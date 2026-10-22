@@ -4,6 +4,7 @@ import os from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { Adb } from './adb';
+import { inspectArchive } from '../packages/archive';
 
 const execute = promisify(execFile);
 
@@ -45,8 +46,9 @@ export async function installXapk(
       return aName.localeCompare(bName);
     });
 
-    onProgress?.(`Installing ${apks.length > 1 ? `${apks.length} split APKs` : 'APK'} on Android…`);
-    await adb.install(serial, apks);
+    const install = await matchDeviceAbis(adb, serial, apks);
+    onProgress?.(`Installing ${install.length > 1 ? `${install.length} split APKs` : 'APK'} on Android…`);
+    await adb.install(serial, install);
 
     const obbs = allFiles.filter((f) => f.endsWith('.obb'));
     if (obbs.length > 0) {
@@ -63,6 +65,24 @@ export async function installXapk(
   } finally {
     await fs.rm(stage, { recursive: true, force: true }).catch(() => undefined);
   }
+}
+
+/**
+ * Drops native-code splits the device cannot run, and fails with a readable message instead of
+ * INSTALL_FAILED_NO_MATCHING_ABIS when the game ships no ABI the device supports.
+ * `apks[0]` is the base APK and is always kept.
+ */
+export async function matchDeviceAbis(adb: Adb, serial: string, apks: string[]): Promise<string[]> {
+  const device = await adb.abis(serial);
+  if (!device.length) return apks;
+  const native = await Promise.all(apks.map((apk) => inspectArchive(apk, async (names) =>
+    [...new Set(names.flatMap((n) => n.match(/^lib\/([^/]+)\//)?.[1] ?? []))]).catch(() => [] as string[])));
+  const shipped = [...new Set(native.flat())];
+  if (shipped.length && !shipped.some((abi) => device.includes(abi))) {
+    throw new Error(`This game only contains ${shipped.join(', ')} native code, but the Android device runs ${device.join(', ')}. `
+      + 'Use an emulator with ARM translation (BlueStacks, LDPlayer, MuMu) via Connect, or an Android phone.');
+  }
+  return apks.filter((_, i) => i === 0 || !native[i].length || native[i].some((abi) => device.includes(abi)));
 }
 
 /** Windows has no `unzip`; its bundled bsdtar (Windows 10 1803+) reads ZIP/ZIP64 under any extension. */

@@ -21,7 +21,10 @@ export class ManagedAndroid {
     if ((process.platform === 'win32' || process.platform === 'darwin') && process.arch === 'x64') return 'x86_64';
     throw new Error('Managed Android currently supports Apple Silicon/Intel Mac and x64 Windows.');
   }
-  get imageId(): string { return `system-images;android-35;default;${this.abi}`; }
+  /** x86_64 needs the Google APIs image: only it ships ARM translation (libndk_translation) for arm64-only games. */
+  get tag(): string { return this.abi === 'x86_64' ? 'google_apis' : 'default'; }
+  get imageId(): string { return `system-images;android-35;${this.tag};${this.abi}`; }
+  private imageDir(sdk: string): string { return path.join(sdk, 'system-images', 'android-35', this.tag, this.abi); }
   get adbPath(): string { return path.join(this.sdk, 'platform-tools', process.platform === 'win32' ? 'adb.exe' : 'adb'); }
   async ready(): Promise<boolean> {
     const marker = await fs.readFile(path.join(this.root, 'installed.json'), 'utf8').catch(() => '');
@@ -29,7 +32,7 @@ export class ManagedAndroid {
       const saved = JSON.parse(marker);
       return saved.imageId === this.imageId && existsSync(this.adbPath)
         && existsSync(path.join(this.sdk, 'emulator', process.platform === 'win32' ? 'emulator.exe' : 'emulator'))
-        && existsSync(path.join(this.sdk, 'system-images', 'android-35', 'default', this.abi, 'system.img'))
+        && existsSync(path.join(this.imageDir(this.sdk), 'system.img'))
         && existsSync(path.join(this.avdHome, MANAGED_AVD + '.ini'));
     } catch { return false; }
   }
@@ -38,9 +41,10 @@ export class ManagedAndroid {
     const host = process.platform === 'darwin' ? 'macosx' : process.platform === 'win32' ? 'windows' : undefined;
     if (!host) throw new Error('Managed Android supports macOS and Windows.');
     this.progress('Reading official Android runtime packages…');
-    const [sdkXml, imageXml] = await Promise.all([downloadText(BASE + 'repository2-3.xml'), downloadText(BASE + 'sys-img/android/sys-img2-3.xml')]);
+    const imageBase = `${BASE}sys-img/${this.tag === 'default' ? 'android' : this.tag}/`;
+    const [sdkXml, imageXml] = await Promise.all([downloadText(BASE + 'repository2-3.xml'), downloadText(imageBase + 'sys-img2-3.xml')]);
     const sdkPackages = repositoryPackages(sdkXml, BASE, host, process.arch);
-    const imagePackages = repositoryPackages(imageXml, BASE + 'sys-img/android/', host, process.arch);
+    const imagePackages = repositoryPackages(imageXml, imageBase, host, process.arch);
     const packages = [latestPackage(sdkPackages, 'platform-tools'), latestPackage(sdkPackages, 'emulator'), latestPackage(imagePackages, this.imageId)];
     const licenses = [...new Map(packages.map((p) => [p.licenseId, { id: p.licenseId, text: p.licenseText }])).values()];
     const plan: RuntimePlan = { token: randomUUID(), bytes: packages.reduce((n, p) => n + p.size, 0), licenses, packages: packages.map((p) => p.id) };
@@ -74,26 +78,30 @@ export class ManagedAndroid {
         const folders = await fs.readdir(unpack);
         if (folders.length !== 1) throw new Error(`Unexpected archive layout for ${pkg.id}.`);
         const source = path.join(unpack, folders[0]);
-        const destination = pkg.id.startsWith('system-images;')
-          ? path.join(sdkStage, 'system-images', 'android-35', 'default', this.abi) : path.join(sdkStage, pkg.id);
+        const destination = pkg.id.startsWith('system-images;') ? this.imageDir(sdkStage) : path.join(sdkStage, pkg.id);
         await fs.mkdir(path.dirname(destination), { recursive: true }); await fs.rename(source, destination);
         await fs.rm(zip);
       }
       this.progress('Creating the PigPort Android device…');
+      await this.stopRunning();
       const oldSdk = path.join(stage, 'old-sdk');
       const hadSdk = existsSync(this.sdk);
       if (hadSdk) { await fs.rename(this.sdk, oldSdk); backupSdk = oldSdk; }
       try { await fs.rename(sdkStage, this.sdk); switched = true; }
       catch (error) { if (hadSdk) await fs.rename(oldSdk, this.sdk); throw error; }
       await fs.mkdir(this.avdHome, { recursive: true });
-      const avd = path.join(this.avdHome, MANAGED_AVD + '.avd'); await fs.mkdir(avd, { recursive: true });
-      const image = path.join(this.sdk, 'system-images/android-35/default', this.abi) + path.sep;
+      const avd = path.join(this.avdHome, MANAGED_AVD + '.avd');
+      // Userdata from a different system image does not boot, so start the device fresh.
+      const previous = await fs.readFile(path.join(this.root, 'installed.json'), 'utf8').then((t) => JSON.parse(t).imageId, () => undefined);
+      if (previous && previous !== this.imageId) await fs.rm(avd, { recursive: true, force: true });
+      await fs.mkdir(avd, { recursive: true });
+      const image = this.imageDir(this.sdk) + path.sep;
       const config = [
         'avd.ini.encoding=UTF-8', `AvdId=${MANAGED_AVD}`, 'avd.ini.displayname=PlayBridge Android',
         `abi.type=${this.abi}`, `hw.cpu.arch=${this.abi === 'arm64-v8a' ? 'arm64' : 'x86_64'}`, 'hw.cpu.ncore=4',
         'hw.ramSize=3072', 'hw.gpu.enabled=yes', 'hw.gpu.mode=auto', 'hw.lcd.width=1280', 'hw.lcd.height=720', 'hw.lcd.density=240',
         'hw.keyboard=yes', 'hw.mainKeys=no', 'hw.audioInput=no', 'hw.camera.back=none', 'hw.camera.front=none',
-        'disk.dataPartition.size=6G', `image.sysdir.1=${image}`, 'tag.id=default', 'tag.display=Default', 'target=android-35', 'PlayStore.enabled=false',
+        'disk.dataPartition.size=6G', `image.sysdir.1=${image}`, `tag.id=${this.tag}`, `tag.display=${this.tag === 'default' ? 'Default' : 'Google APIs'}`, 'target=android-35', 'PlayStore.enabled=false',
       ].join('\n') + '\n';
       await fs.writeFile(path.join(avd, 'config.ini'), config);
       await fs.writeFile(path.join(this.avdHome, MANAGED_AVD + '.ini'), `avd.ini.encoding=UTF-8\npath=${avd}\ntarget=android-35\n`);
@@ -111,5 +119,18 @@ export class ManagedAndroid {
       this.working = false;
       if (stage) await fs.rm(stage, { recursive: true, force: true });
     }
+  }
+  /** On Windows a running emulator or adb server locks the files that setup replaces. */
+  private async stopRunning(): Promise<void> {
+    if (!existsSync(this.adbPath)) return;
+    const adb = (args: string[]) => execute(this.adbPath, args, { timeout: 15000, windowsHide: true }).then((r) => r.stdout, () => '');
+    const serials = (await adb(['devices'])).split(/\r?\n/).map((l) => l.split(/\s+/)[0]).filter((s) => s.startsWith('emulator-'));
+    let stopped = false;
+    for (const serial of serials) {
+      if ((await adb(['-s', serial, 'emu', 'avd', 'name'])).split(/\r?\n/)[0].trim() !== MANAGED_AVD) continue;
+      await adb(['-s', serial, 'emu', 'kill']); stopped = true;
+    }
+    await adb(['kill-server']);
+    if (stopped) await new Promise((resolve) => setTimeout(resolve, 5000));
   }
 }

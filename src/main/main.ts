@@ -11,7 +11,7 @@ import { NativeIpaRuntime } from './runtime/ipa';
 import { ManagedAndroid, MANAGED_AVD } from './runtime/managedAndroid';
 import { inspectPackage } from './packages/packages';
 import { packageIcon } from './packages/icon';
-import { installXapk } from './android/xapk';
+import { installXapk, matchDeviceAbis } from './android/xapk';
 import type { MobilePackage } from '../shared/api';
 
 const imported = new Map<string, MobilePackage>();
@@ -119,7 +119,7 @@ function registerIpc(): void {
         if (pkg.kind === 'xapk') {
           await installXapk(adb, target, file, pkg.bundleId, progress);
         } else {
-          await adb.install(target, [file]);
+          await adb.install(target, await matchDeviceAbis(adb, target, [file]));
         }
         // Check the exact package rather than guessing by comparing the app list.
         const present = (await adb.packages(target)).some((p) => p.id === pkg.bundleId);

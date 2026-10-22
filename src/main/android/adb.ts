@@ -77,6 +77,13 @@ export class Adb {
     return parsePackages(out);
   }
 
+  /** Native ABIs the device can run, best first (e.g. x86_64, arm64-v8a with ARM translation). */
+  async abis(serial: string): Promise<string[]> {
+    const list = (await this.shell(serial, ['getprop', 'ro.product.cpu.abilist'])).trim()
+      || (await this.shell(serial, ['getprop', 'ro.product.cpu.abi'])).trim();
+    return list.split(',').map((a) => a.trim()).filter(Boolean);
+  }
+
   /** Installs one APK, or a split APK set (base + config splits) in one go. */
   async install(serial: string, apks: string[]): Promise<void> {
     if (apks.length === 0) throw new Error('No APK selected');
