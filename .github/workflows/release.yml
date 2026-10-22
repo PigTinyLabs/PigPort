@@ -1,0 +1,43 @@
+name: Release
+
+# Push a tag such as v0.2.2 to build macOS (Apple silicon + Intel) and Windows installers
+# and publish them as a GitHub release. Signing setup: see build.yml.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ github.ref_name }}
+    secrets: inherit
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: PigPort ${{ github.ref_name }}
+          files: artifacts/*
+          fail_on_unmatched_files: false
+          body: |
+            | Máy | File |
+            |---|---|
+            | Mac chip Apple (M1/M2/M3/M4) | `PigPort-…-mac-arm64.dmg` — chơi được game iOS (IPA) và Android |
+            | Mac chip Intel | `PigPort-…-mac-x64.dmg` — chỉ game Android (APK) |
+            | Windows | `PigPort-…-win-x64.exe` (cài đặt) hoặc bản portable |
+
+            Nếu bản này chưa được ký bằng chứng chỉ trả phí:
+            - **macOS:** mở app lần đầu, macOS sẽ chặn. Vào **System Settings → Privacy & Security**, kéo xuống và bấm **Open Anyway**.
+            - **Windows:** SmartScreen hiện "Windows protected your PC" → bấm **More info** → **Run anyway**.

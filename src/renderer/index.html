@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'">
+  <title>PigPort</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <img class="brand-mark" src="logo.svg" alt="" aria-hidden="true">
+        <span>PigPort</span>
+      </div>
+
+      <nav class="tabs" aria-label="Library">
+        <button id="tab-packages" class="tab active">Game library</button>
+        <button id="tab-android" class="tab">Android games</button>
+        <button id="tab-ios" class="tab" hidden>iPhone &amp; iPad</button>
+      </nav>
+
+      <section id="device-panel" class="panel">
+        <h4>Device</h4>
+        <div class="row">
+          <select id="device" aria-label="Android device"></select>
+          <button id="refresh-devices" class="icon-btn" title="Refresh devices">↻</button>
+        </div>
+        <form id="connect-form" class="row">
+          <input id="connect-address" list="recent-addresses" placeholder="127.0.0.1:5555" aria-label="Emulator address" autocomplete="off">
+          <button class="btn small" type="submit">Connect</button>
+        </form>
+        <datalist id="recent-addresses"></datalist>
+        <p class="muted small">Network adb for emulators like LDPlayer, MuMu or BlueStacks.</p>
+      </section>
+
+      <footer class="sidebar-foot">
+        <span id="adb-status" class="adb-status">checking adb…</span>
+        <button id="open-settings" class="icon-btn" title="Settings">⚙</button>
+      </footer>
+    </aside>
+
+    <main class="main">
+      <header class="main-head">
+        <h1 id="main-title">Android games</h1>
+        <input id="search" type="search" placeholder="Search" aria-label="Search games">
+        <div id="main-actions" class="row"></div>
+      </header>
+      <p id="install-progress" class="note" role="status" aria-live="polite" hidden></p>
+      <div id="content" class="content"></div>
+    </main>
+  </div>
+
+  <dialog id="settings">
+    <form id="settings-form" method="dialog">
+      <h2>Settings</h2>
+      <label class="field stacked"><span>Android virtual device</span><select id="set-avd"></select></label>
+      <label class="field stacked"><span>adb path</span>
+        <input id="set-adb" placeholder="adb" autocomplete="off">
+      </label>
+      <label class="field stacked"><span>Stream resolution (longest side)</span>
+        <select id="set-size">
+          <option value="1280">1280</option><option value="1600">1600</option>
+          <option value="1920">1920</option><option value="2560">2560</option>
+        </select>
+      </label>
+      <label class="field stacked"><span>Frame rate</span>
+        <select id="set-fps"><option value="30">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option></select>
+      </label>
+      <label class="field stacked"><span>Bit rate</span>
+        <select id="set-bitrate">
+          <option value="4000000">4 Mbps</option><option value="8000000">8 Mbps</option>
+          <option value="16000000">16 Mbps</option><option value="24000000">24 Mbps</option>
+        </select>
+      </label>
+      <p class="muted small">Stream changes apply the next time a game starts.</p>
+      <div class="row end">
+        <button class="btn ghost" value="cancel">Cancel</button>
+        <button class="btn primary" value="save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="runtime-terms">
+    <form method="dialog">
+      <h2>Set up built-in Android</h2>
+      <p id="runtime-download-size"></p>
+      <p>Runtime components download directly from Google's official Android repository. Read the license terms below before installing.</p>
+      <textarea id="runtime-license" readonly aria-label="Android license terms" rows="16"></textarea>
+      <label class="field"><input id="runtime-accept" type="checkbox"> I have read and accept these license terms.</label>
+      <div class="row end"><button class="btn ghost" value="cancel">Cancel</button><button id="runtime-confirm" class="btn primary" value="install" disabled>Accept &amp; install Android</button></div>
+    </form>
+  </dialog>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

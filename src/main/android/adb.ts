@@ -1,0 +1,134 @@
+import { execFile, spawn, ChildProcess } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
+export interface Device {
+  serial: string;
+  state: string;
+  model?: string;
+}
+
+export interface AppPackage {
+  id: string;
+}
+
+const exe = process.platform === 'win32' ? 'adb.exe' : 'adb';
+
+/** Finds adb: explicit setting, bundled copy, Android SDK, then PATH. */
+export function locateAdb(configured?: string, bundledDir?: string): string {
+  const candidates: string[] = [];
+  if (configured) candidates.push(configured);
+  if (bundledDir) candidates.push(path.join(bundledDir, 'platform-tools', exe));
+  for (const env of ['ANDROID_HOME', 'ANDROID_SDK_ROOT']) {
+    const root = process.env[env];
+    if (root) candidates.push(path.join(root, 'platform-tools', exe));
+  }
+  const home = process.env.HOME ?? process.env.USERPROFILE ?? '';
+  if (process.platform === 'darwin') candidates.push(path.join(home, 'Library/Android/sdk/platform-tools', exe));
+  if (process.platform === 'win32' && process.env.LOCALAPPDATA) {
+    candidates.push(path.join(process.env.LOCALAPPDATA, 'Android/Sdk/platform-tools', exe));
+  }
+  return candidates.find((c) => existsSync(c)) ?? exe; // fall back to PATH lookup
+}
+
+export class Adb {
+  constructor(public binary: string) {}
+
+  run(args: string[], timeoutMs = 60_000): Promise<string> {
+    return new Promise((resolve, reject) => {
+      execFile(this.binary, args, { timeout: timeoutMs, maxBuffer: 32 * 1024 * 1024, windowsHide: true },
+        (err, stdout, stderr) => {
+          if (err) {
+            const detail = (stderr || stdout || '').trim();
+            reject(new Error(detail ? `adb ${args[0]}: ${detail}` : `adb ${args[0]} failed: ${err.message}`));
+          } else {
+            resolve(stdout);
+          }
+        });
+    });
+  }
+
+  spawn(args: string[]): ChildProcess {
+    return spawn(this.binary, args, { windowsHide: true });
+  }
+
+  async version(): Promise<string> {
+    return (await this.run(['version'], 10_000)).split('\n')[0].trim();
+  }
+
+  async devices(): Promise<Device[]> {
+    const out = await this.run(['devices', '-l'], 15_000);
+    return parseDevices(out);
+  }
+
+  /** For emulators that expose adb over TCP (LDPlayer, MuMu, BlueStacks, ...). */
+  async connect(address: string): Promise<string> {
+    const out = (await this.run(['connect', address], 20_000)).trim();
+    if (/cannot|failed|unable/i.test(out)) throw new Error(out);
+    return out;
+  }
+
+  shell(serial: string, command: string[], timeoutMs?: number): Promise<string> {
+    return this.run(['-s', serial, 'shell', ...command], timeoutMs);
+  }
+
+  async packages(serial: string): Promise<AppPackage[]> {
+    const out = await this.shell(serial, ['pm', 'list', 'packages', '-3']);
+    return parsePackages(out);
+  }
+
+  /** Installs one APK, or a split APK set (base + config splits) in one go. */
+  async install(serial: string, apks: string[]): Promise<void> {
+    if (apks.length === 0) throw new Error('No APK selected');
+    const args = apks.length === 1
+      ? ['-s', serial, 'install', '-r', apks[0]]
+      : ['-s', serial, 'install-multiple', '-r', ...apks];
+    const out = await this.run(args, 10 * 60_000);
+    if (!/Success/.test(out)) throw new Error(out.trim() || 'Install failed');
+  }
+
+  async uninstall(serial: string, pkg: string, keepData = false): Promise<void> {
+    const out = await this.run(['-s', serial, 'uninstall', ...(keepData ? ['-k'] : []), pkg]);
+    if (!/Success/.test(out)) throw new Error(out.trim() || 'Uninstall failed');
+  }
+
+  async launch(serial: string, pkg: string): Promise<void> {
+    const out = await this.shell(serial, ['monkey', '-p', pkg, '-c', 'android.intent.category.LAUNCHER', '1']);
+    if (!/Events injected:\s*[1-9]/.test(out) || /No activities found|monkey aborted|Error:/i.test(out)) throw new Error(`${pkg} could not launch: ${out.trim()}`);
+  }
+
+  async forceStop(serial: string, pkg: string): Promise<void> {
+    await this.shell(serial, ['am', 'force-stop', pkg]);
+  }
+
+  async push(serial: string, local: string, remote: string): Promise<void> {
+    await this.run(['-s', serial, 'push', local, remote], 60_000);
+  }
+
+  async forward(serial: string, local: string, remote: string): Promise<void> {
+    await this.run(['-s', serial, 'forward', local, remote]);
+  }
+
+  async removeForward(serial: string, local: string): Promise<void> {
+    await this.run(['-s', serial, 'forward', '--remove', local]).catch(() => undefined);
+  }
+}
+
+export function parseDevices(out: string): Device[] {
+  const devices: Device[] = [];
+  for (const line of out.split(/\r?\n/).slice(1)) {
+    const m = line.trim().match(/^(\S+)\s+(\S+)(.*)$/);
+    if (!m) continue;
+    const model = m[3].match(/model:(\S+)/)?.[1]?.replace(/_/g, ' ');
+    devices.push({ serial: m[1], state: m[2], model });
+  }
+  return devices;
+}
+
+export function parsePackages(out: string): AppPackage[] {
+  return out.split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith('package:'))
+    .map((l) => ({ id: l.slice('package:'.length) }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}

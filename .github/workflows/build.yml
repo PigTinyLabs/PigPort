@@ -1,0 +1,105 @@
+name: Build
+
+# Shared by release.yml and nightly.yml: builds the macOS (Apple silicon + Intel) and
+# Windows installers and uploads them as artifacts.
+#
+# Signing secrets are optional; without them the builds are unsigned (macOS ad-hoc signed).
+# macOS: MAC_CERTS (base64 of a Developer ID Application .p12), MAC_CERTS_PASSWORD,
+#        APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID (notarization)
+# Windows: WIN_CERTS (base64 of a code-signing .pfx), WIN_CERTS_PASSWORD
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Version to stamp into the app; empty keeps package.json
+        type: string
+        default: ''
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci && npm run setup:electron
+
+      - name: Fetch scrcpy-server
+        run: npm run fetch:scrcpy-server
+
+      - name: Set version
+        if: inputs.version != ''
+        shell: bash
+        run: npm version "${{ inputs.version }}" --no-git-tag-version --allow-same-version
+
+      - name: Signing certificate (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          MAC_CERTS: ${{ secrets.MAC_CERTS }}
+          MAC_CERTS_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -n "$MAC_CERTS" ]; then
+            echo "$MAC_CERTS" | base64 --decode > "$RUNNER_TEMP/mac-cert.p12"
+            echo "CSC_LINK=$RUNNER_TEMP/mac-cert.p12" >> "$GITHUB_ENV"
+            echo "CSC_KEY_PASSWORD=$MAC_CERTS_PASSWORD" >> "$GITHUB_ENV"
+            if [ -n "$APPLE_ID" ]; then
+              echo "APPLE_ID=$APPLE_ID" >> "$GITHUB_ENV"
+              echo "APPLE_APP_SPECIFIC_PASSWORD=$APPLE_APP_SPECIFIC_PASSWORD" >> "$GITHUB_ENV"
+              echo "APPLE_TEAM_ID=$APPLE_TEAM_ID" >> "$GITHUB_ENV"
+            else
+              echo "No Apple ID secrets: the app will be signed but not notarized."
+            fi
+          else
+            echo "No MAC_CERTS: building an ad-hoc signed app."
+          fi
+
+      - name: Signing certificate (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          WIN_CERTS: ${{ secrets.WIN_CERTS }}
+          WIN_CERTS_PASSWORD: ${{ secrets.WIN_CERTS_PASSWORD }}
+        run: |
+          if [ -n "$WIN_CERTS" ]; then
+            echo "$WIN_CERTS" | base64 --decode > "$RUNNER_TEMP/win-cert.pfx"
+            echo "WIN_CSC_LINK=$RUNNER_TEMP/win-cert.pfx" >> "$GITHUB_ENV"
+            echo "WIN_CSC_KEY_PASSWORD=$WIN_CERTS_PASSWORD" >> "$GITHUB_ENV"
+          else
+            echo "No WIN_CERTS: building an unsigned installer."
+          fi
+
+      - name: Test
+        if: runner.os == 'macOS'
+        run: npm test
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: npm run dist:mac -- --publish never
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: npm run dist:win -- --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pigport-${{ runner.os }}
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe
+          if-no-files-found: error

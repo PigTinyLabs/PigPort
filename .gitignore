@@ -1,0 +1,16 @@
+node_modules/
+dist/
+resources/scrcpy-server
+resources/scrcpy-server.version
+resources/platform-tools/
+release/
+*.log
+resources/ios-input/
+.DS_Store
+
+# Signing secrets never belong in the repo
+*.p12
+*.pfx
+*.p8
+.env
+.env.*
