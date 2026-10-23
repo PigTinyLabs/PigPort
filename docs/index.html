@@ -158,47 +158,62 @@
 
     /* Navbar */
     nav {
-      height: 80px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(12, 13, 20, 0.85);
+    }
+
+    nav .container {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(16px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(12, 13, 20, 0.75);
+      width: 100%;
+      max-width: 1240px;
+      padding: 0 20px;
+      gap: 16px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       text-decoration: none;
       color: var(--text);
       font-family: var(--font-heading);
       font-weight: 800;
-      font-size: 1.4rem;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+      margin-right: 8px;
     }
 
     .brand img {
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       filter: drop-shadow(0 4px 10px rgba(244, 143, 177, 0.5));
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: clamp(8px, 1.3vw, 18px);
+      white-space: nowrap;
+      flex-shrink: 1;
     }
 
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.92rem;
+      font-size: 0.88rem;
       font-weight: 500;
       transition: color 0.2s ease;
+      white-space: nowrap;
     }
 
     .nav-links a:hover {
@@ -208,7 +223,78 @@
     .nav-actions {
       display: flex;
       align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .menu-toggle {
+      display: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-highlight);
+      color: var(--text);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      transition: all 0.2s ease;
+    }
+
+    .menu-toggle:hover {
+      background: rgba(244, 143, 177, 0.2);
+      border-color: var(--primary);
+    }
+
+    /* Mobile Nav Drawer */
+    .mobile-nav {
+      position: fixed;
+      top: 72px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(8, 10, 16, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-10px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      overflow-y: auto;
+    }
+
+    .mobile-nav.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .mobile-nav a {
+      display: flex;
+      align-items: center;
       gap: 12px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      color: #e2e8f0;
+      text-decoration: none;
+      font-size: 1.02rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .mobile-nav a:hover, .mobile-nav a:active {
+      background: rgba(244, 143, 177, 0.15);
+      border-color: rgba(244, 143, 177, 0.35);
+      color: #fff;
     }
 
     .lang-btn {
@@ -1195,11 +1281,42 @@
       margin-bottom: 12px;
     }
 
-    /* Responsive */
-    @media (max-width: 768px) {
+    /* Responsive Media Queries */
+    @media (max-width: 1080px) {
       .nav-links { display: none; }
-      .hero { padding: 60px 0 40px; }
-      section { padding: 60px 0; }
+      .menu-toggle { display: flex; }
+      .btn-github span { display: none; }
+      .btn-github { padding: 8px 10px; }
+    }
+
+    @media (max-width: 768px) {
+      nav { height: 64px; }
+      .mobile-nav { top: 64px; }
+      .brand span { font-size: 1.2rem; }
+      .hero { padding: 50px 0 30px; }
+      section { padding: 50px 0; }
+      h1 { font-size: clamp(1.9rem, 7vw, 2.6rem); line-height: 1.2; margin-bottom: 16px; }
+      .hero-desc { font-size: 0.98rem; margin-bottom: 24px; padding: 0 4px; }
+      .cta-group { flex-direction: column; gap: 12px; margin-bottom: 32px; }
+      .btn-primary, .btn-secondary { width: 100%; justify-content: center; padding: 14px 20px; }
+      .badge-pill { font-size: 0.74rem; padding: 5px 12px; margin-bottom: 18px; }
+      .hero-meta { flex-direction: column; gap: 8px; font-size: 0.82rem; }
+      .window-header { padding: 10px 14px; }
+      .window-title { font-size: 0.78rem; }
+      .game-card-grid { grid-template-columns: 1fr; gap: 16px; }
+      .download-grid { grid-template-columns: 1fr; gap: 18px; }
+      .guide-box-grid { grid-template-columns: 1fr; gap: 18px; }
+      .ctrl-mockup-grid { grid-template-columns: 1fr; }
+      .ctrl-mockup-col { border-right: none !important; border-left: none !important; border-bottom: 1px solid #232a38; }
+      .ctrl-screen-preview { height: 210px; margin: 8px 0; }
+      .ctrl-stage-joystick { width: 85px; height: 85px; }
+      .ctrl-stage-camera { width: 65px; height: 65px; }
+      .table-container { margin: 0 -12px; border-radius: 10px; }
+      table { min-width: 560px; font-size: 0.82rem; }
+      th, td { padding: 12px 10px; }
+      .steps-grid { grid-template-columns: 1fr; gap: 16px; }
+      .footer-links { flex-direction: column; gap: 12px; }
+      .modal-box { width: calc(100% - 24px); max-height: 88vh; padding: 22px 16px; }
     }
   </style>
 </head>
@@ -1209,7 +1326,7 @@
 
   <!-- Navigation -->
   <nav>
-    <div class="container" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+    <div class="container">
       <a href="#" class="brand">
         <img src="icon.svg" alt="PigPort Logo">
         <span>PigPort</span>
@@ -1218,8 +1335,8 @@
       <div class="nav-links">
         <a href="#downloads" data-i18n="nav.downloads">Downloads</a>
         <a href="#features" data-i18n="nav.features">Features</a>
-        <a href="#packages-guide" data-i18n="nav.packages">Get Games (.IPA / .APK)</a>
-        <a href="#controls-guide" data-i18n="nav.controls">Controls Guide</a>
+        <a href="#packages-guide" data-i18n="nav.packages">Games (.IPA / .APK)</a>
+        <a href="#controls-guide" data-i18n="nav.controls">Controls</a>
         <a href="#comparison" data-i18n="nav.comparison">Comparison</a>
         <a href="#how-it-works" data-i18n="nav.guide">Quick Start</a>
         <a href="#faq" data-i18n="nav.faq">FAQ</a>
@@ -1229,15 +1346,29 @@
         <button id="langToggle" class="lang-btn" onclick="toggleLanguage()">
           🌐 <span id="langText">VI</span>
         </button>
-        <a href="https://github.com/PigTinyLabs/PigPort" target="_blank" class="btn-github">
+        <a href="https://github.com/PigTinyLabs/PigPort" target="_blank" class="btn-github" title="View Source on GitHub">
           <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
           </svg>
           <span>GitHub</span>
         </a>
+        <button id="menuToggle" class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu">
+          <span id="menuIcon">☰</span>
+        </button>
       </div>
     </div>
   </nav>
+
+  <!-- Mobile Drawer Menu -->
+  <div id="mobileNav" class="mobile-nav">
+    <a href="#downloads" onclick="closeMobileMenu()" data-i18n="nav.downloads">⬇️ Downloads</a>
+    <a href="#features" onclick="closeMobileMenu()" data-i18n="nav.features">⚡ Features</a>
+    <a href="#packages-guide" onclick="closeMobileMenu()" data-i18n="nav.packages">📦 Games (.IPA / .APK)</a>
+    <a href="#controls-guide" onclick="closeMobileMenu()" data-i18n="nav.controls">🎮 Controls Guide</a>
+    <a href="#comparison" onclick="closeMobileMenu()" data-i18n="nav.comparison">⚖️ Comparison</a>
+    <a href="#how-it-works" onclick="closeMobileMenu()" data-i18n="nav.guide">🚀 Quick Start</a>
+    <a href="#faq" onclick="closeMobileMenu()" data-i18n="nav.faq">❓ FAQ</a>
+  </div>
 
   <!-- Hero Section -->
   <header class="hero">
@@ -1959,8 +2090,8 @@
       en: {
         "nav.downloads": "Downloads",
         "nav.features": "Features",
-        "nav.packages": "Get Games (.IPA / .APK)",
-        "nav.controls": "Control Settings",
+        "nav.packages": "Games (.IPA/.APK)",
+        "nav.controls": "Controls",
         "nav.comparison": "Comparison",
         "nav.guide": "Quick Start",
         "nav.faq": "FAQ",
@@ -2108,7 +2239,7 @@
       vi: {
         "nav.downloads": "Tải về",
         "nav.features": "Tính năng",
-        "nav.packages": "Tìm Tải Game (.IPA / .APK)",
+        "nav.packages": "Tải Game (.IPA/.APK)",
         "nav.controls": "Cài đặt phím",
         "nav.comparison": "So sánh",
         "nav.guide": "Hướng dẫn",
@@ -2278,6 +2409,23 @@
       if (!isActive) {
         item.classList.add('active');
       }
+    }
+
+    /* Mobile Nav Drawer Handlers */
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobileNav');
+      const icon = document.getElementById('menuIcon');
+      const isOpen = menu.classList.toggle('open');
+      icon.textContent = isOpen ? '✕' : '☰';
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    }
+
+    function closeMobileMenu() {
+      const menu = document.getElementById('mobileNav');
+      const icon = document.getElementById('menuIcon');
+      if (menu) menu.classList.remove('open');
+      if (icon) icon.textContent = '☰';
+      document.body.style.overflow = '';
     }
 
     /* Modal Handlers */
