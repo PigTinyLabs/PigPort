@@ -448,15 +448,13 @@
       gap: 14px;
     }
 
-    .demo-icon {
+    .demo-icon-img {
       width: 54px;
       height: 54px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border-radius: 13px;
+      object-fit: cover;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       flex-shrink: 0;
     }
 
@@ -561,6 +559,94 @@
       font-size: 1.05rem;
     }
 
+    /* Package Sources Guide Section */
+    .guide-box-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin-top: 20px;
+    }
+
+    .guide-box {
+      background: linear-gradient(180deg, rgba(28, 30, 48, 0.8) 0%, rgba(18, 20, 32, 0.8) 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .guide-box:hover {
+      border-color: var(--border-highlight);
+      transform: translateY(-3px);
+    }
+
+    .guide-box-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .guide-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(244, 143, 177, 0.2);
+      color: #f48fb1;
+      margin-left: auto;
+    }
+
+    .guide-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .guide-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .guide-list li strong {
+      color: #fff;
+    }
+
+    .guide-list li .bullet-icon {
+      color: #f48fb1;
+      font-size: 1.1rem;
+      line-height: 1.2;
+    }
+
+    .guide-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+      padding: 10px 18px;
+      background: rgba(244, 143, 177, 0.15);
+      border: 1px solid rgba(244, 143, 177, 0.3);
+      color: #fff;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .guide-link-btn:hover {
+      background: rgba(244, 143, 177, 0.25);
+      border-color: #f48fb1;
+      color: #f48fb1;
+    }
+
     /* Features Grid */
     .features-grid {
       display: grid;
@@ -659,92 +745,37 @@
       color: #f87171;
     }
 
-    /* Package Sources Guide Section */
-    .guide-box-grid {
+    /* Quick Start Steps */
+    .steps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 28px;
-      margin-top: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 30px;
     }
 
-    .guide-box {
-      background: linear-gradient(180deg, rgba(28, 30, 48, 0.8) 0%, rgba(18, 20, 32, 0.8) 100%);
+    .step-card {
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px 28px;
+      border-radius: 16px;
+      padding: 28px;
       position: relative;
-      transition: all 0.3s;
     }
 
-    .guide-box:hover {
-      border-color: var(--border-highlight);
-      transform: translateY(-3px);
+    .step-number {
+      font-family: var(--font-heading);
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: rgba(244, 143, 177, 0.35);
+      line-height: 1;
+      margin-bottom: 12px;
     }
 
-    .guide-box-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 20px;
-    }
-
-    .guide-badge {
-      font-size: 0.8rem;
+    .step-card h4 {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
       font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: rgba(244, 143, 177, 0.2);
-      color: #f48fb1;
-      margin-left: auto;
-    }
-
-    .guide-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-top: 16px;
-    }
-
-    .guide-list li {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      line-height: 1.5;
-    }
-
-    .guide-list li strong {
       color: #fff;
-    }
-
-    .guide-list li .bullet-icon {
-      color: #f48fb1;
-      font-size: 1.1rem;
-      line-height: 1.2;
-    }
-
-    .guide-link-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 20px;
-      padding: 10px 18px;
-      background: rgba(244, 143, 177, 0.15);
-      border: 1px solid rgba(244, 143, 177, 0.3);
-      color: #fff;
-      font-size: 0.92rem;
-      font-weight: 600;
-      border-radius: 10px;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-
-    .guide-link-btn:hover {
-      background: rgba(244, 143, 177, 0.25);
-      border-color: #f48fb1;
-      color: #f48fb1;
+      margin-bottom: 8px;
     }
 
     /* FAQ Section */
@@ -801,39 +832,6 @@
     .faq-item.active .faq-answer {
       max-height: 350px;
       margin-top: 14px;
-    }
-
-    /* Quick Start Steps */
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
-      margin-top: 30px;
-    }
-
-    .step-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      position: relative;
-    }
-
-    .step-number {
-      font-family: var(--font-heading);
-      font-size: 2.4rem;
-      font-weight: 800;
-      color: rgba(244, 143, 177, 0.35);
-      line-height: 1;
-      margin-bottom: 12px;
-    }
-
-    .step-card h4 {
-      font-family: var(--font-heading);
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 8px;
     }
 
     /* Footer */
@@ -971,31 +969,6 @@
       gap: 6px;
     }
 
-    /* Toast Notification */
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      background: #1e2133;
-      border: 1px solid var(--border-highlight);
-      border-radius: 12px;
-      padding: 14px 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 9999;
-      transform: translateY(120px);
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      max-width: 380px;
-    }
-
-    .toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
     /* SEO Keyword Cloud for Search Engines */
     .seo-keyword-block {
       margin-top: 40px;
@@ -1077,9 +1050,9 @@
       </div>
 
       <div class="hero-meta">
-        <span>✨ 100% Free & Open Source</span>
-        <span>🚫 Zero Advertisements</span>
-        <span>⚡ Apple Silicon & Intel 64-bit</span>
+        <span data-i18n="hero.meta_free">✨ 100% Free & Open Source</span>
+        <span data-i18n="hero.meta_ads">🚫 Zero Advertisements</span>
+        <span data-i18n="hero.meta_arch">⚡ Apple Silicon & Intel 64-bit</span>
       </div>
 
       <!-- Live Mockup Preview -->
@@ -1091,7 +1064,7 @@
               <span class="dot dot-yellow"></span>
               <span class="dot dot-green"></span>
             </div>
-            <div class="window-title">PigPort Game Library — v0.2.4 (Active Session)</div>
+            <div class="window-title" data-i18n="mockup.title">PigPort Game Library — v0.2.4 (Active Session)</div>
             <div style="width: 40px;"></div>
           </div>
           <div class="window-body">
@@ -1099,10 +1072,10 @@
               <!-- Game Card 1: Genshin Impact -->
               <div class="game-card-demo">
                 <div class="demo-icon-row">
-                  <div class="demo-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">✨</div>
+                  <img src="assets/genshin.jpg" alt="Genshin Impact Logo" class="demo-icon-img">
                   <div>
                     <div class="demo-title">Genshin Impact</div>
-                    <span class="demo-tag">iOS IPA • Metal API • 120 FPS</span>
+                    <span class="demo-tag" data-i18n="card.tag_genshin">iOS IPA • Metal API • 120 FPS</span>
                   </div>
                 </div>
                 <div class="demo-actions">
@@ -1118,10 +1091,10 @@
               <!-- Game Card 2: Identity V -->
               <div class="game-card-demo">
                 <div class="demo-icon-row">
-                  <div class="demo-icon" style="background: linear-gradient(135deg, #6366f1, #4338ca);">🎭</div>
+                  <img src="assets/identity_v.jpg" alt="Identity V Logo" class="demo-icon-img">
                   <div>
                     <div class="demo-title">Identity V</div>
-                    <span class="demo-tag">Android XAPK • WASD Keymap</span>
+                    <span class="demo-tag" data-i18n="card.tag_identity">Android XAPK • WASD Keymap</span>
                   </div>
                 </div>
                 <div class="demo-actions">
@@ -1137,10 +1110,10 @@
               <!-- Game Card 3: Honkai: Star Rail -->
               <div class="game-card-demo">
                 <div class="demo-icon-row">
-                  <div class="demo-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">🌌</div>
+                  <img src="assets/star_rail.jpg" alt="Honkai: Star Rail Logo" class="demo-icon-img">
                   <div>
                     <div class="demo-title">Honkai: Star Rail</div>
-                    <span class="demo-tag">iOS IPA • ARM64 Native</span>
+                    <span class="demo-tag" data-i18n="card.tag_starrail">iOS IPA • ARM64 Native</span>
                   </div>
                 </div>
                 <div class="demo-actions">
@@ -1176,29 +1149,29 @@
           <div class="guide-box-header">
             <div class="feature-icon-box" style="margin-bottom: 0;">🍎</div>
             <div>
-              <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">iOS Games (.IPA)</h3>
-              <span style="font-size: 0.85rem; color: var(--text-muted);">For Apple Silicon M1/M2/M3/M4</span>
+              <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;" data-i18n="pkg.ios_title">iOS Games (.IPA)</h3>
+              <span style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="pkg.ios_sub">For Apple Silicon M1/M2/M3/M4</span>
             </div>
-            <span class="guide-badge">Decrypted IPAs</span>
+            <span class="guide-badge" data-i18n="pkg.ios_badge">Decrypted IPAs</span>
           </div>
           
           <ul class="guide-list">
             <li>
               <span class="bullet-icon">✦</span>
-              <span><strong>decrypt.day</strong>: The most popular database for decrypted iOS IPAs designed for macOS Apple Silicon. Simply search the game name and download the <code>.ipa</code>.</span>
+              <span data-i18n="pkg.ios_item1"><strong>decrypt.day</strong>: The most popular database for decrypted iOS IPAs designed for macOS Apple Silicon. Simply search the game name and download the <code>.ipa</code>.</span>
             </li>
             <li>
               <span class="bullet-icon">✦</span>
-              <span><strong>Google Search query</strong>: Search <code>"[Game Name] decrypted ipa"</code> or <code>"[Game Name] ipa for mac"</code>.</span>
+              <span data-i18n="pkg.ios_item2"><strong>Google Search query</strong>: Search <code>"[Game Name] decrypted ipa"</code> or <code>"[Game Name] ipa for mac"</code>.</span>
             </li>
             <li>
               <span class="bullet-icon">✦</span>
-              <span><strong>Own Apple ID extraction</strong>: Export IPAs from your purchased apps with tools like Apple Configurator or IPA extraction utilities.</span>
+              <span data-i18n="pkg.ios_item3"><strong>Own Apple ID extraction</strong>: Export IPAs from your purchased apps with tools like Apple Configurator or IPA extraction utilities.</span>
             </li>
           </ul>
 
           <a href="https://decrypt.day/" target="_blank" rel="noopener noreferrer" class="guide-link-btn">
-            <span>🌐 Visit Decrypt.day Database</span>
+            <span data-i18n="pkg.ios_btn">🌐 Visit Decrypt.day Database</span>
             <span>→</span>
           </a>
         </div>
@@ -1208,29 +1181,29 @@
           <div class="guide-box-header">
             <div class="feature-icon-box" style="margin-bottom: 0;">🤖</div>
             <div>
-              <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Android Games (.APK / .XAPK)</h3>
-              <span style="font-size: 0.85rem; color: var(--text-muted);">For Universal macOS Runtime</span>
+              <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;" data-i18n="pkg.android_title">Android Games (.APK / .XAPK)</h3>
+              <span style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="pkg.android_sub">For Universal macOS Runtime</span>
             </div>
-            <span class="guide-badge">Split APK & OBB</span>
+            <span class="guide-badge" data-i18n="pkg.android_badge">Split APK & OBB</span>
           </div>
           
           <ul class="guide-list">
             <li>
               <span class="bullet-icon">✦</span>
-              <span><strong>Google Search query</strong>: Search <code>"[Game Name] apk"</code> or <code>"[Game Name] xapk"</code> (e.g. <em>Identity V apk</em>, <em>Genshin Impact xapk</em>).</span>
+              <span data-i18n="pkg.android_item1"><strong>Google Search query</strong>: Search <code>"[Game Name] apk"</code> or <code>"[Game Name] xapk"</code> (e.g. <em>Identity V apk</em>, <em>Genshin Impact xapk</em>).</span>
             </li>
             <li>
               <span class="bullet-icon">✦</span>
-              <span><strong>Top Trusted Sites</strong>: Download directly from <strong>APKPure.com</strong>, <strong>APKMirror.com</strong>, or <strong>QooApp</strong>.</span>
+              <span data-i18n="pkg.android_item2"><strong>Top Trusted Sites</strong>: Download directly from <strong>APKPure.com</strong>, <strong>APKMirror.com</strong>, or <strong>QooApp</strong>.</span>
             </li>
             <li>
               <span class="bullet-icon">✦</span>
-              <span><strong>1-Click Install</strong>: Drag and drop the downloaded <code>.xapk</code> into PigPort. It extracts graphic OBBs and split-apks automatically!</span>
+              <span data-i18n="pkg.android_item3"><strong>1-Click Install</strong>: Drag and drop the downloaded <code>.xapk</code> into PigPort. It extracts graphic OBBs and split-apks automatically!</span>
             </li>
           </ul>
 
           <a href="https://apkpure.com/" target="_blank" rel="noopener noreferrer" class="guide-link-btn">
-            <span>🔍 Browse APKPure Repository</span>
+            <span data-i18n="pkg.android_btn">🔍 Browse APKPure Repository</span>
             <span>→</span>
           </a>
         </div>
@@ -1323,7 +1296,7 @@
           <thead>
             <tr>
               <th data-i18n="th.feature">Feature / Metric</th>
-              <th class="highlight-col">🐷 PigPort</th>
+              <th class="highlight-col" data-i18n="th.pigport">🐷 PigPort</th>
               <th data-i18n="th.sideload">Other Sideload Tools</th>
               <th data-i18n="th.emulators">Traditional Emulators</th>
             </tr>
@@ -1331,39 +1304,39 @@
           <tbody>
             <tr>
               <td><strong data-i18n="row.ios">iOS Games (.IPA)</strong></td>
-              <td class="highlight-col check">✓ Native Smooth (ARM64)</td>
-              <td class="check">✓ Supported</td>
-              <td class="cross">✗ Not Supported</td>
+              <td class="highlight-col check" data-i18n="cell.ios_pigport">✓ Native Smooth (ARM64)</td>
+              <td class="check" data-i18n="cell.ios_sideload">✓ Supported</td>
+              <td class="cross" data-i18n="cell.ios_emu">✗ Not Supported</td>
             </tr>
             <tr>
               <td><strong data-i18n="row.android">Android Games (.APK / .XAPK)</strong></td>
-              <td class="highlight-col check">✓ Built-in & Auto-extract</td>
-              <td class="cross">✗ Not Supported</td>
-              <td class="check">✓ Supported</td>
+              <td class="highlight-col check" data-i18n="cell.android_pigport">✓ Built-in & Auto-extract</td>
+              <td class="cross" data-i18n="cell.android_sideload">✗ Not Supported</td>
+              <td class="check" data-i18n="cell.android_emu">✓ Supported</td>
             </tr>
             <tr>
               <td><strong data-i18n="row.ram">RAM & Battery Usage</strong></td>
-              <td class="highlight-col check">✓ Ultra-light (~150MB launcher)</td>
-              <td class="check">✓ Low</td>
-              <td class="cross">✗ Extremely Heavy (3-6GB RAM)</td>
+              <td class="highlight-col check" data-i18n="cell.ram_pigport">✓ Ultra-light (~150MB launcher)</td>
+              <td class="check" data-i18n="cell.ram_sideload">✓ Low</td>
+              <td class="cross" data-i18n="cell.ram_emu">✗ Extremely Heavy (3-6GB RAM)</td>
             </tr>
             <tr>
               <td><strong data-i18n="row.keymap">Visual Keymapping Editor</strong></td>
-              <td class="highlight-col check">✓ In-game Overlay (⌘K)</td>
-              <td class="check">✓ Available</td>
-              <td class="check">✓ Available</td>
+              <td class="highlight-col check" data-i18n="cell.keymap_pigport">✓ In-game Overlay (⌘K)</td>
+              <td class="check" data-i18n="cell.keymap_sideload">✓ Available</td>
+              <td class="check" data-i18n="cell.keymap_emu">✓ Available</td>
             </tr>
             <tr>
               <td><strong data-i18n="row.ads">Zero Ads / Clean UI</strong></td>
-              <td class="highlight-col check">✓ 100% Clean</td>
-              <td class="check">✓ Clean</td>
-              <td class="cross">✗ Ad-ridden Bloatware</td>
+              <td class="highlight-col check" data-i18n="cell.ads_pigport">✓ 100% Clean</td>
+              <td class="check" data-i18n="cell.ads_sideload">✓ Clean</td>
+              <td class="cross" data-i18n="cell.ads_emu">✗ Ad-ridden Bloatware</td>
             </tr>
             <tr>
               <td><strong data-i18n="row.open">Open Source (MIT License)</strong></td>
-              <td class="highlight-col check">✓ Fully Transparent</td>
-              <td class="check">✓ Open Source</td>
-              <td class="cross">✗ Closed Source Proprietary</td>
+              <td class="highlight-col check" data-i18n="cell.open_pigport">✓ Fully Transparent</td>
+              <td class="check" data-i18n="cell.open_sideload">✓ Open Source</td>
+              <td class="cross" data-i18n="cell.open_emu">✗ Closed Source Proprietary</td>
             </tr>
           </tbody>
         </table>
@@ -1468,8 +1441,13 @@
         <a href="https://github.com/PigTinyLabs" target="_blank">PigTinyLabs</a>
       </div>
 
-      <p style="margin-bottom: 8px;">Released under the MIT License • Built with ❤️ for Mac Gamers worldwide</p>
-      <p style="font-size: 0.82rem; color: #64748b;">“Small code, big dreams.” 🐷✨</p>
+      <p style="margin-bottom: 8px;" data-i18n="footer.mit">Released under the MIT License • Built with ❤️ for Mac Gamers worldwide</p>
+      <p style="font-size: 0.82rem; color: #64748b;" data-i18n="footer.tagline">“Small code, big dreams.” 🐷✨</p>
+
+      <!-- Legal Fair Use Disclaimer -->
+      <p style="font-size: 0.78rem; color: #555b6e; max-width: 820px; margin: 16px auto 0; line-height: 1.5;" data-i18n="footer.disclaimer">
+        Disclaimer: All game titles, logos, and trademarks (Genshin Impact, Identity V, Honkai: Star Rail) are property of their respective owners (Cognosphere / miHoYo, NetEase, etc.) and are used here solely for illustrative compatibility demonstration.
+      </p>
 
       <!-- SEO Keywords Footer -->
       <div class="seo-keyword-block">
@@ -1515,7 +1493,7 @@
           <span style="font-size: 2rem;">🎮</span>
           <div>
             <h3 id="ctrlModalTitle" style="font-family: var(--font-heading); font-size: 1.3rem; color: #fff;">Keymap Profile: Genshin Impact</h3>
-            <span style="font-size: 0.8rem; color: #f48fb1; font-weight: 600;">Customizable in-game with ⌘K</span>
+            <span style="font-size: 0.8rem; color: #f48fb1; font-weight: 600;" data-i18n="modal.ctrl_sub">Customizable in-game with ⌘K</span>
           </div>
         </div>
 
@@ -1528,7 +1506,7 @@
                 <div style="grid-area: s;"><span class="key-badge">S</span></div>
                 <div style="grid-area: d;"><span class="key-badge">D</span></div>
               </div>
-              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Movement</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;" data-i18n="modal.key_move">Movement</span>
             </div>
 
             <div style="text-align: center;">
@@ -1537,17 +1515,17 @@
                 <span class="key-badge">E</span>
                 <span class="key-badge">Space</span>
               </div>
-              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Skills & Sprint</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;" data-i18n="modal.key_skills">Skills & Sprint</span>
             </div>
 
             <div style="text-align: center;">
               <div class="key-badge" style="width: auto; padding: 0 12px; margin-bottom: 8px;">Mouse Look</div>
-              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">360° Camera</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;" data-i18n="modal.key_cam">360° Camera</span>
             </div>
           </div>
         </div>
 
-        <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 20px;">
+        <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 20px;" data-i18n="modal.ctrl_desc">
           PigPort translates physical Mac keyboard keystrokes and mouse movements into multi-touch events in real time with zero perceived latency.
         </p>
 
@@ -1556,12 +1534,6 @@
         </a>
       </div>
     </div>
-  </div>
-
-  <!-- Toast Notification -->
-  <div id="toast" class="toast">
-    <span style="font-size: 1.4rem;">🚀</span>
-    <span id="toastMsg" style="font-size: 0.9rem; color: #fff;"></span>
   </div>
 
   <!-- Scripts -->
@@ -1578,11 +1550,32 @@
         "hero.desc": "Modern open-source launcher optimized for macOS. Sideload and install <strong>.IPA, .APK, and .XAPK</strong> packages with 1-click, customize mouse & keyboard keymapping, and enjoy ultra-lightweight performance. The ultimate alternative to bloated, heavy emulators.",
         "hero.cta_download": "Download PigPort for macOS (Free)",
         "hero.cta_source": "⭐ Source Code on GitHub",
+        "hero.meta_free": "✨ 100% Free & Open Source",
+        "hero.meta_ads": "🚫 Zero Advertisements",
+        "hero.meta_arch": "⚡ Apple Silicon & Intel 64-bit",
+        "mockup.title": "PigPort Game Library — v0.2.4 (Active Session)",
+        "card.tag_genshin": "iOS IPA • Metal API • 120 FPS",
+        "card.tag_identity": "Android XAPK • WASD Keymap",
+        "card.tag_starrail": "iOS IPA • ARM64 Native",
         "card.play": "Play Now",
         "card.ctrl": "Controls",
         "pkg.tag": "Resource Guide",
         "pkg.title": "Where to Find .IPA & .APK Game Files?",
         "pkg.subtitle": "PigPort runs non-encrypted iOS packages and Android APK/XAPKs. Here are the top community repositories and search tips.",
+        "pkg.ios_title": "iOS Games (.IPA)",
+        "pkg.ios_sub": "For Apple Silicon M1/M2/M3/M4",
+        "pkg.ios_badge": "Decrypted IPAs",
+        "pkg.ios_item1": "<strong>decrypt.day</strong>: The most popular database for decrypted iOS IPAs designed for macOS Apple Silicon. Simply search the game name and download the <code>.ipa</code>.",
+        "pkg.ios_item2": "<strong>Google Search query</strong>: Search <code>\"[Game Name] decrypted ipa\"</code> or <code>\"[Game Name] ipa for mac\"</code>.",
+        "pkg.ios_item3": "<strong>Own Apple ID extraction</strong>: Export IPAs from your purchased apps with tools like Apple Configurator or IPA extraction utilities.",
+        "pkg.ios_btn": "🌐 Visit Decrypt.day Database",
+        "pkg.android_title": "Android Games (.APK / .XAPK)",
+        "pkg.android_sub": "For Universal macOS Runtime",
+        "pkg.android_badge": "Split APK & OBB",
+        "pkg.android_item1": "<strong>Google Search query</strong>: Search <code>\"[Game Name] apk\"</code> or <code>\"[Game Name] xapk\"</code> (e.g. <em>Identity V apk</em>, <em>Genshin Impact xapk</em>).",
+        "pkg.android_item2": "<strong>Top Trusted Sites</strong>: Download directly from <strong>APKPure.com</strong>, <strong>APKMirror.com</strong>, or <strong>QooApp</strong>.",
+        "pkg.android_item3": "<strong>1-Click Install</strong>: Drag and drop the downloaded <code>.xapk</code> into PigPort. It extracts graphic OBBs and split-apks automatically!",
+        "pkg.android_btn": "🔍 Browse APKPure Repository",
         "features.tag": "Core Advantages",
         "features.title": "Why Gamers Choose PigPort on macOS?",
         "features.subtitle": "Carefully engineered to deliver a console-grade mobile gaming experience on Mac without heating up or battery drain.",
@@ -1602,6 +1595,7 @@
         "comp.title": "PigPort vs Alternative Solutions",
         "comp.subtitle": "See how PigPort compares to traditional sideload tools and bulky emulators.",
         "th.feature": "Feature / Metric",
+        "th.pigport": "🐷 PigPort",
         "th.sideload": "Other Sideload Tools",
         "th.emulators": "Traditional Emulators",
         "row.ios": "iOS Games (.IPA)",
@@ -1610,12 +1604,30 @@
         "row.keymap": "Visual Keymapping Editor",
         "row.ads": "Zero Ads / Clean UI",
         "row.open": "Open Source (MIT License)",
+        "cell.ios_pigport": "✓ Native Smooth (ARM64)",
+        "cell.ios_sideload": "✓ Supported",
+        "cell.ios_emu": "✗ Not Supported",
+        "cell.android_pigport": "✓ Built-in & Auto-extract",
+        "cell.android_sideload": "✗ Not Supported",
+        "cell.android_emu": "✓ Supported",
+        "cell.ram_pigport": "✓ Ultra-light (~150MB launcher)",
+        "cell.ram_sideload": "✓ Low",
+        "cell.ram_emu": "✗ Extremely Heavy (3-6GB RAM)",
+        "cell.keymap_pigport": "✓ In-game Overlay (⌘K)",
+        "cell.keymap_sideload": "✓ Available",
+        "cell.keymap_emu": "✓ Available",
+        "cell.ads_pigport": "✓ 100% Clean",
+        "cell.ads_sideload": "✓ Clean",
+        "cell.ads_emu": "✗ Ad-ridden Bloatware",
+        "cell.open_pigport": "✓ Fully Transparent",
+        "cell.open_sideload": "✓ Open Source",
+        "cell.open_emu": "✗ Closed Source Proprietary",
         "guide.tag": "Quick Start",
         "guide.title": "3 Simple Steps to Play Games on Mac",
         "step1.title": "Download PigPort",
-        "step1.desc": "Download the official PigPort-x.x.x.dmg from GitHub Releases and drag it to your Applications folder.",
+        "step1.desc": "Download the official <code>PigPort-x.x.x.dmg</code> from GitHub Releases and drag it to your Applications folder.",
         "step2.title": "Import Game Package",
-        "step2.desc": "Click 'Import Package' and select your .ipa, .apk, or .xapk game file.",
+        "step2.desc": "Click 'Import Package' and select your <code>.ipa</code>, <code>.apk</code>, or <code>.xapk</code> game file.",
         "step3.title": "Configure & Play",
         "step3.desc": "Enable your keymap if needed and click 'Play'. Experience fluid mobile gaming on your Mac's large screen!",
         "faq.tag": "FAQ",
@@ -1623,13 +1635,21 @@
         "faq1.q": "Can Apple Silicon (M1/M2/M3/M4) Macs run iOS games natively?",
         "faq1.a": "Yes! PigPort is built specifically for Apple Silicon. Because M-series chips share the ARM architecture with iPhone/iPad, iOS games run natively at full speed without emulator overhead or battery drain.",
         "faq2.q": "Where can I find .IPA or .APK files?",
-        "faq2.a": "For iOS games, use decrypted repositories such as decrypt.day or extract from your personal Apple ID account. For Android, safe repositories like APKPure or APKMirror provide direct .apk/.xapk packages. Check our 'Get Games' section above for direct links!",
+        "faq2.a": "For iOS games, use decrypted repositories such as <strong>decrypt.day</strong> or extract from your personal Apple ID account. For Android, safe repositories like APKPure or APKMirror provide direct .apk/.xapk packages. Check our 'Get Games' section above for direct links!",
         "faq3.q": "Is playing games via PigPort bannable?",
         "faq3.a": "PigPort runs games in clean containers and does not modify core game mechanics. However, some games with strict kernel-level anti-cheat might flag non-standard hardware. We recommend using secondary accounts for heavily monitored competitive games.",
         "faq4.q": "Is PigPort completely free?",
         "faq4.a": "Yes! PigPort is 100% free and open-source under the MIT license. If you enjoy the project, feel free to support development with a coffee via PayPal (paypal.me/pigtiny) or star the repository on GitHub!",
+        "footer.mit": "Released under the MIT License • Built with ❤️ for Mac Gamers worldwide",
+        "footer.tagline": "“Small code, big dreams.” 🐷✨",
+        "footer.disclaimer": "Disclaimer: All game titles, logos, and trademarks (Genshin Impact, Identity V, Honkai: Star Rail) are property of their respective owners (Cognosphere / miHoYo, NetEase, etc.) and are used here solely for illustrative compatibility demonstration.",
         "modal.download": "Download PigPort v0.2.4 (DMG)",
         "modal.getfile": "Where to get the .IPA / .APK file? →",
+        "modal.ctrl_sub": "Customizable in-game with ⌘K",
+        "modal.key_move": "Movement",
+        "modal.key_skills": "Skills & Sprint",
+        "modal.key_cam": "360° Camera",
+        "modal.ctrl_desc": "PigPort translates physical Mac keyboard keystrokes and mouse movements into multi-touch events in real time with zero perceived latency.",
         "modal.trykeymap": "Try Keymapping in PigPort"
       },
       vi: {
@@ -1641,13 +1661,34 @@
         "hero.badge": "Phiên bản mới v0.2.4 • Hỗ trợ Apple Silicon (M1/M2/M3/M4) & Intel",
         "hero.title": "Chơi Game <span class='gradient-text'>iOS & Android</span><br>Trên Mac Mượt Mà & Không Giật Lag",
         "hero.desc": "Trình khởi chạy mã nguồn mở tối ưu cho macOS. Sideload và cài đặt trực tiếp file <strong>.IPA, .APK, .XAPK</strong> chỉ với 1 cú click, gán phím chuột (Keymapping) trực quan và siêu nhẹ máy. Thay thế hoàn hảo cho các trình giả lập cồng kềnh.",
-        "hero.cta_download": "Tải PigPort cho macOS (Free)",
+        "hero.cta_download": "Tải PigPort cho macOS (Miễn phí)",
         "hero.cta_source": "⭐ Mã nguồn trên GitHub",
+        "hero.meta_free": "✨ 100% Miễn phí & Mã nguồn mở",
+        "hero.meta_ads": "🚫 Hoàn toàn không quảng cáo",
+        "hero.meta_arch": "⚡ Hỗ trợ Apple Silicon & Intel Mac",
+        "mockup.title": "Thư viện Game PigPort — v0.2.4 (Đang hoạt động)",
+        "card.tag_genshin": "iOS IPA • Metal API • 120 FPS",
+        "card.tag_identity": "Android XAPK • Gán phím WASD",
+        "card.tag_starrail": "iOS IPA • ARM64 Native",
         "card.play": "Chơi ngay",
         "card.ctrl": "Phím ảo",
         "pkg.tag": "Cẩm nang tải game",
         "pkg.title": "Tìm & Tải File Game .IPA / .APK ở đâu?",
         "pkg.subtitle": "PigPort hỗ trợ nạp game iOS đã giải mã (Decrypted IPA) và game Android APK/XAPK. Dưới đây là các nguồn an toàn và uy tín nhất.",
+        "pkg.ios_title": "Game iOS (.IPA)",
+        "pkg.ios_sub": "Dành cho Mac Apple Silicon M1/M2/M3/M4",
+        "pkg.ios_badge": "IPA đã giải mã",
+        "pkg.ios_item1": "<strong>decrypt.day</strong>: Kho lưu trữ file IPA giải mã lớn và uy tín nhất cho Mac Apple Silicon. Chỉ cần tìm tên game và tải file <code>.ipa</code> về máy.",
+        "pkg.ios_item2": "<strong>Mẹo tìm kiếm Google</strong>: Gõ cú pháp <code>\"[Tên game] decrypted ipa\"</code> hoặc <code>\"[Tên game] ipa for mac\"</code>.",
+        "pkg.ios_item3": "<strong>Trích xuất từ Apple ID</strong>: Xuất file IPA từ tài khoản App Store chính chủ bằng Apple Configurator hoặc công cụ trích xuất IPA.",
+        "pkg.ios_btn": "🌐 Truy cập kho Decrypt.day",
+        "pkg.android_title": "Game Android (.APK / .XAPK)",
+        "pkg.android_sub": "Dành cho trình chạy macOS đa năng",
+        "pkg.android_badge": "Gói cài đặt OBB tự động",
+        "pkg.android_item1": "<strong>Mẹo tìm kiếm Google</strong>: Gõ cú pháp <code>\"[Tên game] apk\"</code> hoặc <code>\"[Tên game] xapk\"</code> (ví dụ: <em>Identity V apk</em>, <em>Genshin Impact xapk</em>).",
+        "pkg.android_item2": "<strong>Các trang web uy tín hàng đầu</strong>: Tải an toàn từ <strong>APKPure.com</strong>, <strong>APKMirror.com</strong>, hoặc <strong>QooApp</strong>.",
+        "pkg.android_item3": "<strong>Cài đặt 1 Click</strong>: Kéo thả trực tiếp file <code>.xapk</code> tải về vào PigPort. Phần mềm tự động giải nén OBB và cài đặt hoàn tất!",
+        "pkg.android_btn": "🔍 Khám phá kho APKPure",
         "features.tag": "Ưu điểm vượt trội",
         "features.title": "Tại sao game thủ chọn PigPort trên Mac?",
         "features.subtitle": "Được thiết kế tỉ mỉ để mang lại trải nghiệm chơi game mobile đỉnh cao trên macOS mà không làm nóng máy hay tụt pin.",
@@ -1666,7 +1707,8 @@
         "comp.tag": "Bảng so sánh",
         "comp.title": "PigPort vs Các phần mềm khác",
         "comp.subtitle": "Sự khác biệt rõ ràng giữa PigPort và các giải pháp giả lập hay sideload truyền thống.",
-        "th.feature": "Tính năng / Tiêu chí",
+        "th.feature": "Tính năng & Tiêu chí",
+        "th.pigport": "🐷 PigPort",
         "th.sideload": "Công cụ Sideload khác",
         "th.emulators": "Trình giả lập truyền thống",
         "row.ios": "Hỗ trợ Game iOS (.IPA)",
@@ -1675,12 +1717,30 @@
         "row.keymap": "Gán phím ảo Keymapping",
         "row.ads": "Không quảng cáo / Bloatware",
         "row.open": "Mã nguồn mở (MIT License)",
+        "cell.ios_pigport": "✓ Cực mượt (Native ARM64)",
+        "cell.ios_sideload": "✓ Có hỗ trợ",
+        "cell.ios_emu": "✗ Không hỗ trợ",
+        "cell.android_pigport": "✓ Tích hợp sẵn & Tự giải nén",
+        "cell.android_sideload": "✗ Không hỗ trợ",
+        "cell.android_emu": "✓ Có hỗ trợ",
+        "cell.ram_pigport": "✓ Siêu nhẹ (~150MB launcher)",
+        "cell.ram_sideload": "✓ Tiêu thụ thấp",
+        "cell.ram_emu": "✗ Rất nặng (3-6GB RAM, nóng máy)",
+        "cell.keymap_pigport": "✓ Bật phím ảo trong game (⌘K)",
+        "cell.keymap_sideload": "✓ Có hỗ trợ",
+        "cell.keymap_emu": "✓ Có hỗ trợ",
+        "cell.ads_pigport": "✓ 100% Sạch sẽ",
+        "cell.ads_sideload": "✓ Sạch sẽ",
+        "cell.ads_emu": "✗ Nhiều quảng cáo rác",
+        "cell.open_pigport": "✓ Hoàn toàn minh bạch",
+        "cell.open_sideload": "✓ Mã nguồn mở",
+        "cell.open_emu": "✗ Mã nguồn đóng",
         "guide.tag": "Bắt đầu nhanh",
         "guide.title": "3 Bước đơn giản để chơi game trên Mac",
         "step1.title": "Tải PigPort",
-        "step1.desc": "Tải file cài đặt PigPort-x.x.x.dmg từ trang GitHub Releases chính thức và kéo thả vào thư mục Applications.",
+        "step1.desc": "Tải file cài đặt <code>PigPort-x.x.x.dmg</code> từ trang GitHub Releases chính thức và kéo thả vào thư mục Applications.",
         "step2.title": "Thêm File Game",
-        "step2.desc": "Bấm nút \"Import Package\" và chọn file game .ipa, .apk hoặc .xapk bạn muốn chơi.",
+        "step2.desc": "Bấm nút \"Import Package\" và chọn file game <code>.ipa</code>, <code>.apk</code> hoặc <code>.xapk</code> bạn muốn chơi.",
         "step3.title": "Khởi Động & Chiến",
         "step3.desc": "Bật phím ảo Keymap nếu cần rồi nhấn \"Play\". Trải nghiệm cảm giác chơi game mobile mượt mà trên màn hình lớn của Mac!",
         "faq.tag": "Câu hỏi thường gặp",
@@ -1688,13 +1748,21 @@
         "faq1.q": "MacBook chip Apple Silicon (M1, M2, M3, M4) có chơi được không?",
         "faq1.a": "Có! PigPort được sinh ra và tối ưu mạnh mẽ nhất cho Apple Silicon (M1/M2/M3/M4). Nhờ chia sẻ kiến trúc ARM với chip Apple trên iPhone/iPad, game chạy với hiệu năng gần như 100% native, không hao pin và quạt tản nhiệt không cần rú lên.",
         "faq2.q": "Tôi lấy file game .IPA hoặc .APK ở đâu?",
-        "faq2.a": "Với game iOS, bạn có thể tải từ kho decrypt.day hoặc trích xuất từ Apple ID. Với Android, các kho APKPure hoặc APKMirror cung cấp sẵn file tải an toàn. Xem chi tiết tại mục hướng dẫn bên trên!",
+        "faq2.a": "Với game iOS, bạn có thể tải từ kho <strong>decrypt.day</strong> hoặc trích xuất từ Apple ID. Với Android, các kho APKPure hoặc APKMirror cung cấp sẵn file tải an toàn. Xem chi tiết tại mục hướng dẫn bên trên!",
         "faq3.q": "Chơi game qua PigPort có bị khóa tài khoản không?",
         "faq3.a": "PigPort là trình nạp môi trường sạch và không can thiệp (inject) vào logic bảo mật của game. Tuy nhiên, một số tựa game có chính sách cấm chặt chẽ việc chạy ngoài iPhone vật lý hoặc cấm trình giả lập. Bạn nên sử dụng tài khoản phụ đối với các game có cơ chế kiểm tra anti-cheat nghiêm ngặt.",
         "faq4.q": "PigPort có hoàn toàn miễn phí không?",
         "faq4.a": "Hoàn toàn miễn phí 100% và mã nguồn mở theo giấy phép MIT. Dự án phi lợi nhuận do PigTinyLabs phát triển. Nếu yêu thích, bạn có thể ủng hộ tác giả bằng cách tặng 1 ly cà phê qua PayPal (paypal.me/pigtiny) hoặc tặng 1 sao (Star) trên GitHub!",
+        "footer.mit": "Phát hành theo Giấy phép MIT • Phát triển bằng ❤️ dành cho cộng đồng Game thủ Mac",
+        "footer.tagline": "“Small code, big dreams.” 🐷✨",
+        "footer.disclaimer": "Tuyên bố miễn trừ: Mọi tên tựa game, hình ảnh logo và thương hiệu (Genshin Impact, Identity V, Honkai: Star Rail) thuộc quyền sở hữu của các nhà phát triển tương ứng (Cognosphere / miHoYo, NetEase...) và chỉ được sử dụng tại đây nhằm mục đích minh họa khả năng tương thích.",
         "modal.download": "Tải PigPort v0.2.4 (DMG)",
         "modal.getfile": "Xem nguồn tìm file .IPA / .APK →",
+        "modal.ctrl_sub": "Tùy biến phím ảo trực tiếp trong game với ⌘K",
+        "modal.key_move": "Di chuyển WASD",
+        "modal.key_skills": "Chiêu thức & Lướt",
+        "modal.key_cam": "Xoay Camera 360°",
+        "modal.ctrl_desc": "PigPort chuyển đổi thao tác phím và di chuột trên Mac thành cảm ứng đa điểm trong thời gian thực với độ trễ cực thấp.",
         "modal.trykeymap": "Trải nghiệm gán phím trong PigPort"
       }
     };
@@ -1729,11 +1797,17 @@
       document.getElementById('modalGameType').textContent = type + ' • Native Accelerated';
       
       const icons = {
-        'Genshin Impact': '✨',
-        'Identity V': '🎭',
-        'Honkai: Star Rail': '🌌'
+        'Genshin Impact': 'assets/genshin.jpg',
+        'Identity V': 'assets/identity_v.jpg',
+        'Honkai: Star Rail': 'assets/star_rail.jpg'
       };
-      document.getElementById('modalGameIcon').textContent = icons[gameName] || '🎮';
+      
+      const iconPath = icons[gameName];
+      if (iconPath) {
+        document.getElementById('modalGameIcon').innerHTML = `<img src="${iconPath}" alt="${gameName}" style="width: 72px; height: 72px; border-radius: 18px; object-fit: cover; box-shadow: 0 6px 20px rgba(0,0,0,0.5);">`;
+      } else {
+        document.getElementById('modalGameIcon').textContent = '🎮';
+      }
       
       const isVi = currentLang === 'vi';
       document.getElementById('modalGameMsg').innerHTML = isVi 
@@ -1756,15 +1830,6 @@
       if (e.target.id === modalId) {
         closeModalDirect(modalId);
       }
-    }
-
-    function showToast(msg) {
-      const toast = document.getElementById('toast');
-      document.getElementById('toastMsg').textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 3500);
     }
   </script>
 </body>
