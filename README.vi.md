@@ -8,6 +8,7 @@
   <i>Một sản phẩm của PigTinyLabs</i>
   <br><br>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://paypal.me/pigtiny" target="_blank"><img src="https://img.shields.io/badge/Donate%20a%20coffee-PayPal-FFDD00.svg?logo=buy-me-a-coffee&logoColor=black" alt="Donate a coffee"></a>
 </p>
 
 <p align="center">
