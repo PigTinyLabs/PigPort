@@ -160,7 +160,7 @@ export class Adb {
     // Sending a launch request is not proof that the process survived startup.
     const deadline = Date.now() + observationMs;
     do {
-      const alive = (await this.shell(serial, ['sh', '-c', `pidof ${pkg} || true`], 5000)).trim();
+      const alive = (await this.shell(serial, ['pidof', pkg], 5000).catch(() => '')).trim();
       if (!alive) throw new Error(`${pkg} exited during startup. Open Android diagnostics to see the recent crash buffer. This may be a crash or an intentional game exit.`);
       if (Date.now() >= deadline) break;
       await pause(Math.min(750, Math.max(1, deadline - Date.now())));
