@@ -77,5 +77,5 @@ export async function ensureAndroid(adb: Adb, serial?: string, preferredAvd?: st
 
 export function emulatorArguments(name: string, managed: boolean, graphics: 'auto' | 'software'): string[] {
   return ['-avd', name, '-no-boot-anim', ...(managed
-    ? ['-no-window', '-no-snapshot', '-skin', '1280x800', '-dpi-device', '160', '-gpu', graphics === 'software' ? 'swiftshader' : 'auto'] : [])];
+    ? ['-no-window', '-no-snapshot', '-skin', '1280x800', '-dpi-device', '160', '-partition-size', '32768', '-gpu', graphics === 'software' ? 'swiftshader' : 'auto'] : [])];
 }

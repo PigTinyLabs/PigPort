@@ -101,7 +101,7 @@ export class ManagedAndroid {
         `abi.type=${this.abi}`, `hw.cpu.arch=${this.abi === 'arm64-v8a' ? 'arm64' : 'x86_64'}`, 'hw.cpu.ncore=4',
         'hw.ramSize=3072', 'hw.gpu.enabled=yes', 'hw.gpu.mode=auto', 'hw.lcd.width=1280', 'hw.lcd.height=720', 'hw.lcd.density=240',
         'hw.keyboard=yes', 'hw.mainKeys=no', 'hw.audioInput=no', 'hw.camera.back=none', 'hw.camera.front=none',
-        'disk.dataPartition.size=6G', `image.sysdir.1=${image}`, `tag.id=${this.tag}`, `tag.display=${this.tag === 'default' ? 'Default' : 'Google APIs'}`, 'target=android-35', 'PlayStore.enabled=false',
+        'disk.dataPartition.size=32G', `image.sysdir.1=${image}`, `tag.id=${this.tag}`, `tag.display=${this.tag === 'default' ? 'Default' : 'Google APIs'}`, 'target=android-35', 'PlayStore.enabled=false',
       ].join('\n') + '\n';
       await fs.writeFile(path.join(avd, 'config.ini'), config);
       await fs.writeFile(path.join(this.avdHome, MANAGED_AVD + '.ini'), `avd.ini.encoding=UTF-8\npath=${avd}\ntarget=android-35\n`);

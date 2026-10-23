@@ -426,13 +426,30 @@ function renderFiles(): HTMLElement {
       pkg.version ? el('span', { class: 'meta-version' }, `v${pkg.version}`) : ''
     );
 
+function humanizeInstallError(error?: string): string {
+  if (!error) return 'Installation failed';
+  if (/INSUFFICIENT_STORAGE/i.test(error) || /not enough storage/i.test(error)) {
+    return 'Not enough storage on Android device';
+  }
+  if (/NO_MATCHING_ABIS/i.test(error) || /native code.*device runs/i.test(error)) {
+    return 'Incompatible CPU architecture (ABI)';
+  }
+  if (/UPDATE_INCOMPATIBLE/i.test(error) || /INCONSISTENT_CERTIFICATES/i.test(error)) {
+    return 'Signature mismatch with installed version';
+  }
+  if (/VERSION_DOWNGRADE/i.test(error)) {
+    return 'A newer version is already installed';
+  }
+  return error.replace(/^adb\s+-s:\s*adb:\s*/i, '').replace(/^adb\s+[a-z-]+:\s*/i, '');
+}
+
     const statusDesc = el('div', { class: 'card-status-desc' },
       pkg.missing && !installed
         ? el('span', { class: 'text-error', title: pkg.file }, 'File not found. Remove it or add the file again.')
         : pkg.kind === 'ipa' && !state.runtime.nativeIpa
         ? el('span', { class: 'muted' }, document.body.dataset.platform === 'win32' ? 'iOS games cannot run on Windows' : 'Needs an Apple Silicon Mac')
         : pkg.status === 'error'
-        ? el('span', { class: 'text-error' }, pkg.error ?? 'Installation failed')
+        ? el('span', { class: 'text-error', title: pkg.error ?? '' }, humanizeInstallError(pkg.error))
         : el('span', { class: 'muted' }, pkg.bundleId ?? (installed ? 'Installed' : 'Ready to install'))
     );
 

@@ -142,16 +142,20 @@ function registerIpc(): void {
         if (!pkg.bundleId) throw new Error(`Cannot read ${pkg.kind.toUpperCase()} package ID.`);
         const target = await androidDevice(serial);
         await assertAbi(adb, target, pkg.architectures);
-        if (pkg.kind === 'xapk') {
-          await installXapk(adb, target, file, pkg.bundleId, progress);
-        } else {
-          await adb.install(target, await matchDeviceAbis(adb, target, [file]));
+        const presentBefore = (await adb.packages(target)).some((p) => p.id === pkg.bundleId);
+        if (!presentBefore) {
+          if (pkg.kind === 'xapk') {
+            await installXapk(adb, target, file, pkg.bundleId, progress);
+          } else {
+            await adb.install(target, await matchDeviceAbis(adb, target, [file]));
+          }
         }
         // Check the exact package rather than guessing by comparing the app list.
         const present = (await adb.packages(target)).some((p) => p.id === pkg.bundleId);
         if (!present) throw new Error('Android did not report the installed package.');
         pkg.serial = target;
         pkg.status = 'installed';
+        delete pkg.error;
       } else {
         if (!iosAppsSupported()) throw new Error('IPA games require an Apple Silicon Mac. Local iOS execution is unavailable on Windows.');
         pkg.installedPath = await nativeIpa.install(file, pkg.bundleId!);

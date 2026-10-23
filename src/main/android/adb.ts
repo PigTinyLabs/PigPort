@@ -49,6 +49,22 @@ export class Adb {
         (err, stdout, stderr) => {
           if (err) {
             const detail = (stderr || stdout || '').trim();
+            if (/INSTALL_FAILED_INSUFFICIENT_STORAGE/i.test(detail)) {
+              reject(new Error('Not enough storage space on the Android device/emulator. Please free up space or expand disk.'));
+              return;
+            }
+            if (/INSTALL_FAILED_NO_MATCHING_ABIS/i.test(detail)) {
+              reject(new Error('This package is not compatible with the CPU architecture of this Android device.'));
+              return;
+            }
+            if (/INSTALL_FAILED_UPDATE_INCOMPATIBLE|INCONSISTENT_CERTIFICATES/i.test(detail)) {
+              reject(new Error('Signature mismatch with existing installed version. Uninstall the existing version first.'));
+              return;
+            }
+            if (/INSTALL_FAILED_VERSION_DOWNGRADE/i.test(detail)) {
+              reject(new Error('A newer version of this app is already installed on the device.'));
+              return;
+            }
             reject(new Error(detail ? `adb ${args[0]}: ${detail}` : `adb ${args[0]} failed: ${err.message}`));
           } else {
             resolve(stdout);
