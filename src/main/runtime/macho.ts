@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 const ARM64 = 0x0100000c;
 const align = (n: number) => Math.ceil(n / 8) * 8;
 
-/** Independent Mach-O conversion; no PlayCover source or decryption code. */
+/** Mach-O binary parsing and platform conversion utilities. */
 export function convertMachHeader(data: Buffer, sliceSize: number,
   mapLibrary: (name: string) => string = (name) => name): Buffer {
   if (data.length < 32 || data.readUInt32LE(0) !== 0xfeedfacf || data.readUInt32LE(4) !== ARM64) throw new Error('Expected a 64-bit ARM executable.');

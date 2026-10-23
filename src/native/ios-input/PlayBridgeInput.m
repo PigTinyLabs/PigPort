@@ -6,7 +6,7 @@
 // (keymaps/<bundle-id>.json, passed in PLAYBRIDGE_KEYMAP). ⌘K opens an in-game editor.
 // It also fits the Mac window to the game's real render size (see PBWindowFit).
 //
-// Independent implementation; no PlayCover/PlayTools code.
+// Native input mapping and window management implementation.
 
 #import <UIKit/UIKit.h>
 #import <QuartzCore/QuartzCore.h>

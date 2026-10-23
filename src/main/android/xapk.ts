@@ -80,7 +80,7 @@ export async function matchDeviceAbis(adb: Adb, serial: string, apks: string[]):
   const shipped = [...new Set(native.flat())];
   if (shipped.length && !shipped.some((abi) => device.includes(abi))) {
     throw new Error(`This game only contains ${shipped.join(', ')} native code, but the Android device runs ${device.join(', ')}. `
-      + 'Use an emulator with ARM translation (BlueStacks, LDPlayer, MuMu) via Connect, or an Android phone.');
+      + 'Use an environment or device with compatible ARM translation via Connect, or an Android phone.');
   }
   return apks.filter((_, i) => i === 0 || !native[i].length || native[i].some((abi) => device.includes(abi)));
 }

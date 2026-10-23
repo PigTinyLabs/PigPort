@@ -62,7 +62,7 @@ export class Adb {
     return parseDevices(out);
   }
 
-  /** For emulators that expose adb over TCP (LDPlayer, MuMu, BlueStacks, ...). */
+  /** For emulators or devices that expose adb over TCP. */
   async connect(address: string): Promise<string> {
     const out = (await this.run(['connect', address], 20_000)).trim();
     if (/cannot|failed|unable/i.test(out)) throw new Error(out);

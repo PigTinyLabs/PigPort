@@ -32,7 +32,6 @@ This is remote execution: the Mac must remain available. It is not local/offline
 True local Windows support would require a separate iOS-compatible runtime: Mach-O loading, ARM64 execution/translation where necessary, Objective-C/Swift runtime support, Apple-framework API compatibility, graphics translation, data/services compatibility and game-specific validation. Windows ARM64 only addresses CPU architecture, not these APIs. Reusing the current Mac Catalyst converter does not provide them.
 
 References:
-- https://github.com/PlayCover/PlayCover — current project targets Apple Silicon Macs.
 - https://developer.apple.com/documentation/uikit/choosing-a-user-interface-idiom-for-your-mac-app
 - https://developer.android.com/studio/run/managing-avds
 
