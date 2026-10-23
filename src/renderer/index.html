@@ -27,12 +27,8 @@
           <select id="device" aria-label="Android device"></select>
           <button id="refresh-devices" class="icon-btn" title="Refresh devices">↻</button>
         </div>
-        <form id="connect-form" class="row">
-          <input id="connect-address" list="recent-addresses" placeholder="127.0.0.1:5555" aria-label="Emulator address" autocomplete="off">
-          <button class="btn small" type="submit">Connect</button>
-        </form>
-        <datalist id="recent-addresses"></datalist>
-        <p class="muted small">Network adb for external emulator instances or networked devices.</p>
+        <button id="open-wifi" class="btn small" type="button">Connect a phone over Wi-Fi…</button>
+        <p class="muted small">Android games install and run on the device selected above: the built-in Android or a phone connected by USB or Wi-Fi.</p>
       </section>
 
       <footer class="sidebar-foot">
@@ -93,6 +89,28 @@
       <textarea id="runtime-license" readonly aria-label="Android license terms" rows="16"></textarea>
       <label class="field"><input id="runtime-accept" type="checkbox"> I have read and accept these license terms.</label>
       <div class="row end"><button class="btn ghost" value="cancel">Cancel</button><button id="runtime-confirm" class="btn primary" value="install" disabled>Accept &amp; install Android</button></div>
+    </form>
+  </dialog>
+  <dialog id="wifi">
+    <form method="dialog">
+      <h2>Connect a phone over Wi-Fi</h2>
+      <p class="muted small">Put the phone and this computer on the same Wi-Fi. Once connected, Mirror screen and Android games work as over USB. Bluetooth cannot carry adb or a live game stream.</p>
+
+      <h3>Android 11 or newer</h3>
+      <p class="small">On the phone: Settings → Developer options → <b>Wireless debugging</b> → turn on → <b>Pair device with pairing code</b>.</p>
+      <div id="wifi-found" class="wifi-found"></div>
+      <div class="row">
+        <input id="wifi-pair-address" placeholder="IP address & port, e.g. 192.168.1.23:41235" aria-label="Pairing address" autocomplete="off">
+        <input id="wifi-pair-code" placeholder="6-digit code" aria-label="Pairing code" inputmode="numeric" maxlength="6" autocomplete="off">
+        <button id="wifi-pair" class="btn primary" type="button">Pair</button>
+      </div>
+
+      <h3>Android 10 or older</h3>
+      <p class="small">Connect the phone with USB once and allow USB debugging, select it under Device, then switch it to Wi-Fi. You can unplug the cable afterwards.</p>
+      <button id="wifi-from-usb" class="btn" type="button">Switch selected device to Wi-Fi</button>
+
+      <p class="muted small">Over Wi-Fi, a stream of 1280–1600 at 8 Mbps (Settings) keeps input responsive.</p>
+      <div class="row end"><button class="btn ghost" value="close">Close</button></div>
     </form>
   </dialog>
   <div id="toasts" class="toasts" aria-live="polite"></div>

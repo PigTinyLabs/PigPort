@@ -267,13 +267,22 @@ function registerIpc(): void {
     }
   });
   handle('adb:devices', () => adb.devices());
-  handle('adb:connect', async (address: string) => {
-    const out = await adb.connect(address);
-    const s = await store.settings();
-    s.recentAddresses = [address, ...s.recentAddresses.filter((a) => a !== address)].slice(0, 8);
-    await store.saveSettings(s);
-    return out;
+  handle('adb:wireless', () => adb.wireless());
+  handle('adb:pair', async (address: string, code: string) => {
+    const paired = await adb.pair(address, code);
+    // The phone then advertises a connect address on the same IP (different port); use it.
+    const host = address.replace(/:\d+$/, '');
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const devices = await adb.devices();
+      if (devices.some((d) => d.state === 'device' && d.serial.startsWith(host + ':'))) return paired;
+      const service = (await adb.wireless()).find((s) => s.kind === 'connect' && s.address.startsWith(host + ':'));
+      if (service) return `${paired}\n${await adb.connect(service.address)}`;
+      await pause(1000);
+    }
+    return `${paired}\nNow tap Connect with the IP address & port shown under Wireless debugging.`;
   });
+  handle('adb:enableWifi', (serial: string) => adb.enableWifi(serial));
+  handle('adb:connect', (address: string) => adb.connect(address));
   handle('adb:packages', (serial: string) => adb.packages(serial));
   handle('adb:install', async (serial: string) => {
     const pick = await dialog.showOpenDialog(win!, {

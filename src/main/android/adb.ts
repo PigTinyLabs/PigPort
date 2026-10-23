@@ -13,6 +13,14 @@ export interface AppPackage {
   id: string;
 }
 
+/** A phone advertising Wireless debugging on the local network (adb mDNS). */
+export interface WirelessService {
+  name: string;
+  /** "pairing" while the phone shows a pairing code; "connect" once paired or for legacy adb tcpip. */
+  kind: 'pairing' | 'connect';
+  address: string;
+}
+
 const exe = process.platform === 'win32' ? 'adb.exe' : 'adb';
 
 /** Finds adb: explicit setting, bundled copy, Android SDK, then PATH. */
@@ -67,6 +75,33 @@ export class Adb {
     const out = (await this.run(['connect', address], 20_000)).trim();
     if (/cannot|failed|unable/i.test(out)) throw new Error(out);
     return out;
+  }
+
+  /** Android 11+ Wireless debugging: pair once with the 6-digit code the phone shows. */
+  async pair(address: string, code: string): Promise<string> {
+    if (!/^[\w.:-]+:\d+$/.test(address)) throw new Error('Enter the pairing address shown on the phone, e.g. 192.168.1.23:41235.');
+    if (!/^\d{6}$/.test(code)) throw new Error('Enter the 6-digit pairing code shown on the phone.');
+    const out = (await this.run(['pair', address, code], 30_000)).trim();
+    if (!/successfully paired/i.test(out)) throw new Error(out || 'Pairing failed');
+    return out;
+  }
+
+  /** Phones on this network with Wireless debugging on. Empty when mDNS is unavailable. */
+  async wireless(): Promise<WirelessService[]> {
+    return parseMdnsServices(await this.run(['mdns', 'services'], 10_000).catch(() => ''));
+  }
+
+  /** Android 10 and older: switch a USB-connected device to adb over Wi-Fi and connect to it. */
+  async enableWifi(serial: string): Promise<string> {
+    const ip = parseWlanAddress(await this.shell(serial, ['ip', '-f', 'inet', 'addr', 'show', 'wlan0'], 10_000).catch(() => ''))
+      ?? parseWlanAddress(await this.shell(serial, ['ip', 'route'], 10_000).catch(() => ''));
+    if (!ip) throw new Error('The device is not on Wi-Fi. Connect it to the same Wi-Fi network as this computer.');
+    await this.run(['-s', serial, 'tcpip', '5555'], 20_000);
+    // adbd restarts in TCP mode; give it a moment before connecting.
+    for (let attempt = 0; ; attempt++) {
+      await pause(1500);
+      try { return await this.connect(`${ip}:5555`); } catch (e) { if (attempt >= 3) throw e; }
+    }
   }
 
   shell(serial: string, command: string[], timeoutMs?: number): Promise<string> {
@@ -159,6 +194,22 @@ export function parseDevices(out: string): Device[] {
     devices.push({ serial: m[1], state: m[2], model });
   }
   return devices;
+}
+
+/** Parses `adb mdns services`, e.g. "adb-R58M-AbCd\t_adb-tls-pairing._tcp\t192.168.1.23:41235". */
+export function parseMdnsServices(out: string): WirelessService[] {
+  const services: WirelessService[] = [];
+  for (const line of out.split(/\r?\n/)) {
+    const m = line.trim().match(/^(\S+)\s+_adb(-tls-(connect|pairing))?\._tcp\.?\s+(\S+:\d+)$/);
+    if (m) services.push({ name: m[1], kind: m[3] === 'pairing' ? 'pairing' : 'connect', address: m[4] });
+  }
+  return services;
+}
+
+/** The device's IPv4 address from `ip addr show wlan0` ("inet 192.168.1.23/24") or `ip route` ("src 192.168.1.23"). */
+export function parseWlanAddress(out: string): string | undefined {
+  const m = out.match(/\binet (\d+\.\d+\.\d+\.\d+)\//) ?? out.match(/\bwlan\d.*\bsrc (\d+\.\d+\.\d+\.\d+)/);
+  return m && m[1] !== '127.0.0.1' ? m[1] : undefined;
 }
 
 export function parsePackages(out: string): AppPackage[] {

@@ -45,10 +45,9 @@ async function init(): Promise<void> {
     state.serial = (e.target as HTMLSelectElement).value;
     void refreshPackages();
   });
-  $('connect-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    void connectAddress();
-  });
+  $('open-wifi').addEventListener('click', () => openWifi());
+  $('wifi-pair').addEventListener('click', () => void pairWifi());
+  $('wifi-from-usb').addEventListener('click', () => void wifiFromUsb());
   $<HTMLInputElement>('search').addEventListener('input', (e) => {
     state.filter = (e.target as HTMLInputElement).value.trim().toLowerCase();
     renderMain();
@@ -79,7 +78,6 @@ async function init(): Promise<void> {
       state.imported = await playbridge.packages.list(); renderMain();
     });
   });
-  renderRecents();
   switchTab('packages');
   await refreshDevices();
   if (state.iosSupported) void refreshIos();
@@ -128,23 +126,65 @@ async function refreshPackages(): Promise<void> {
   renderMain();
 }
 
-async function connectAddress(): Promise<void> {
-  const input = $<HTMLInputElement>('connect-address');
-  const address = input.value.trim();
-  if (!address) return;
+// ---- Wi-Fi ----
+
+let wifiScan: ReturnType<typeof setInterval> | undefined;
+
+function openWifi(): void {
+  const dialog = $<HTMLDialogElement>('wifi');
+  const usb = state.devices.find((d) => d.serial === state.serial && d.state === 'device' && !/[:.]/.test(d.serial));
+  $<HTMLButtonElement>('wifi-from-usb').disabled = !usb;
+  void scanWifi();
+  // Phones appear and disappear as Wireless debugging screens open and close.
+  wifiScan = setInterval(() => void scanWifi(), 3000);
+  dialog.addEventListener('close', () => { clearInterval(wifiScan); wifiScan = undefined; }, { once: true });
+  dialog.showModal();
+}
+
+async function scanWifi(): Promise<void> {
+  const found = await playbridge.adb.wireless().catch(() => []);
+  const connected = new Set(state.devices.map((d) => d.serial));
+  $('wifi-found').replaceChildren(...(found.length ? found.map((s) => el('div', { class: 'wifi-row' },
+    el('span', { class: 'wifi-name', title: s.name }, s.name.replace(/^adb-/, '').replace(/-\w+$/, '')),
+    el('span', { class: 'muted small' }, `${s.kind === 'pairing' ? 'ready to pair' : 'paired'} · ${s.address}`),
+    s.kind === 'pairing'
+      ? el('button', { class: 'btn small', type: 'button', onclick: () => {
+        $<HTMLInputElement>('wifi-pair-address').value = s.address;
+        $<HTMLInputElement>('wifi-pair-code').focus();
+      } }, 'Use')
+      : connected.has(s.address)
+        ? el('span', { class: 'muted small' }, 'Connected')
+        : el('button', { class: 'btn small', type: 'button', onclick: () => void connectWifi(s.address) }, 'Connect'),
+  )) : [el('p', { class: 'muted small' }, 'Looking for phones with Wireless debugging on… If none appears, type the address shown on the phone below.')]));
+}
+
+async function connectWifi(address: string): Promise<void> {
   await run(async () => {
     toast(await playbridge.adb.connect(address));
-    state.settings = await playbridge.settings.get();
-    renderRecents();
     await refreshDevices();
+    void scanWifi();
   });
 }
 
-function renderRecents(): void {
-  const recents = state.settings?.recentAddresses ?? [];
-  const presets = ['127.0.0.1:5555', '127.0.0.1:7555', '127.0.0.1:16384', '127.0.0.1:62001'];
-  $('recent-addresses').replaceChildren(...[...new Set([...recents, ...presets])].map((a) => el('option', { value: a })));
+async function pairWifi(): Promise<void> {
+  const address = $<HTMLInputElement>('wifi-pair-address').value.trim();
+  const code = $<HTMLInputElement>('wifi-pair-code').value.trim();
+  await run(async () => {
+    toast(await playbridge.adb.pair(address, code));
+    $<HTMLInputElement>('wifi-pair-code').value = '';
+    await refreshDevices();
+    void scanWifi();
+  }, 'Pairing…');
 }
+
+async function wifiFromUsb(): Promise<void> {
+  const serial = state.serial;
+  await run(async () => {
+    toast(`${await playbridge.adb.enableWifi(serial)}. You can unplug the USB cable.`);
+    await refreshDevices();
+  }, 'Switching to Wi-Fi…');
+}
+
 
 async function play(pkg: string): Promise<void> {
   await run(async () => {
@@ -450,7 +490,7 @@ function renderAndroid(): HTMLElement {
     return empty(unauthorized ? 'Allow USB debugging' : 'No Android device',
       unauthorized
         ? 'Accept the "Allow USB debugging?" prompt on the device, then refresh.'
-        : 'Drop an APK or XAPK in Game library to set up Android and start playing, or connect an existing emulator or phone.',
+        : 'Drop an APK or XAPK in Game library to set up Android and start playing, or connect a phone over Wi-Fi.',
       el('button', { class: 'btn primary', onclick: () => void refreshDevices() }, 'Refresh'));
   }
   const list = state.packages.filter((p) => !state.filter || p.id.toLowerCase().includes(state.filter)

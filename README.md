@@ -68,6 +68,11 @@
   - **+ Mouse look**: Define a free-look camera zone (toggle mouse lock with the `` ` `` key).
 - Drag bindings to match on-screen skills/buttons and click **Save** to apply immediately!
 
+### 4. Use an Android Phone over Wi-Fi (optional)
+Android games run on the built-in Android device. To mirror and play on your own phone instead, put it on the same Wi-Fi and click **Connect a phone over Wi-Fi…** under Device. No app is needed on the phone:
+- **Android 11+:** Settings → Developer options → **Wireless debugging** → **Pair device with pairing code**, then enter the address and 6-digit code in PigPort.
+- **Android 10 and older:** connect by USB once, select the phone under Device, and click **Switch selected device to Wi-Fi**.
+
 ---
 
 ## 🛠️ Developer Setup (Build from Source)

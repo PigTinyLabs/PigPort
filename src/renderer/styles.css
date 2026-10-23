@@ -635,3 +635,22 @@ body.dragging::after { content: "Drop IPA / APK / XAPK to install"; position: fi
 .ce-footer { border-top: 1px solid #303642; flex-wrap: wrap; }
 .ce-status { margin-right: auto; color: #abb8ca; font-size: 12px; }
 @media (max-width: 1000px) { .ce-body { grid-template-columns: 150px minmax(200px, 1fr) 190px; } .ce-tools, .ce-details, .ce-center { padding: 10px; } }
+
+/* Wi-Fi pairing */
+#open-wifi { width: 100%; }
+#wifi { width: min(560px, calc(100vw - 32px)); }
+#wifi h3 { font-size: 14px; margin-bottom: -6px; }
+#wifi-pair-address { flex: 1; min-width: 0; }
+#wifi-pair-code { width: 112px; font-variant-numeric: tabular-nums; letter-spacing: 0.08em; }
+.wifi-found { display: flex; flex-direction: column; gap: 6px; }
+.wifi-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.wifi-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

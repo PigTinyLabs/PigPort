@@ -51,6 +51,12 @@ export interface PlayBridgeApi {
     status(): Promise<AdbStatus>;
     devices(): Promise<Device[]>;
     connect(address: string): Promise<string>;
+    /** Phones on this Wi-Fi with Wireless debugging on. */
+    wireless(): Promise<{ name: string; kind: 'pairing' | 'connect'; address: string }[]>;
+    /** Android 11+: pair with the phone's 6-digit code, then connect. */
+    pair(address: string, code: string): Promise<string>;
+    /** Android 10 and older: move a USB-connected device to adb over Wi-Fi. */
+    enableWifi(serial: string): Promise<string>;
     packages(serial: string): Promise<AppPackage[]>;
     install(serial: string): Promise<boolean>;
     uninstall(serial: string, pkg: string): Promise<void>;
