@@ -32,12 +32,16 @@ jobs:
           files: artifacts/*
           fail_on_unmatched_files: false
           body: |
-            | Máy | File |
-            |---|---|
-            | Mac chip Apple (M1/M2/M3/M4) | `PigPort-…-mac-arm64.dmg` — chơi được game iOS (IPA) và Android |
-            | Mac chip Intel | `PigPort-…-mac-x64.dmg` — chỉ game Android (APK) |
-            | Windows | `PigPort-…-win-x64.exe` (cài đặt) hoặc bản portable |
+            ### 📥 Downloads
 
-            Nếu bản này chưa được ký bằng chứng chỉ trả phí:
-            - **macOS:** mở app lần đầu, macOS sẽ chặn. Vào **System Settings → Privacy & Security**, kéo xuống và bấm **Open Anyway**.
-            - **Windows:** SmartScreen hiện "Windows protected your PC" → bấm **More info** → **Run anyway**.
+            | Platform | Installer File | Supported Games |
+            |---|---|---|
+            | **Mac Apple Silicon (M1/M2/M3/M4)** | `PigPort-${{ github.ref_name }}-mac-arm64.dmg` | **Both iOS (IPA)** and **Android (APK/XAPK)** |
+            | **Mac Intel (x64)** | `PigPort-${{ github.ref_name }}-mac-x64.dmg` | Android (APK/XAPK) |
+            | **Windows (x64)** | `PigPort-${{ github.ref_name }}-win-x64.exe` or portable `.zip` | Android (APK/XAPK) |
+
+            ---
+
+            ### ⚠️ First-time Launch Instructions
+            - **macOS:** Open the app. If blocked by Gatekeeper, go to **System Settings → Privacy & Security**, scroll down to Security, and click **Open Anyway** (or run `xattr -cr /Applications/PigPort.app`).
+            - **Windows:** If SmartScreen displays "Windows protected your PC", click **More info → Run anyway**.
