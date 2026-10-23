@@ -1,31 +1,35 @@
-# PigPort v0.2.3 — Release Notes
+# PigPort v0.2.4 — Release Notes
 
 > **PigPort** (by PigTinyLabs): Trình khởi chạy và chơi game iOS (IPA) & Android (APK / XAPK) mượt mà trên macOS và Windows với bàn phím và chuột.
 
 ---
 
-## 🌟 Điểm nổi bật trong bản cập nhật (What's New)
+## 🌟 Điểm nổi bật trong bản cập nhật v0.2.4 (What's New)
 
-### 1. 📦 Hỗ trợ định dạng XAPK (Split APKs + OBB Data)
-- **Kéo thả và cài đặt 1 chạm:** Giờ đây bạn chỉ cần kéo thả file `.xapk` (như Liên Quân Mobile, Free Fire, PUBG, Genshin...) vào cửa sổ PigPort.
-- **Tự động xử lý Split APKs:** Trích xuất và cài đặt đồng thời toàn bộ các gói split APK (`base.apk`, `config.arm64_v8a.apk`, `config.xxxhdpi.apk`,...) qua `adb install-multiple`.
-- **Tự động chuyển OBB:** Tự động tạo thư mục `/sdcard/Android/obb/<bundleId>/` và sao chép đầy đủ các tệp dữ liệu đồ hoạ `.obb` vào thiết bị/máy ảo mà không cần can thiệp thủ công.
-- **Badge nhận diện mới:** Bổ sung nhãn phân loại **XAPK** màu hổ phách chuyên nghiệp trong Thư viện Game.
+### 1. 🎮 Trình Chỉnh Sửa Phím Gán Trực Quan (Visual Controls Editor)
+- **Cấu hình phím trước hoặc trong khi chơi:** Nút **Controls** mới trên từng thẻ game trong thư viện cho phép bạn tùy biến phím gán trước khi khởi chạy game (hỗ trợ cả IPA, APK và XAPK).
+- **Trực quan hoá trên màn hình game:** Mở trình chỉnh sửa ngay trong phiên chơi Android kèm ảnh chụp khung hình game thực tế tại thời điểm mở để đặt phím chính xác từng pixel.
+- **Đa dạng công cụ gán phím:**
+  - Nút bấm đơn (Key Tap): Gán phím bất kỳ từ bàn phím hoặc chuột.
+  - Cụm di chuyển WASD Joystick: Tuỳ biến bán kính, tâm di chuyển cho các tựa game MOBA / FPS.
+  - Vùng lia chuột (Mouse Look): Điều chỉnh độ nhạy theo trục X/Y, khoá chuột khi chơi game bắn súng / sinh tồn.
+- **Preset & Quản lý profile:** Cung cấp sẵn layout khởi tạo mẫu cho game MOBA / FPS; hỗ trợ sao lưu (Export) và nạp (Import) file cấu hình phím định dạng JSON.
 
-### 2. 🛡️ Chống Crash & Bypass Anti-Cheat cho Game iOS (Apple Silicon)
-- **Chặn lệnh thoát ứng dụng cưỡng bức:** Intercept các hàm hệ thống `exit()`, `abort()`, `pthread_kill()` mà các SDK bảo mật (như Tencent CrashSight, ACE Anti-cheat) thường kích hoạt khi phát hiện môi trường macOS.
-- **Method Swizzling:** Vô hiệu hoá các hàm báo cáo lỗi và đóng ứng dụng của CrashSight runtime.
-- **Mocking Keychain & Chống đệ quy:** Bổ sung cơ chế bảo vệ Keychain trong thư viện native `PlayBridgeInput.dylib`, ngăn chặn các lỗi crash do truy cập sai quyền Keychain hoặc deadlock đệ quy.
+### 2. ⚡ Nâng Cao Độ Ổn Định Môi Trường Android (Android Runtime & Architecture Guard)
+- **Lọc kiến trúc APK thông minh:** Tự động kiểm tra và cảnh báo/từ chối các gói APK/XAPK có native ABI không tương thích với CPU của thiết bị hoặc máy ảo đang chạy.
+- **Kiểm tra trạng thái khởi động an toàn:** Chờ đợi cả `sys.boot_completed` và dịch vụ Package Manager sẵn sàng thực sự trước khi tiến hành cài đặt hoặc stream game.
+- **Khởi chạy ứng dụng chuẩn xác:** Sử dụng cơ chế resolve Launch Activity và giám sát tiến trình bằng `am start -W` thay thế cách kích hoạt ngẫu nhiên bằng Monkey, ghi nhận ngay lập tức nếu ứng dụng thoát đột ngột.
+- **Thu thập chẩn đoán lỗi (Diagnostics):** Tích hợp công cụ chẩn đoán nhanh trên từng card game Android và tự động trích xuất thông tin crash gần nhất vào `diagnostics/android-latest.txt` khi game gặp sự cố.
+- **Cấu hình đồ hoạ linh hoạt:** Bổ sung lựa chọn render Auto / Software graphics trong Cài đặt để giải quyết các trường hợp máy ảo bị lỗi GPU driver.
 
-### 3. 🎨 Nâng cấp Giao diện Thư viện Game (Modern UI/UX)
-- **Giao diện thẻ game hiện đại:** Thiết kế lại card game với avatar logo sắc nét, bo góc mềm mại, hiển thị rõ ràng Bundle ID, phiên bản và trạng thái cài đặt.
-- **Thanh nút bấm gọn gàng & thông minh:** Các nút **Play**, **Install**, **Force Stop**, **Remove** được tinh chỉnh trực quan, có tooltip hướng dẫn và chỉ kích hoạt khi khả dụng.
-- **Hiệu ứng kéo thả chuyên nghiệp:** Hiển thị overlay thông báo "Drop IPA / APK / XAPK to install" khi kéo tệp vào ứng dụng.
+### 3. 🍎 Tối Ưu Hooking Native & Thoát Game Sạch Sẽ (iOS Input Clean Shutdown)
+- **Clean Shutdown Guards:** Bổ sung cơ chế bảo vệ dọn dẹp tài nguyên và huỷ hook an toàn trong `PlayBridgeInput.dylib`, ngăn ngừa triệt để tình trạng crash hoặc treo ứng dụng khi người dùng tắt cửa sổ game iOS.
+- **Bảo vệ môi trường chạy:** Duy trì và tinh chỉnh cơ chế giả lập Keychain an toàn và vô hiệu hoá lệnh abort cưỡng bức từ các crash handler của game.
 
-### 4. 🚀 Tối ưu hoá Hệ thống & Điều khiển
-- Hỗ trợ gán phím linh hoạt (nhấn **⌘K** khi đang chơi game iOS để mở trình chỉnh sửa Keymap).
-- Quản lý phiên streaming Scrcpy mượt mà với độ trễ siêu thấp cho Android.
-- Tự động phát hiện và cấu hình môi trường Android SDK / ADB / AVD tích hợp.
+### 4. 📦 Kế Thừa Trọn Vẹn Các Tính Năng Từ v0.2.3
+- Cài đặt 1 chạm cho định dạng `.xapk` (Split APKs + Data OBB).
+- Giao diện thẻ game hiện đại, hiển thị rõ Bundle ID và trạng thái cài đặt.
+- Stream mượt mà với Scrcpy độ trễ thấp trên macOS và Windows.
 
 ---
 
@@ -33,9 +37,9 @@
 
 | Nền tảng | Tệp cài đặt | Ghi chú |
 |---|---|---|
-| **Mac Apple Silicon (M1/M2/M3/M4)** | `PigPort-0.2.3-mac-arm64.dmg` | Chơi được **cả game iOS (IPA)** và **game Android (APK/XAPK)** |
-| **Mac Intel (x64)** | `PigPort-0.2.3-mac-x64.dmg` | Hỗ trợ chơi game Android (APK/XAPK) |
-| **Windows (x64)** | `PigPort-0.2.3-win-x64.exe` hoặc `.zip` portable | Hỗ trợ chơi game Android (APK/XAPK) |
+| **Mac Apple Silicon (M1/M2/M3/M4)** | `PigPort-0.2.4-mac-arm64.dmg` | Chơi được **cả game iOS (IPA)** và **game Android (APK/XAPK)** |
+| **Mac Intel (x64)** | `PigPort-0.2.4-mac-x64.dmg` | Hỗ trợ chơi game Android (APK/XAPK) |
+| **Windows (x64)** | `PigPort-0.2.4-win-x64.exe` hoặc `.zip` portable | Hỗ trợ chơi game Android (APK/XAPK) |
 
 ---
 
@@ -62,7 +66,7 @@ Do ứng dụng chưa được đăng ký chứng chỉ thương mại trả ph�
 Để kích hoạt GitHub Actions tự động build và xuất bản Release này:
 
 ```bash
-git tag v0.2.3
-git push origin v0.2.3
+git tag v0.2.4
+git push origin v0.2.4
 ```
 GitHub Actions sẽ tự động biên dịch trên các runner macOS và Windows, sau đó đính kèm các file DMG/EXE vào trang Releases!
