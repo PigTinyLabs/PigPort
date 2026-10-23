@@ -6,6 +6,8 @@
   <b>Chơi game iOS và Android mượt mà trên Mac & Windows bằng Bàn phím & Chuột</b>
   <br>
   <i>Một sản phẩm của PigTinyLabs</i>
+  <br><br>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
 ---
