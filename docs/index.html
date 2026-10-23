@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags -->
+  <title>PigPort - Chơi Game iOS & Android trên Mac M1/M2/M3 & Intel | Sideload IPA & APK</title>
+  <meta name="title" content="PigPort - Chơi Game iOS & Android trên Mac M1/M2/M3 & Intel | Sideload IPA & APK">
+  <meta name="description" content="PigPort là ứng dụng nguồn mở miễn phí giúp bạn chơi game iOS (.ipa) và Android (.apk, .xapk) mượt mà trên macOS Apple Silicon (M1/M2/M3/M4) và Intel. Hỗ trợ keymapping bàn phím chuột, không quảng cáo, cài đặt 1 click. Thay thế PlayCover và giả lập Android nặng nề.">
+  <meta name="keywords" content="chơi game ios trên mac, choi game ios tren mac, giả lập ios cho macbook m1, gia lap ios mac m1 m2 m3, playcover alternative, cài file ipa trên macbook, sideload ipa macos, chơi game android trên mac, cai apk tren mac, pigport, mac gaming, liên quân trên macbook, tốc chiến trên macbook">
+  <meta name="author" content="PigTinyLabs">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://pigtinylabs.github.io/PigPort/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://pigtinylabs.github.io/PigPort/">
+  <meta property="og:title" content="PigPort - Chơi Game iOS & Android trên Mac M1/M2/M3 & Intel">
+  <meta property="og:description" content="Trình khởi chạy mã nguồn mở miễn phí cho macOS. Cài đặt và chơi game mobile iOS (.ipa) & Android (.apk/.xapk) trên MacBook với Keymapping bàn phím & chuột trực quan.">
+  <meta property="og:image" content="https://pigtinylabs.github.io/PigPort/icon.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://pigtinylabs.github.io/PigPort/">
+  <meta property="twitter:title" content="PigPort - Chơi Game iOS & Android trên Mac (Apple Silicon & Intel)">
+  <meta property="twitter:description" content="Cài đặt .IPA, .APK, .XAPK và chơi game mượt mà trên Mac. Gán phím trực quan, hiệu năng cực cao, 100% mã nguồn mở.">
+  <meta property="twitter:image" content="https://pigtinylabs.github.io/PigPort/icon.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Structured Data: SoftwareApplication & FAQPage for Rich Google Snippets -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "PigPort",
+        "operatingSystem": "macOS 12.0 or later (Apple Silicon M1/M2/M3/M4 & Intel)",
+        "applicationCategory": "GameApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "PigPort is a modern, lightweight, open-source game launcher for macOS that enables users to sideload and play iOS (.ipa) and Android (.apk, .xapk) games natively with custom keymapping.",
+        "softwareVersion": "v0.2.4",
+        "author": {
+          "@type": "Organization",
+          "name": "PigTinyLabs",
+          "url": "https://github.com/PigTinyLabs"
+        },
+        "downloadUrl": "https://github.com/PigTinyLabs/PigPort/releases/latest"
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "MacBook chip Apple Silicon (M1, M2, M3, M4) có chơi được game iOS bằng PigPort không?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Có, PigPort được tối ưu hóa đặc biệt cho Apple Silicon (M1/M2/M3/M4). Nhờ chia sẻ chung kiến trúc ARM với iPhone/iPad, game iOS chạy gần như nguyên bản (native) với hiệu năng cao nhất và tiêu thụ rất ít pin."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "PigPort có hỗ trợ gán phím (keymapping) bàn phím và chuột không?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Có. PigPort tích hợp sẵn trình biên tập phím ảo trực quan (Visual Keymapping Editor). Bạn có thể gán phím di chuyển WASD, nút kỹ năng, click chuột và điều khiển camera cho mọi tựa game iOS và Android."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "PigPort có an toàn và miễn phí không?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "PigPort là phần mềm mã nguồn mở 100% theo giấy phép MIT. Mã nguồn được công khai trên GitHub, hoàn toàn không chứa quảng cáo, không thu thập dữ liệu người dùng và không chứa mã độc."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "PigPort khác gì so với PlayCover hay BlueStacks?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Khác với PlayCover chỉ hỗ trợ iOS hoặc BlueStacks phải chạy cả máy ảo Android nặng nề, PigPort hỗ trợ cả file iOS (.IPA) và Android (.APK, .XAPK) trên cùng một giao diện hiện đại, tự động trích xuất icon và tiết kiệm tài nguyên máy tối đa."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg-dark: #0c0d14;
+      --bg-card: rgba(22, 24, 38, 0.75);
+      --bg-card-hover: rgba(30, 34, 54, 0.9);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(244, 143, 177, 0.4);
+      --primary: #f48fb1;
+      --primary-gradient: linear-gradient(135deg, #f48fb1 0%, #ff6090 100%);
+      --accent: #8b5cf6;
+      --accent-gradient: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Background Glow */
+    .glow-bg {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100vw;
+      height: 850px;
+      background: radial-gradient(circle at 50% 20%, rgba(244, 143, 177, 0.18) 0%, rgba(139, 92, 246, 0.12) 40%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Navbar */
+    nav {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(12, 13, 20, 0.75);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+      font-family: var(--font-heading);
+      font-weight: 800;
+      font-size: 1.4rem;
+    }
+
+    .brand img {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 4px 10px rgba(244, 143, 177, 0.5));
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lang-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .lang-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--border-highlight);
+    }
+
+    .btn-github {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-github:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: var(--border-highlight);
+      transform: translateY(-1px);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 90px 0 60px;
+      text-align: center;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(244, 143, 177, 0.12);
+      border: 1px solid rgba(244, 143, 177, 0.3);
+      border-radius: 999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #f48fb1;
+      margin-bottom: 24px;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    .gradient-text {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: var(--text-muted);
+      max-width: 780px;
+      margin: 0 auto 36px;
+      font-weight: 400;
+    }
+
+    .cta-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 30px;
+      background: var(--primary-gradient);
+      color: #1a0815;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border-radius: 12px;
+      text-decoration: none;
+      box-shadow: 0 10px 25px -5px rgba(244, 143, 177, 0.45);
+      transition: all 0.25s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px -5px rgba(244, 143, 177, 0.6);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 26px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 600;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .hero-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* App Window Mockup */
+    .mockup-container {
+      margin-top: 50px;
+      perspective: 1200px;
+    }
+
+    .app-window {
+      background: #141624;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(244, 143, 177, 0.15);
+      overflow: hidden;
+      text-align: left;
+    }
+
+    .window-header {
+      background: #0e0f1a;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ff5f56; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #27c93f; }
+
+    .window-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .window-body {
+      padding: 24px;
+      background: linear-gradient(180deg, #131422 0%, #0d0e17 100%);
+    }
+
+    .game-grid-demo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .game-card-demo {
+      background: rgba(25, 27, 43, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.25s;
+    }
+
+    .game-card-demo:hover {
+      border-color: var(--border-highlight);
+      transform: translateY(-2px);
+    }
+
+    .demo-icon-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .demo-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .demo-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    .demo-tag {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(244, 143, 177, 0.15);
+      color: #f48fb1;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    .demo-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .demo-btn-play {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      background: var(--primary-gradient);
+      color: #12040b;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .demo-btn-ctrl {
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Section Styling */
+    section {
+      padding: 90px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 60px;
+    }
+
+    .section-tag {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f48fb1;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 32px 28px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-highlight);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon-box {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: rgba(244, 143, 177, 0.12);
+      border: 1px solid rgba(244, 143, 177, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 22px;
+    }
+
+    .feature-card h3 {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* Comparison Table */
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    th.highlight-col {
+      background: rgba(244, 143, 177, 0.08);
+      color: #f48fb1;
+      border-bottom: 2px solid #f48fb1;
+    }
+
+    td.highlight-col {
+      background: rgba(244, 143, 177, 0.04);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .check {
+      color: #34d399;
+      font-weight: 700;
+    }
+
+    .cross {
+      color: #f87171;
+    }
+
+    /* FAQ Section */
+    .faq-list {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .faq-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 26px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .faq-item:hover {
+      border-color: var(--border-highlight);
+    }
+
+    .faq-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .faq-arrow {
+      font-size: 1.2rem;
+      color: #f48fb1;
+      transition: transform 0.25s ease;
+    }
+
+    .faq-item.active .faq-arrow {
+      transform: rotate(180deg);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, margin-top 0.3s ease;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .faq-item.active .faq-answer {
+      max-height: 300px;
+      margin-top: 14px;
+    }
+
+    /* Quick Start Steps */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 30px;
+    }
+
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+    }
+
+    .step-number {
+      font-family: var(--font-heading);
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: rgba(244, 143, 177, 0.35);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .step-card h4 {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 60px 0 40px;
+      background: #090a0f;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: #f48fb1;
+    }
+
+    /* SEO Keyword Cloud for Search Engines */
+    .seo-keyword-block {
+      margin-top: 40px;
+      padding: 20px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.75rem;
+      color: #555b6e;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero { padding: 60px 0 40px; }
+      section { padding: 60px 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow-bg"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="container" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+      <a href="#" class="brand">
+        <img src="icon.svg" alt="PigPort Logo">
+        <span>PigPort</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#features" data-i18n="nav.features">Tính năng</a>
+        <a href="#comparison" data-i18n="nav.comparison">So sánh</a>
+        <a href="#how-it-works" data-i18n="nav.guide">Hướng dẫn</a>
+        <a href="#faq" data-i18n="nav.faq">Hỏi đáp</a>
+      </div>
+
+      <div class="nav-actions">
+        <button id="langToggle" class="lang-btn" onclick="toggleLanguage()">
+          🌐 <span id="langText">EN</span>
+        </button>
+        <a href="https://github.com/PigTinyLabs/PigPort" target="_blank" class="btn-github">
+          <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="container">
+      <div class="badge-pill">
+        <span>🚀</span> <span data-i18n="hero.badge">Phiên bản mới v0.2.4 • Hỗ trợ Apple Silicon (M1/M2/M3/M4) & Intel</span>
+      </div>
+
+      <h1 data-i18n="hero.title">
+        Chơi Game <span class="gradient-text">iOS & Android</span><br>Trên Mac Mượt Mà & Không Giật Lag
+      </h1>
+
+      <p class="hero-desc" data-i18n="hero.desc">
+        Trình khởi chạy mã nguồn mở tối ưu cho macOS. Sideload và cài đặt trực tiếp file <strong>.IPA, .APK, .XAPK</strong> chỉ với 1 cú click, gán phím chuột (Keymapping) trực quan và siêu nhẹ máy. Thay thế hoàn hảo cho PlayCover và giả lập Android cồng kềnh.
+      </p>
+
+      <div class="cta-group">
+        <a href="https://github.com/PigTinyLabs/PigPort/releases/latest" target="_blank" class="btn-primary">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+          <span data-i18n="hero.cta_download">Tải PigPort cho macOS (Free)</span>
+        </a>
+        <a href="https://github.com/PigTinyLabs/PigPort" target="_blank" class="btn-secondary">
+          <span data-i18n="hero.cta_source">⭐ Mã nguồn trên GitHub</span>
+        </a>
+      </div>
+
+      <div class="hero-meta">
+        <span>✨ 100% Miễn phí & Open Source</span>
+        <span>🚫 Không quảng cáo</span>
+        <span>⚡ Apple Silicon & Intel 64-bit</span>
+      </div>
+
+      <!-- Live Mockup Preview -->
+      <div class="mockup-container">
+        <div class="app-window">
+          <div class="window-header">
+            <div class="window-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <div class="window-title">PigPort Game Library — v0.2.4 (Active Session)</div>
+            <div style="width: 40px;"></div>
+          </div>
+          <div class="window-body">
+            <div class="game-grid-demo">
+              <!-- Game Card 1 -->
+              <div class="game-card-demo">
+                <div class="demo-icon-row">
+                  <div class="demo-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">⚔️</div>
+                  <div>
+                    <div class="demo-title">Arena of Valor / Liên Quân</div>
+                    <span class="demo-tag">iOS • ARM64 Native</span>
+                  </div>
+                </div>
+                <div class="demo-actions">
+                  <button class="demo-btn-play">▶ Chơi ngay</button>
+                  <button class="demo-btn-ctrl">🎮 Phím ảo</button>
+                </div>
+              </div>
+
+              <!-- Game Card 2 -->
+              <div class="game-card-demo">
+                <div class="demo-icon-row">
+                  <div class="demo-icon" style="background: linear-gradient(135deg, #ec4899, #be185d);">🎯</div>
+                  <div>
+                    <div class="demo-title">Free Fire / PUBG Mobile</div>
+                    <span class="demo-tag">Android XAPK • 60 FPS</span>
+                  </div>
+                </div>
+                <div class="demo-actions">
+                  <button class="demo-btn-play">▶ Chơi ngay</button>
+                  <button class="demo-btn-ctrl">🎮 Phím ảo</button>
+                </div>
+              </div>
+
+              <!-- Game Card 3 -->
+              <div class="game-card-demo">
+                <div class="demo-icon-row">
+                  <div class="demo-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">🌌</div>
+                  <div>
+                    <div class="demo-title">Honkai: Star Rail</div>
+                    <span class="demo-tag">iOS IPA • Metal API</span>
+                  </div>
+                </div>
+                <div class="demo-actions">
+                  <button class="demo-btn-play">▶ Chơi ngay</button>
+                  <button class="demo-btn-ctrl">🎮 Phím ảo</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Features Section -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="features.tag">Ưu điểm vượt trội</span>
+        <h2 class="section-title" data-i18n="features.title">Tại sao game thủ chọn PigPort trên Mac?</h2>
+        <p class="section-subtitle" data-i18n="features.subtitle">
+          Được thiết kế tỉ mỉ để mang lại trải nghiệm chơi game mobile đỉnh cao trên macOS mà không làm nóng máy hay tụt pin.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">⚡</div>
+          <h3 data-i18n="feat1.title">Hiệu năng Native Apple Silicon</h3>
+          <p data-i18n="feat1.desc">
+            Tận dụng triệt để kiến trúc ARM trên chip Apple M1, M2, M3, M4. Game iOS chạy trực tiếp không qua máy ảo, đem lại 60-120 FPS mượt mà và mát máy.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">⌨️</div>
+          <h3 data-i18n="feat2.title">Smart Keymapping Bàn phím & Chuột</h3>
+          <p data-i18n="feat2.desc">
+            Giao diện gán phím trực quan (WASD, tâm ngắm FPS, nút kỹ năng MOBA, click chuột tự do). Dễ dàng chuyển đổi cấu hình phím cho từng tựa game.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">📦</div>
+          <h3 data-i18n="feat3.title">Cài đặt 1 Click: IPA, APK & XAPK</h3>
+          <p data-i18n="feat3.desc">
+            Chỉ cần kéo thả file cài đặt vào PigPort. Hệ thống tự động phân tích gói, trích xuất icon sắc nét và chuẩn bị môi trường chạy trong tích tắc.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">🛡️</div>
+          <h3 data-i18n="feat4.title">Mã nguồn mở 100% & Không Quảng Cáo</h3>
+          <p data-i18n="feat4.desc">
+            Không popup, không bloatware, không thu thập dữ liệu bí mật. Toàn bộ mã nguồn mở theo giấy phép MIT trên GitHub của PigTinyLabs.
+          </p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">💻</div>
+          <h3 data-i18n="feat5.title">Tương thích cả Mac Intel & M-Series</h3>
+          <p data-i18n="feat5.desc">
+            Dù bạn đang sở hữu MacBook Air M1 đời mới hay các dòng iMac/MacBook Pro Intel, PigPort luôn có giải pháp tối ưu phù hợp nhất.
+          </p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">🎮</div>
+          <h3 data-i18n="feat6.title">Hỗ trợ Tay cầm Gamepad</h3>
+          <p data-i18n="feat6.desc">
+            Tự động nhận diện tay cầm PlayStation DualSense, Xbox Wireless Controller hoặc tay cầm Bluetooth để chiến game như máy console thực thụ.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Section -->
+  <section id="comparison" style="background: rgba(0,0,0,0.25);">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="comp.tag">Bảng so sánh</span>
+        <h2 class="section-title" data-i18n="comp.title">PigPort vs Các phần mềm khác</h2>
+        <p class="section-subtitle" data-i18n="comp.subtitle">
+          Sự khác biệt rõ ràng giữa PigPort và các giải pháp giả lập hay sideload truyền thống.
+        </p>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="th.feature">Tính năng / Tiêu chí</th>
+              <th class="highlight-col">🐷 PigPort</th>
+              <th>PlayCover</th>
+              <th>BlueStacks / Nox</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Hỗ trợ Game iOS (.IPA)</strong></td>
+              <td class="highlight-col check">✓ Rất mượt (Native)</td>
+              <td class="check">✓ Hỗ trợ</td>
+              <td class="cross">✗ Không hỗ trợ</td>
+            </tr>
+            <tr>
+              <td><strong>Hỗ trợ Game Android (.APK / .XAPK)</strong></td>
+              <td class="highlight-col check">✓ Tích hợp sẵn</td>
+              <td class="cross">✗ Không hỗ trợ</td>
+              <td class="check">✓ Hỗ trợ</td>
+            </tr>
+            <tr>
+              <td><strong>Tiêu thụ RAM & Pin</strong></td>
+              <td class="highlight-col check">✓ Rất thấp (~150MB launcher)</td>
+              <td class="check">✓ Thấp</td>
+              <td class="cross">✗ Rất nặng (3-6GB RAM)</td>
+            </tr>
+            <tr>
+              <td><strong>Gán phím ảo Keymapping</strong></td>
+              <td class="highlight-col check">✓ Visual Editor trực quan</td>
+              <td class="check">✓ Có</td>
+              <td class="check">✓ Có</td>
+            </tr>
+            <tr>
+              <td><strong>Không quảng cáo / Bloatware</strong></td>
+              <td class="highlight-col check">✓ 100% Sạch sẽ</td>
+              <td class="check">✓ Sạch sẽ</td>
+              <td class="cross">✗ Nhiều quảng cáo rác</td>
+            </tr>
+            <tr>
+              <td><strong>Mã nguồn mở (MIT License)</strong></td>
+              <td class="highlight-col check">✓ Hoàn toàn minh bạch</td>
+              <td class="check">✓ Mã nguồn mở</td>
+              <td class="cross">✗ Mã nguồn đóng</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="guide.tag">Bắt đầu nhanh</span>
+        <h2 class="section-title" data-i18n="guide.title">3 Bước đơn giản để chơi game trên Mac</h2>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <h4 data-i18n="step1.title">Tải PigPort</h4>
+          <p data-i18n="step1.desc">Tải file cài đặt <code>PigPort-x.x.x.dmg</code> từ trang GitHub Releases chính thức và kéo thả vào thư mục Applications.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <h4 data-i18n="step2.title">Thêm File Game</h4>
+          <p data-i18n="step2.desc">Bấm nút "Import Package" và chọn file game <code>.ipa</code>, <code>.apk</code> hoặc <code>.xapk</code> bạn muốn chơi.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <h4 data-i18n="step3.title">Khởi Động & Chiến</h4>
+          <p data-i18n="step3.desc">Bật phím ảo Keymap nếu cần rồi nhấn "Play". Trải nghiệm cảm giác chơi game mobile mượt mà trên màn hình lớn của Mac!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" style="background: rgba(0,0,0,0.2);">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="faq.tag">Câu hỏi thường gặp</span>
+        <h2 class="section-title" data-i18n="faq.title">Giải đáp thắc mắc (FAQ)</h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">
+            <span data-i18n="faq1.q">MacBook chip Apple Silicon (M1, M2, M3, M4) có chơi được không?</span>
+            <span class="faq-arrow">▼</span>
+          </div>
+          <div class="faq-answer" data-i18n="faq1.a">
+            Có! PigPort được sinh ra và tối ưu mạnh mẽ nhất cho Apple Silicon (M1/M2/M3/M4). Nhờ chia sẻ kiến trúc ARM với chip Apple trên iPhone/iPad, game chạy với hiệu năng gần như 100% native, không hao pin và quạt tản nhiệt không cần rú lên.
+          </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">
+            <span data-i18n="faq2.q">Tôi lấy file game .IPA hoặc .APK ở đâu?</span>
+            <span class="faq-arrow">▼</span>
+          </div>
+          <div class="faq-answer" data-i18n="faq2.a">
+            Bạn có thể trích xuất file .IPA từ tài khoản Apple ID cá nhân đã sở hữu app, hoặc tải từ các nguồn lưu trữ IPA đã decrypted (giải mã). Đối với file Android, bạn có thể tải an toàn từ APKPure hoặc APKMirror (.apk / .xapk).
+          </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">
+            <span data-i18n="faq3.q">Chơi game qua PigPort có bị khóa tài khoản không?</span>
+            <span class="faq-arrow">▼</span>
+          </div>
+          <div class="faq-answer" data-i18n="faq3.a">
+            PigPort là trình nạp môi trường sạch và không can thiệp (inject) vào logic bảo mật của game. Tuy nhiên, một số tựa game có chính sách cấm chặt chẽ việc chạy ngoài iPhone vật lý hoặc cấm trình giả lập (như Genshin Impact hay một số game FPS). Bạn nên sử dụng tài khoản phụ đối với các game có cơ chế kiểm tra anti-cheat nghiêm ngặt.
+          </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">
+            <span data-i18n="faq4.q">PigPort có hoàn toàn miễn phí không?</span>
+            <span class="faq-arrow">▼</span>
+          </div>
+          <div class="faq-answer" data-i18n="faq4.a">
+            Hoàn toàn miễn phí 100% và mã nguồn mở theo giấy phép MIT. Dự án phi lợi nhuận do PigTinyLabs phát triển. Nếu yêu thích, bạn có thể ủng hộ tác giả bằng cách tặng 1 ly cà phê qua PayPal (paypal.me/pigtiny) hoặc tặng 1 sao (Star) trên GitHub!
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-brand">
+        <img src="icon.svg" width="30" height="30" alt="PigPort Logo">
+        <span>PigPort by PigTinyLabs</span>
+      </div>
+
+      <div class="footer-links">
+        <a href="https://github.com/PigTinyLabs/PigPort" target="_blank">GitHub Repository</a>
+        <a href="https://github.com/PigTinyLabs/PigPort/releases/latest" target="_blank">Download Latest DMG</a>
+        <a href="https://paypal.me/pigtiny" target="_blank">☕ Donate a Coffee</a>
+        <a href="https://github.com/PigTinyLabs" target="_blank">PigTinyLabs</a>
+      </div>
+
+      <p style="margin-bottom: 8px;">Released under the MIT License • Built with ❤️ for Mac Gamers worldwide</p>
+      <p style="font-size: 0.82rem; color: #64748b;">“Small code, big dreams.” 🐷✨</p>
+
+      <!-- SEO Keywords Footer -->
+      <div class="seo-keyword-block">
+        Từ khóa tìm kiếm: chơi game ios trên mac, cài ipa trên macbook m1 m2 m3, giả lập ios cho mac os, playcover alternative cho mac m1, chơi game mobile trên máy tính mac, run ios apps on apple silicon, run apk on macbook, pigport launcher.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script for Language Toggle and FAQ Accordion -->
+  <script>
+    const i18nData = {
+      vi: {
+        "nav.features": "Tính năng",
+        "nav.comparison": "So sánh",
+        "nav.guide": "Hướng dẫn",
+        "nav.faq": "Hỏi đáp",
+        "hero.badge": "Phiên bản mới v0.2.4 • Hỗ trợ Apple Silicon (M1/M2/M3/M4) & Intel",
+        "hero.title": "Chơi Game <span class='gradient-text'>iOS & Android</span><br>Trên Mac Mượt Mà & Không Giật Lag",
+        "hero.desc": "Trình khởi chạy mã nguồn mở tối ưu cho macOS. Sideload và cài đặt trực tiếp file <strong>.IPA, .APK, .XAPK</strong> chỉ với 1 cú click, gán phím chuột (Keymapping) trực quan và siêu nhẹ máy. Thay thế hoàn hảo cho PlayCover và giả lập Android cồng kềnh.",
+        "hero.cta_download": "Tải PigPort cho macOS (Free)",
+        "hero.cta_source": "⭐ Mã nguồn trên GitHub",
+        "features.tag": "Ưu điểm vượt trội",
+        "features.title": "Tại sao game thủ chọn PigPort trên Mac?",
+        "features.subtitle": "Được thiết kế tỉ mỉ để mang lại trải nghiệm chơi game mobile đỉnh cao trên macOS mà không làm nóng máy hay tụt pin.",
+        "feat1.title": "Hiệu năng Native Apple Silicon",
+        "feat1.desc": "Tận dụng triệt để kiến trúc ARM trên chip Apple M1, M2, M3, M4. Game iOS chạy trực tiếp không qua máy ảo, đem lại 60-120 FPS mượt mà và mát máy.",
+        "feat2.title": "Smart Keymapping Bàn phím & Chuột",
+        "feat2.desc": "Giao diện gán phím trực quan (WASD, tâm ngắm FPS, nút kỹ năng MOBA, click chuột tự do). Dễ dàng chuyển đổi cấu hình phím cho từng tựa game.",
+        "feat3.title": "Cài đặt 1 Click: IPA, APK & XAPK",
+        "feat3.desc": "Chỉ cần kéo thả file cài đặt vào PigPort. Hệ thống tự động phân tích gói, trích xuất icon sắc nét và chuẩn bị môi trường chạy trong tích tắc.",
+        "feat4.title": "Mã nguồn mở 100% & Không Quảng Cáo",
+        "feat4.desc": "Không popup, không bloatware, không thu thập dữ liệu bí mật. Toàn bộ mã nguồn mở theo giấy phép MIT trên GitHub của PigTinyLabs.",
+        "feat5.title": "Tương thích cả Mac Intel & M-Series",
+        "feat5.desc": "Dù bạn đang sở hữu MacBook Air M1 đời mới hay các dòng iMac/MacBook Pro Intel, PigPort luôn có giải pháp tối ưu phù hợp nhất.",
+        "feat6.title": "Hỗ trợ Tay cầm Gamepad",
+        "feat6.desc": "Tự động nhận diện tay cầm PlayStation DualSense, Xbox Wireless Controller hoặc tay cầm Bluetooth để chiến game như máy console thực thụ.",
+        "comp.tag": "Bảng so sánh",
+        "comp.title": "PigPort vs Các phần mềm khác",
+        "comp.subtitle": "Sự khác biệt rõ ràng giữa PigPort và các giải pháp giả lập hay sideload truyền thống.",
+        "th.feature": "Tính năng / Tiêu chí",
+        "guide.tag": "Bắt đầu nhanh",
+        "guide.title": "3 Bước đơn giản để chơi game trên Mac",
+        "step1.title": "Tải PigPort",
+        "step1.desc": "Tải file cài đặt PigPort-x.x.x.dmg từ trang GitHub Releases chính thức và kéo thả vào thư mục Applications.",
+        "step2.title": "Thêm File Game",
+        "step2.desc": "Bấm nút \"Import Package\" và chọn file game .ipa, .apk hoặc .xapk bạn muốn chơi.",
+        "step3.title": "Khởi Động & Chiến",
+        "step3.desc": "Bật phím ảo Keymap nếu cần rồi nhấn \"Play\". Trải nghiệm cảm giác chơi game mobile mượt mà trên màn hình lớn của Mac!",
+        "faq.tag": "Câu hỏi thường gặp",
+        "faq.title": "Giải đáp thắc mắc (FAQ)",
+        "faq1.q": "MacBook chip Apple Silicon (M1, M2, M3, M4) có chơi được không?",
+        "faq1.a": "Có! PigPort được sinh ra và tối ưu mạnh mẽ nhất cho Apple Silicon (M1/M2/M3/M4). Nhờ chia sẻ kiến trúc ARM với chip Apple trên iPhone/iPad, game chạy với hiệu năng gần như 100% native, không hao pin và quạt tản nhiệt không cần rú lên.",
+        "faq2.q": "Tôi lấy file game .IPA hoặc .APK ở đâu?",
+        "faq2.a": "Bạn có thể trích xuất file .IPA từ tài khoản Apple ID cá nhân đã sở hữu app, hoặc tải từ các nguồn lưu trữ IPA đã decrypted (giải mã). Đối với file Android, bạn có thể tải an toàn từ APKPure hoặc APKMirror (.apk / .xapk).",
+        "faq3.q": "Chơi game qua PigPort có bị khóa tài khoản không?",
+        "faq3.a": "PigPort là trình nạp môi trường sạch và không can thiệp (inject) vào logic bảo mật của game. Tuy nhiên, một số tựa game có chính sách cấm chặt chẽ việc chạy ngoài iPhone vật lý hoặc cấm trình giả lập (như Genshin Impact hay một số game FPS). Bạn nên sử dụng tài khoản phụ đối với các game có cơ chế kiểm tra anti-cheat nghiêm ngặt.",
+        "faq4.q": "PigPort có hoàn toàn miễn phí không?",
+        "faq4.a": "Hoàn toàn miễn phí 100% và mã nguồn mở theo giấy phép MIT. Dự án phi lợi nhuận do PigTinyLabs phát triển. Nếu yêu thích, bạn có thể ủng hộ tác giả bằng cách tặng 1 ly cà phê qua PayPal (paypal.me/pigtiny) hoặc tặng 1 sao (Star) trên GitHub!"
+      },
+      en: {
+        "nav.features": "Features",
+        "nav.comparison": "Comparison",
+        "nav.guide": "Guide",
+        "nav.faq": "FAQ",
+        "hero.badge": "New Release v0.2.4 • Apple Silicon (M1/M2/M3/M4) & Intel Supported",
+        "hero.title": "Play <span class='gradient-text'>iOS & Android</span> Games<br>On Mac Natively, No Lag",
+        "hero.desc": "Modern open-source launcher optimized for macOS. Sideload and install <strong>.IPA, .APK, and .XAPK</strong> packages with 1-click, customize mouse & keyboard keymapping, and enjoy ultra-lightweight performance. The ultimate alternative to PlayCover and bloated Android emulators.",
+        "hero.cta_download": "Download PigPort for macOS (Free)",
+        "hero.cta_source": "⭐ Source Code on GitHub",
+        "features.tag": "Core Advantages",
+        "features.title": "Why Gamers Choose PigPort on macOS?",
+        "features.subtitle": "Carefully engineered to deliver a console-grade mobile gaming experience on Mac without heating up or battery drain.",
+        "feat1.title": "Apple Silicon Native Performance",
+        "feat1.desc": "Fully leverages ARM architecture on Apple M1, M2, M3, M4 chips. iOS games run natively without virtual machines, providing solid 60-120 FPS.",
+        "feat2.title": "Smart Mouse & Keyboard Keymapping",
+        "feat2.desc": "Visual keymapping editor with WASD directional control, FPS camera look, MOBA skill buttons, and free mouse clicks. Easily switch profiles.",
+        "feat3.title": "1-Click Install: IPA, APK & XAPK",
+        "feat3.desc": "Simply drag & drop installation files into PigPort. It extracts icons, inspects signatures, and prepares runtime environments automatically.",
+        "feat4.title": "100% Open Source & Zero Ads",
+        "feat4.desc": "No popups, no tracking, and no bloatware. The entire source code is transparently published under the MIT license on PigTinyLabs GitHub.",
+        "feat5.title": "Universal Intel & Apple Silicon Support",
+        "feat5.desc": "Whether you are on a modern M-series MacBook or an Intel-based iMac / MacBook Pro, PigPort provides tailored execution pipelines.",
+        "feat6.title": "Gamepad & Controller Ready",
+        "feat6.desc": "Automatically connects with PlayStation DualSense, Xbox Wireless Controllers, and Bluetooth gamepads for a true console gaming experience.",
+        "comp.tag": "Comparison",
+        "comp.title": "PigPort vs Alternative Solutions",
+        "comp.subtitle": "See how PigPort compares to traditional sideload tools and bulky emulators.",
+        "th.feature": "Feature / Metric",
+        "guide.tag": "Quick Start",
+        "guide.title": "3 Simple Steps to Play Games on Mac",
+        "step1.title": "Download PigPort",
+        "step1.desc": "Download the official PigPort-x.x.x.dmg from GitHub Releases and drag it to your Applications folder.",
+        "step2.title": "Import Game Package",
+        "step2.desc": "Click 'Import Package' and select your .ipa, .apk, or .xapk game file.",
+        "step3.title": "Configure & Play",
+        "step3.desc": "Enable your keymap if needed and click 'Play'. Experience fluid mobile gaming on your Mac's large screen!",
+        "faq.tag": "FAQ",
+        "faq.title": "Frequently Asked Questions",
+        "faq1.q": "Can Apple Silicon (M1/M2/M3/M4) Macs run iOS games natively?",
+        "faq1.a": "Yes! PigPort is built specifically for Apple Silicon. Because M-series chips share the ARM architecture with iPhone/iPad, iOS games run natively at full speed without emulator overhead or battery drain.",
+        "faq2.q": "Where can I find .IPA or .APK files?",
+        "faq2.a": "You can export .IPA files from your own Apple ID account or decrypted community repositories. For Android games, safe repositories like APKPure or APKMirror provide direct .apk/.xapk packages.",
+        "faq3.q": "Is playing games via PigPort bannable?",
+        "faq3.a": "PigPort runs games in clean containers and does not modify core game mechanics. However, some games with strict kernel-level anti-cheat might flag non-standard hardware. We recommend using secondary accounts for heavily monitored competitive games.",
+        "faq4.q": "Is PigPort completely free?",
+        "faq4.a": "Yes! PigPort is 100% free and open-source under the MIT license. If you enjoy the project, feel free to support development with a coffee via PayPal (paypal.me/pigtiny) or star the repository on GitHub!"
+      }
+    };
+
+    let currentLang = 'vi';
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'vi' ? 'en' : 'vi';
+      document.documentElement.lang = currentLang;
+      document.getElementById('langText').textContent = currentLang === 'vi' ? 'EN' : 'VI';
+      
+      const elements = document.querySelectorAll('[data-i18n]');
+      elements.forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18nData[currentLang] && i18nData[currentLang][key]) {
+          el.innerHTML = i18nData[currentLang][key];
+        }
+      });
+    }
+
+    function toggleFaq(item) {
+      const isActive = item.classList.contains('active');
+      document.querySelectorAll('.faq-item').forEach(el => el.classList.remove('active'));
+      if (!isActive) {
+        item.classList.add('active');
+      }
+    }
+  </script>
+</body>
+</html>
