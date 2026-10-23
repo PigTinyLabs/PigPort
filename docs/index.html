@@ -33,10 +33,10 @@
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
 
-  <!-- Google Fonts -->
+  <!-- Google Fonts: Be Vietnam Pro (Chuẩn hiển thị Tiếng Việt 100%, không bị lỗi dấu/vỡ font) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
 
   <!-- Structured Data: SoftwareApplication & FAQPage for Rich Google Snippets -->
   <script type="application/ld+json">
@@ -116,8 +116,8 @@
       --accent-gradient: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%);
       --text: #f8fafc;
       --text-muted: #94a3b8;
-      --font-heading: 'Outfit', sans-serif;
-      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --font-heading: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      --font-body: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
     }
 
     * {
@@ -1271,9 +1271,27 @@
         <!-- Feature 6 -->
         <div class="feature-card">
           <div class="feature-icon-box">🎮</div>
-          <h3 data-i18n="feat6.title">Gamepad & Controller Ready</h3>
+          <h3 data-i18n="feat6.title">Controllers in Supported Games</h3>
           <p data-i18n="feat6.desc">
-            Automatically connects with PlayStation DualSense, Xbox Wireless Controllers, and Bluetooth gamepads for a true console gaming experience.
+            iOS games with built-in controller support work with DualSense, Xbox and other Bluetooth controllers paired to your Mac. PigPort&#39;s own remapping covers keyboard &amp; mouse; controller remapping is not available yet.
+          </p>
+        </div>
+
+        <!-- Feature 7 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">📶</div>
+          <h3 data-i18n="feat7.title">Play on Your Android Phone over Wi-Fi</h3>
+          <p data-i18n="feat7.desc">
+            Pair your Android phone with a 6-digit code from Wireless debugging. No app to install, no cable: mirror the screen and play phone games with keyboard &amp; mouse.
+          </p>
+        </div>
+
+        <!-- Feature 8 -->
+        <div class="feature-card">
+          <div class="feature-icon-box">📱</div>
+          <h3 data-i18n="feat8.title">View Your iPhone Screen</h3>
+          <p data-i18n="feat8.desc">
+            Mirror an iPhone or iPad to your Mac or Windows PC with AirPlay Screen Mirroring, nothing to install on the phone. View only: iOS does not allow remote control.
           </p>
         </div>
       </div>
@@ -1409,7 +1427,7 @@
             <span class="faq-arrow">▼</span>
           </div>
           <div class="faq-answer" data-i18n="faq3.a">
-            PigPort runs games in clean containers and does not modify core game mechanics. However, some games with strict kernel-level anti-cheat might flag non-standard hardware. We recommend using secondary accounts for heavily monitored competitive games.
+            Possibly. To add keyboard &amp; mouse controls and fit the game window, PigPort loads a small input layer into iOS games and re-signs them to run on the Mac. Online games with strict anti-cheat may detect this and block or ban accounts. Use a secondary account for competitive games.
           </div>
         </div>
 
@@ -1420,6 +1438,16 @@
           </div>
           <div class="faq-answer" data-i18n="faq4.a">
             Yes! PigPort is 100% free and open-source under the MIT license. If you enjoy the project, feel free to support development with a coffee via PayPal (paypal.me/pigtiny) or star the repository on GitHub!
+          </div>
+        </div>
+
+        <div class="faq-item" onclick="toggleFaq(this)">
+          <div class="faq-question">
+            <span data-i18n="faq5.q">Can I mirror my phone to the computer?</span>
+            <span class="faq-arrow">▼</span>
+          </div>
+          <div class="faq-answer" data-i18n="faq5.a">
+            Android: yes, over USB or Wi-Fi. Turn on Wireless debugging (Android 11+) and pair with the 6-digit code; then mirror and play with keyboard &amp; mouse. iPhone/iPad: view only, through AirPlay Screen Mirroring (the receiver built into macOS, or the one bundled with PigPort for Windows). iOS does not let another device control the phone; to play iOS games with keyboard &amp; mouse, install the IPA on an Apple Silicon Mac. Bluetooth is too slow to carry a live game screen.
           </div>
         </div>
       </div>
@@ -1589,8 +1617,8 @@
         "feat4.desc": "No popups, no tracking, and no bloatware. The entire source code is transparently published under the MIT license on PigTinyLabs GitHub.",
         "feat5.title": "Universal Intel & Apple Silicon Support",
         "feat5.desc": "Whether you are on a modern M-series MacBook or an Intel-based iMac / MacBook Pro, PigPort provides tailored execution pipelines.",
-        "feat6.title": "Gamepad & Controller Ready",
-        "feat6.desc": "Automatically connects with PlayStation DualSense, Xbox Wireless Controllers, and Bluetooth gamepads for a true console gaming experience.",
+        "feat6.title": "Controllers in Supported Games",
+        "feat6.desc": "iOS games with built-in controller support work with DualSense, Xbox and other Bluetooth controllers paired to your Mac. PigPort&#39;s own remapping covers keyboard &amp; mouse; controller remapping is not available yet.",
         "comp.tag": "Comparison",
         "comp.title": "PigPort vs Alternative Solutions",
         "comp.subtitle": "See how PigPort compares to traditional sideload tools and bulky emulators.",
@@ -1637,9 +1665,15 @@
         "faq2.q": "Where can I find .IPA or .APK files?",
         "faq2.a": "For iOS games, use decrypted repositories such as <strong>decrypt.day</strong> or extract from your personal Apple ID account. For Android, safe repositories like APKPure or APKMirror provide direct .apk/.xapk packages. Check our 'Get Games' section above for direct links!",
         "faq3.q": "Is playing games via PigPort bannable?",
-        "faq3.a": "PigPort runs games in clean containers and does not modify core game mechanics. However, some games with strict kernel-level anti-cheat might flag non-standard hardware. We recommend using secondary accounts for heavily monitored competitive games.",
+        "faq3.a": "Possibly. To add keyboard &amp; mouse controls and fit the game window, PigPort loads a small input layer into iOS games and re-signs them to run on the Mac. Online games with strict anti-cheat may detect this and block or ban accounts. Use a secondary account for competitive games.",
         "faq4.q": "Is PigPort completely free?",
         "faq4.a": "Yes! PigPort is 100% free and open-source under the MIT license. If you enjoy the project, feel free to support development with a coffee via PayPal (paypal.me/pigtiny) or star the repository on GitHub!",
+        "feat7.title": "Play on Your Android Phone over Wi-Fi",
+        "feat7.desc": "Pair your Android phone with a 6-digit code from Wireless debugging. No app to install, no cable: mirror the screen and play phone games with keyboard &amp; mouse.",
+        "feat8.title": "View Your iPhone Screen",
+        "feat8.desc": "Mirror an iPhone or iPad to your Mac or Windows PC with AirPlay Screen Mirroring, nothing to install on the phone. View only: iOS does not allow remote control.",
+        "faq5.q": "Can I mirror my phone to the computer?",
+        "faq5.a": "Android: yes, over USB or Wi-Fi. Turn on Wireless debugging (Android 11+) and pair with the 6-digit code; then mirror and play with keyboard &amp; mouse. iPhone/iPad: view only, through AirPlay Screen Mirroring (the receiver built into macOS, or the one bundled with PigPort for Windows). iOS does not let another device control the phone; to play iOS games with keyboard &amp; mouse, install the IPA on an Apple Silicon Mac. Bluetooth is too slow to carry a live game screen.",
         "footer.mit": "Released under the MIT License • Built with ❤️ for Mac Gamers worldwide",
         "footer.tagline": "“Small code, big dreams.” 🐷✨",
         "footer.disclaimer": "Disclaimer: All game titles, logos, and trademarks (Genshin Impact, Identity V, Honkai: Star Rail) are property of their respective owners (Cognosphere / miHoYo, NetEase, etc.) and are used here solely for illustrative compatibility demonstration.",
@@ -1702,8 +1736,8 @@
         "feat4.desc": "Không popup, không bloatware, không thu thập dữ liệu bí mật. Toàn bộ mã nguồn mở theo giấy phép MIT trên GitHub của PigTinyLabs.",
         "feat5.title": "Tương thích cả Mac Intel & M-Series",
         "feat5.desc": "Dù bạn đang sở hữu MacBook Air M1 đời mới hay các dòng iMac/MacBook Pro Intel, PigPort luôn có giải pháp tối ưu phù hợp nhất.",
-        "feat6.title": "Hỗ trợ Tay cầm Gamepad",
-        "feat6.desc": "Tự động nhận diện tay cầm PlayStation DualSense, Xbox Wireless Controller hoặc tay cầm Bluetooth để chiến game như máy console thực thụ.",
+        "feat6.title": "Tay cầm trong game có hỗ trợ",
+        "feat6.desc": "Game iOS có sẵn hỗ trợ tay cầm sẽ dùng được tay cầm DualSense, Xbox hoặc tay cầm Bluetooth đã kết nối với Mac. Phần ánh xạ của PigPort hiện dành cho bàn phím &amp; chuột; chưa có ánh xạ cho tay cầm.",
         "comp.tag": "Bảng so sánh",
         "comp.title": "PigPort vs Các phần mềm khác",
         "comp.subtitle": "Sự khác biệt rõ ràng giữa PigPort và các giải pháp giả lập hay sideload truyền thống.",
@@ -1750,9 +1784,15 @@
         "faq2.q": "Tôi lấy file game .IPA hoặc .APK ở đâu?",
         "faq2.a": "Với game iOS, bạn có thể tải từ kho <strong>decrypt.day</strong> hoặc trích xuất từ Apple ID. Với Android, các kho APKPure hoặc APKMirror cung cấp sẵn file tải an toàn. Xem chi tiết tại mục hướng dẫn bên trên!",
         "faq3.q": "Chơi game qua PigPort có bị khóa tài khoản không?",
-        "faq3.a": "PigPort là trình nạp môi trường sạch và không can thiệp (inject) vào logic bảo mật của game. Tuy nhiên, một số tựa game có chính sách cấm chặt chẽ việc chạy ngoài iPhone vật lý hoặc cấm trình giả lập. Bạn nên sử dụng tài khoản phụ đối với các game có cơ chế kiểm tra anti-cheat nghiêm ngặt.",
+        "faq3.a": "Có thể. Để có điều khiển bàn phím &amp; chuột và khớp khung hình, PigPort nạp một lớp điều khiển nhỏ vào game iOS và ký lại game để chạy trên Mac. Game online có anti-cheat nghiêm ngặt có thể phát hiện và chặn hoặc khóa tài khoản. Nên dùng tài khoản phụ cho game thi đấu.",
         "faq4.q": "PigPort có hoàn toàn miễn phí không?",
         "faq4.a": "Hoàn toàn miễn phí 100% và mã nguồn mở theo giấy phép MIT. Dự án phi lợi nhuận do PigTinyLabs phát triển. Nếu yêu thích, bạn có thể ủng hộ tác giả bằng cách tặng 1 ly cà phê qua PayPal (paypal.me/pigtiny) hoặc tặng 1 sao (Star) trên GitHub!",
+        "feat7.title": "Chơi trên điện thoại Android qua Wi-Fi",
+        "feat7.desc": "Ghép đôi điện thoại Android bằng mã 6 số trong Wireless debugging. Không cài app, không cần cáp: chiếu màn hình và chơi game trên điện thoại bằng bàn phím &amp; chuột.",
+        "feat8.title": "Xem màn hình iPhone",
+        "feat8.desc": "Chiếu iPhone, iPad lên Mac hoặc PC Windows bằng AirPlay Screen Mirroring, không cần cài gì trên điện thoại. Chỉ xem: iOS không cho điều khiển từ xa.",
+        "faq5.q": "Có chiếu màn hình điện thoại lên máy tính được không?",
+        "faq5.a": "Android: được, qua USB hoặc Wi-Fi. Bật Wireless debugging (Android 11+) và ghép đôi bằng mã 6 số, sau đó chiếu màn hình và chơi bằng bàn phím &amp; chuột. iPhone/iPad: chỉ xem được, qua AirPlay Screen Mirroring (bộ nhận có sẵn trên macOS, hoặc bộ nhận đi kèm PigPort trên Windows). iOS không cho thiết bị khác điều khiển điện thoại; muốn chơi game iOS bằng bàn phím &amp; chuột, hãy cài file IPA trên Mac chip Apple. Bluetooth quá chậm để truyền hình ảnh game.",
         "footer.mit": "Phát hành theo Giấy phép MIT • Phát triển bằng ❤️ dành cho cộng đồng Game thủ Mac",
         "footer.tagline": "“Small code, big dreams.” 🐷✨",
         "footer.disclaimer": "Tuyên bố miễn trừ: Mọi tên tựa game, hình ảnh logo và thương hiệu (Genshin Impact, Identity V, Honkai: Star Rail) thuộc quyền sở hữu của các nhà phát triển tương ứng (Cognosphere / miHoYo, NetEase...) và chỉ được sử dụng tại đây nhằm mục đích minh họa khả năng tương thích.",

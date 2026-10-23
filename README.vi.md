@@ -68,6 +68,16 @@
   - **+ Mouse look**: Tạo vùng lia góc nhìn bằng chuột (nhấn phím `` ` `` để bật/tắt khoá chuột).
 - Kéo thả các nút đến đúng vị trí kỹ năng trên màn hình rồi bấm **Save** để áp dụng ngay lập tức!
 
+### 4. Xem màn hình iPhone (Chỉ xem)
+Mở mục **iPhone & iPad → Xem màn hình iPhone**. Trên iPhone (cùng mạng Wi-Fi), mở Trung tâm điều khiển (Control Center) → **Phản chiếu màn hình (Screen Mirroring)** và chọn tên thiết bị PigPort hiển thị. Không cần cài ứng dụng nào trên iPhone. Hệ điều hành iOS không cho phép thiết bị khác điều khiển cảm ứng từ xa, vì vậy tính năng này chỉ dùng để xem; để chơi game iOS bằng phím và chuột, hãy cài đặt trực tiếp file IPA trên Mac.
+- **macOS:** Sử dụng tính năng AirPlay Receiver tích hợp sẵn của Apple (Cài đặt hệ thống → Cài đặt chung → AirDrop & Handoff).
+- **Windows:** Bấm **Bắt đầu nhận (Start receiver)** và cấp quyền mạng riêng tư nếu Windows yêu cầu. Tính năng này sử dụng [UxPlay](https://github.com/FDH2/UxPlay) (GPLv3), được đóng gói riêng trong thư mục `resources/airplay` kèm theo giấy phép và mã nguồn; được build tự động trong CI qua `scripts/build-uxplay-windows.sh`.
+
+### 5. Kết nối điện thoại Android qua Wi-Fi (Tùy chọn)
+Mặc định game Android sẽ chạy trên thiết bị Android tích hợp sẵn của PigPort. Nếu bạn muốn phản chiếu và chơi trực tiếp trên chính điện thoại Android vật lý của mình, hãy kết nối điện thoại vào cùng mạng Wi-Fi và bấm **Kết nối điện thoại qua Wi-Fi…** ở mục Thiết bị. Không cần cài thêm ứng dụng nào trên điện thoại:
+- **Android 11 trở lên:** Cài đặt → Tùy chọn nhà phát triển → **Gỡ lỗi qua Wi-Fi (Wireless debugging)** → **Ghép nối thiết bị bằng mã ghép nối**, sau đó nhập địa chỉ IP và mã 6 chữ số vào PigPort.
+- **Android 10 trở về trước:** Cắm cáp USB kết nối một lần, chọn điện thoại trong danh sách Thiết bị, và bấm **Chuyển thiết bị đã chọn sang Wi-Fi**.
+
 ---
 
 ## 🛠️ Cài đặt & Khởi chạy từ mã nguồn
