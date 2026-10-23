@@ -3,102 +3,111 @@
 <p align="center">
   <img src="build/icon.png" width="128" alt="PigPort Logo">
   <br>
-  <b>Chơi game iOS và Android mượt mà trên Mac & Windows bằng Bàn phím & Chuột</b>
+  <b>Play iOS & Android Games on Mac & Windows with Keyboard & Mouse</b>
   <br>
-  <i>Một sản phẩm của PigTinyLabs</i>
+  <i>Crafted with ❤️ by PigTinyLabs</i>
   <br><br>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
----
-
-## 🎮 Giới thiệu
-
-**PigPort** là trình khởi chạy và chơi game di động đa nền tảng, cho phép bạn mang trọn vẹn trải nghiệm game **iOS (file .ipa)** và **Android (file .apk, .xapk)** lên máy tính cá nhân. Với hệ thống gán phím thông minh và công nghệ tối ưu hoá đồ hoạ độ trễ thấp, bạn có thể điều khiển mọi tựa game di động yêu thích dễ dàng và chuẩn xác như một game PC thực thụ!
+<p align="center">
+  <b>English</b> | <a href="README.vi.md">Tiếng Việt</a>
+</p>
 
 ---
 
-## ⚡ Tính năng nổi bật cho game thủ
+## 🎮 Introduction
 
-- 🎯 **Kéo & Thả Cài Đặt 1 Chạm**: Kéo thả trực tiếp file `.ipa`, `.apk` hoặc `.xapk` vào PigPort để cài đặt và tự động cập nhật vào Thư viện Game.
-- 📦 **Hỗ trợ định dạng XAPK**: Tự động trích xuất các gói Split APKs và sao chép toàn bộ dữ liệu đồ hoạ OBB vào game mà không cần thao tác thủ công.
-- ⌨️ **Trình Gán Phím Trực Quan (Visual Keymap Editor)**:
-  - Tùy biến phím bấm trực quan ngay trên khung hình game (nhấn nút **🎮 Controls** trên card hoặc phím tắt **⌘K** khi đang chơi).
-  - Cụm di chuyển **WASD Joystick** mượt mà cho các game MOBA (Liên Quân Mobile, Tốc Chiến) và Nhập vai sinh tồn.
-  - Chế độ **Lia chuột (Mouse Look)** xoay camera 360° tự do dành riêng cho game bắn súng FPS và Battle Royale (PUBG, Free Fire).
-  - Hỗ trợ gán phím chuột trái, chuột phải, chuột giữa và tùy chỉnh độ nhạy mượt mà.
-- 🍎 **Chơi Game iOS Mượt Mà trên Mac Apple Silicon**: Chạy trực tiếp các tựa game iPhone & iPad (IPA) trên chip Apple M1/M2/M3/M4 với hiệu năng đồ hoạ gốc cực cao.
-- 🤖 **Môi trường Android Tối Ưu**: Tự động cấu hình môi trường máy ảo và công cụ Android tối ưu cho game mà không cần cài đặt rườm rà.
-- 🖥️ **Tự động khớp khung hình chuẩn tỉ lệ**: Tự động đo đạc và khóa đúng tỷ lệ khung hình thật của game, không bị méo hay vỡ hạt, hỗ trợ hiển thị toàn màn hình sắc nét.
+**PigPort** is a modern, cross-platform mobile game launcher that brings your favorite **iOS (.ipa)** and **Android (.apk, .xapk)** games directly to your desktop. With low-latency hardware-accelerated rendering and an intuitive visual keymapping system, PigPort delivers a seamless, PC-grade gaming experience on both macOS and Windows.
 
 ---
 
-## 🖥️ Hỗ trợ nền tảng
+## ⚡ Highlights & Features
 
-| Tính năng | macOS (Apple Silicon M1/M2/M3/M4) | macOS (Intel x64) | Windows (x64) |
+- 🎯 **One-Click Drag & Drop**: Drag and drop `.ipa`, `.apk`, or `.xapk` files straight into PigPort to install and organize games in your persistent library.
+- 📦 **Full XAPK Support**: Automatically extracts Split APK bundles and copies graphical OBB expansion data without manual file management.
+- ⌨️ **Visual Keymap Editor**:
+  - Customize on-screen controls in real time (click the **🎮 Controls** button on any game card or press **⌘K** while playing).
+  - Responsive **WASD Joystick** for fluid movement in MOBAs and RPGs.
+  - **Mouse Look** with 360° camera rotation for FPS and Battle Royale games.
+  - Support for single-key taps, mouse buttons (LMB/RMB/MMB), and customizable sensitivity.
+- 🍎 **Native iOS Playback on Apple Silicon**: Run unencrypted iPhone & iPad (IPA) games directly on Mac with Apple Silicon (M1/M2/M3/M4) utilizing native GPU performance.
+- 🤖 **Optimized Android Runtime**: Automatic setup and configuration of lightweight Android virtual environments for instant gameplay.
+- 🖥️ **Pixel-Perfect Aspect Ratios**: Automatically fits the game's native render size without stretching or distortion, supporting crisp full-screen playback.
+
+---
+
+## 🖥️ Platform Support
+
+| Feature | macOS (Apple Silicon M1/M2/M3/M4) | macOS (Intel x64) | Windows (x64) |
 |---|:---:|:---:|:---:|
-| **Game iOS (.ipa)** | ✅ Cực mượt | ❌ Không hỗ trợ | ❌ Không hỗ trợ |
-| **Game Android (.apk, .xapk)** | ✅ Có | ✅ Có | ✅ Có |
-| **Trình chỉnh sửa phím Controls** | ✅ Có | ✅ Có | ✅ Có |
-| **Kéo thả cài đặt tự động** | ✅ Có | ✅ Có | ✅ Có |
+| **iOS Games (.ipa)** | ✅ Native & Smooth | ❌ Not supported | ❌ Not supported |
+| **Android Games (.apk, .xapk)** | ✅ Supported | ✅ Supported | ✅ Supported |
+| **Visual Controls Editor** | ✅ Available | ✅ Available | ✅ Available |
+| **Drag & Drop Installer** | ✅ Available | ✅ Available | ✅ Available |
 
 ---
 
-## 🕹️ Hướng dẫn chơi game
+## 🕹️ Getting Started
 
-### 1. Cài đặt game vào Thư viện
-- Mở **PigPort**.
-- Kéo thả file game (`.ipa`, `.apk`, hoặc `.xapk`) vào cửa sổ ứng dụng, hoặc bấm nút **Install IPA / APK / XAPK**.
-- Game sẽ được tự động cài đặt và hiển thị thẻ game với avatar/logo sắc nét trong Thư viện.
+### 1. Add Games to Library
+- Launch **PigPort**.
+- Drag and drop your `.ipa`, `.apk`, or `.xapk` game file into the app, or click **Install IPA / APK / XAPK**.
+- The game will be installed and displayed with its official artwork and version details in your Library.
 
-### 2. Bắt đầu chơi
-- Bấm **▶ Play** trên thẻ game để khởi chạy và bắt đầu chiến game.
-- Điều khiển game bằng bàn phím và chuột đã được thiết lập sẵn.
+### 2. Start Playing
+- Click **▶ Play** on the game card to launch.
+- Enjoy gaming immediately with mapped keyboard and mouse controls.
 
-### 3. Tùy chỉnh phím điều khiển (Controls)
-- Bấm nút **🎮 Controls** trên thẻ game hoặc nhấn phím tắt **⌘K** trong khi đang chơi để mở giao diện gán phím:
-  - **+ Button**: Thêm nút bấm đơn (gán bất kỳ phím nào trên bàn phím hoặc chuột).
-  - **+ Joystick**: Thêm cụm phím di chuyển 4 hướng WASD (có thể kéo chỉnh bán kính và vị trí tâm).
-  - **+ Mouse look**: Tạo vùng lia góc nhìn bằng chuột (nhấn phím `` ` `` để bật/tắt khoá chuột).
-- Kéo thả các nút đến đúng vị trí kỹ năng trên màn hình rồi bấm **Save** để áp dụng ngay lập tức!
+### 3. Customize Controls (Keymapping)
+- Click the **🎮 Controls** button on the game card or press **⌘K** during gameplay to open the editor:
+  - **+ Button**: Add an on-screen tap button (assign any keyboard key or mouse button).
+  - **+ Joystick**: Place a 4-direction WASD movement joystick with adjustable radius.
+  - **+ Mouse look**: Define a free-look camera zone (toggle mouse lock with the `` ` `` key).
+- Drag bindings to match on-screen skills/buttons and click **Save** to apply immediately!
 
 ---
 
-## 🛠️ Cài đặt & Khởi chạy từ mã nguồn
+## 🛠️ Developer Setup (Build from Source)
 
-Dành cho các bạn lập trình viên muốn tự build hoặc đóng góp phát triển:
+For developers interested in building or contributing to PigPort:
 
-### Yêu cầu
-- [Node.js](https://nodejs.org/) phiên bản 22 trở lên.
+### Prerequisites
+- [Node.js](https://nodejs.org/) version 22 or later.
 
-### Cài đặt
+### Installation
 ```bash
-# Cài đặt các thư viện phụ thuộc
+# Install dependencies
 npm install
 
-# Thiết lập Electron binary
+# Download Electron binary
 npm run setup:electron
 
-# Tải scrcpy-server cho Android stream
+# Fetch scrcpy-server for Android streaming
 npm run fetch:scrcpy-server
 ```
 
-### Khởi chạy ứng dụng
+### Run Locally
 ```bash
 npm start
 ```
 
-### Đóng gói ứng dụng
+### Run Tests
 ```bash
-# Build bộ cài đặt cho macOS (.dmg)
+npm test
+```
+
+### Packaging / Distribution
+```bash
+# Build macOS installer (.dmg)
 npm run dist:mac
 
-# Build bộ cài đặt cho Windows (.exe)
+# Build Windows installer (.exe)
 npm run dist:win
 ```
 
 ---
 
-## 📄 Giấy phép
-- Phát hành bởi **PigTinyLabs**.
-- Dự án mã nguồn mở theo giấy phép [MIT](LICENSE).
+## 📄 License
+- Developed and maintained by **PigTinyLabs**.
+- Released as open source under the [MIT License](LICENSE).
