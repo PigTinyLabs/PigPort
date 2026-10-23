@@ -284,7 +284,7 @@ async function playGame(pkg: MobilePackage): Promise<void> {
   }
 }
 
-function renderAppIcon(file: string, id: string, name: string): HTMLElement {
+function renderAppIcon(fileOrId: string, id: string, name: string): HTMLElement {
   const wrap = el('div', { class: 'card-art' });
   const img = el('img', { class: 'icon', alt: name, hidden: '' });
   const av = avatar(id || name);
@@ -294,8 +294,12 @@ function renderAppIcon(file: string, id: string, name: string): HTMLElement {
     img.removeAttribute('hidden');
     av.style.display = 'none';
   });
+  img.addEventListener('error', () => {
+    img.setAttribute('hidden', '');
+    av.style.display = '';
+  });
 
-  void playbridge.packages.icon(file)
+  void playbridge.packages.icon(fileOrId)
     .then((src) => { if (src) img.src = src; })
     .catch(() => {});
 
@@ -472,9 +476,12 @@ function renderAndroid(): HTMLElement {
       )
     );
 
+    const matched = state.imported.find((pkg) => pkg.bundleId === p.id);
+    const art = renderAppIcon(matched ? matched.file : p.id, p.id, prettyPackage(p.id));
+
     return el('article', { class: 'card is-installed' },
       el('div', { class: 'card-top' },
-        el('div', { class: 'card-art' }, avatar(p.id)),
+        art,
         el('div', { class: 'card-badges' },
           el('span', { class: 'badge badge-apk' }, 'APK'),
           el('span', { class: 'badge-status status-installed' }, el('span', { class: 'status-dot' }), 'Installed')

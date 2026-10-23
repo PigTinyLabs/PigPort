@@ -101,9 +101,13 @@ function registerIpc(): void {
   let installing = false;
   // `missing`: the IPA/APK was moved or deleted after it was added to the library.
   handle('packages:list', () => [...imported.values()].map((p) => ({ ...p, missing: !existsSync(p.file) })));
-  handle('packages:icon', async (file: string) => {
-    const pkg = imported.get(file);
-    const icon = await packageIcon(file, path.join(app.getPath('userData'), 'icon-cache'), pkg?.installedPath);
+  handle('packages:icon', async (fileOrId: string) => {
+    let pkg = imported.get(fileOrId);
+    if (!pkg) {
+      pkg = [...imported.values()].find((p) => p.bundleId === fileOrId || p.file === fileOrId);
+    }
+    const targetFile = pkg?.file ?? fileOrId;
+    const icon = await packageIcon(targetFile, path.join(app.getPath('userData'), 'icon-cache'), pkg?.installedPath);
     if (!icon) throw new Error('No icon');
     return icon;
   });

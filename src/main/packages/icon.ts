@@ -1,11 +1,18 @@
 import path from 'node:path';
-import { promises as fs } from 'node:fs';
+import { existsSync, promises as fs } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { inspectArchive } from './archive';
 
 const execute = promisify(execFile);
+
+function mimeFromBuffer(buf: Buffer): string {
+  if (buf.length >= 4 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png';
+  if (buf.length >= 12 && buf.slice(0, 4).toString() === 'RIFF' && buf.slice(8, 12).toString() === 'WEBP') return 'image/webp';
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+  return 'image/png';
+}
 
 /**
  * Extracts and caches the game icon from an installed app bundle, IPA archive, or APK archive.
@@ -18,7 +25,7 @@ export async function packageIcon(file: string, cacheDir: string, installedPath?
 
   try {
     const cached = await fs.readFile(cachedFile);
-    if (cached.length > 0) return `data:image/png;base64,${cached.toString('base64')}`;
+    if (cached.length > 0) return `data:${mimeFromBuffer(cached)};base64,${cached.toString('base64')}`;
   } catch {}
 
   // 1. If installed iOS bundle exists on disk
@@ -89,21 +96,34 @@ export async function packageIcon(file: string, cacheDir: string, installedPath?
           } catch {}
         }
       } else if (ext === '.apk') {
-        const icons = names.filter((n) => /^res\/(mipmap|drawable)[^/]*\/(ic_launcher|app_icon|icon)[^/]*\.png$/i.test(n));
+        const isImage = (n: string) => /\.(png|webp|jpg|jpeg)$/i.test(n);
+        const isLauncher = (n: string) => /(ic_launcher|app_icon|game_icon|icon|logo)/i.test(path.basename(n)) &&
+          !n.includes('notification') && !n.includes('status') && !n.includes('small');
+
+        let icons = names.filter((n) => isImage(n) && /^res\/(mipmap|drawable)/i.test(n) && isLauncher(n));
         if (!icons.length) {
-          const anyLauncher = names.filter((n) => n.endsWith('.png') && (n.includes('ic_launcher') || n.includes('app_icon')));
-          if (anyLauncher.length) icons.push(...anyLauncher);
+          icons = names.filter((n) => isImage(n) && isLauncher(n));
+        }
+        if (!icons.length) {
+          icons = names.filter((n) => isImage(n) && /^res\/(mipmap|drawable)/i.test(n));
         }
         if (!icons.length) return undefined;
 
         icons.sort((a, b) => {
           const rank = (s: string) => {
-            if (s.includes('xxxhdpi')) return 5;
-            if (s.includes('xxhdpi')) return 4;
-            if (s.includes('xhdpi')) return 3;
-            if (s.includes('hdpi')) return 2;
-            if (s.includes('mdpi')) return 1;
-            return 0;
+            let score = 0;
+            const lower = s.toLowerCase();
+            if (lower.includes('ic_launcher') || lower.includes('app_icon')) score += 100;
+            if (lower.includes('round')) score -= 5;
+            if (lower.includes('foreground')) score -= 20;
+            if (lower.includes('background')) score -= 30;
+            if (lower.includes('xxxhdpi')) score += 50;
+            else if (lower.includes('xxhdpi')) score += 40;
+            else if (lower.includes('xhdpi')) score += 30;
+            else if (lower.includes('hdpi')) score += 20;
+            else if (lower.includes('mdpi')) score += 10;
+            if (lower.endsWith('.png')) score += 2;
+            return score;
           };
           return rank(b) - rank(a);
         });
@@ -111,9 +131,9 @@ export async function packageIcon(file: string, cacheDir: string, installedPath?
         for (const name of icons) {
           try {
             const buf = await read(name);
-            if (buf && buf.length > 500) {
+            if (buf && buf.length > 50) {
               await fs.writeFile(cachedFile, buf);
-              return `data:image/png;base64,${buf.toString('base64')}`;
+              return `data:${mimeFromBuffer(buf)};base64,${buf.toString('base64')}`;
             }
           } catch {}
         }
@@ -135,10 +155,35 @@ export async function packageIcon(file: string, cacheDir: string, installedPath?
         if (iconName) {
           try {
             const buf = await read(iconName);
-            if (buf && buf.length > 100) {
+            if (buf && buf.length > 50) {
               await fs.writeFile(cachedFile, buf);
-              const mime = iconName.toLowerCase().endsWith('.webp') ? 'image/webp' : iconName.toLowerCase().endsWith('.jpg') ? 'image/jpeg' : 'image/png';
-              return `data:${mime};base64,${buf.toString('base64')}`;
+              return `data:${mimeFromBuffer(buf)};base64,${buf.toString('base64')}`;
+            }
+          } catch {}
+        }
+
+        // Fallback: If no top-level icon in XAPK, extract the icon from the inner APK!
+        const innerApks = names.filter((n) => n.endsWith('.apk'));
+        if (innerApks.length > 0) {
+          const mainApkName = innerApks.find((n) => n === 'base.apk' || n.toLowerCase().includes('base')) || innerApks[0];
+          try {
+            const tempDir = path.join(cacheDir, `inner_${hash}`);
+            await fs.mkdir(tempDir, { recursive: true });
+            if (process.platform === 'darwin' || process.platform === 'linux') {
+              await execute('/usr/bin/unzip', ['-j', '-o', file, mainApkName, '-d', tempDir], { timeout: 30000 });
+              const extractedApk = path.join(tempDir, path.basename(mainApkName));
+              if (existsSync(extractedApk)) {
+                try {
+                  const innerIcon = await packageIcon(extractedApk, cacheDir);
+                  if (innerIcon) {
+                    const outBuf = Buffer.from(innerIcon.split(',')[1], 'base64');
+                    await fs.writeFile(cachedFile, outBuf);
+                    return innerIcon;
+                  }
+                } finally {
+                  await fs.rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
+                }
+              }
             }
           } catch {}
         }
