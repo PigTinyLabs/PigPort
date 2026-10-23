@@ -1061,6 +1061,140 @@
       line-height: 1.8;
     }
 
+    /* Control Settings Guide Section Styles */
+    .ctrl-mockup-window {
+      background: #11141c;
+      border: 1px solid #2e3544;
+      border-radius: 18px;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+      overflow: hidden;
+      margin-bottom: 36px;
+    }
+    .ctrl-mockup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid #232a38;
+      background: #161a24;
+    }
+    .ctrl-mockup-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr 240px;
+      gap: 0;
+      background: #0d1017;
+      min-height: 380px;
+    }
+    @media (max-width: 992px) {
+      .ctrl-mockup-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .ctrl-mockup-col {
+      padding: 16px;
+      border-right: 1px solid #232a38;
+    }
+    .ctrl-mockup-col:last-child {
+      border-right: none;
+      border-left: 1px solid #232a38;
+    }
+    .ctrl-pill-btn {
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      background: #181d28;
+      border: 1px solid #2c3342;
+      color: #cbd5e1;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: left;
+    }
+    .ctrl-pill-btn.active {
+      background: rgba(255, 156, 74, 0.15);
+      border-color: #ff9c4a;
+      color: #ffb573;
+    }
+    .ctrl-screen-preview {
+      position: relative;
+      background: #090c12 radial-gradient(#1f2737 1px, transparent 1px);
+      background-size: 18px 18px;
+      border-radius: 12px;
+      border: 1px solid #283142;
+      height: 300px;
+      margin: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .ctrl-stage-marker {
+      position: absolute;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-weight: 700;
+      color: #fff;
+      font-size: 0.72rem;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    }
+    .ctrl-stage-joystick {
+      width: 110px;
+      height: 110px;
+      background: rgba(180, 83, 9, 0.85);
+      border: 2px solid #ff9c4a;
+      box-shadow: 0 0 20px rgba(255, 156, 74, 0.35);
+      left: 20%;
+      bottom: 12%;
+    }
+    .ctrl-stage-button {
+      width: 44px;
+      height: 44px;
+      background: rgba(24, 32, 47, 0.9);
+      border: 2px solid rgba(255,255,255,0.7);
+      right: 22%;
+      bottom: 24%;
+    }
+    .ctrl-stage-camera {
+      width: 80px;
+      height: 80px;
+      border-radius: 16px;
+      border: 2px dashed #38bdf8;
+      background: rgba(14, 116, 144, 0.35);
+      color: #38bdf8;
+      right: 18%;
+      top: 18%;
+    }
+    .ctrl-guide-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+    .ctrl-guide-card:hover {
+      border-color: rgba(255, 156, 74, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+    .ctrl-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(255, 156, 74, 0.15);
+      color: #ff9c4a;
+      border: 1px solid rgba(255, 156, 74, 0.3);
+      margin-bottom: 12px;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .nav-links { display: none; }
@@ -1085,6 +1219,7 @@
         <a href="#downloads" data-i18n="nav.downloads">Downloads</a>
         <a href="#features" data-i18n="nav.features">Features</a>
         <a href="#packages-guide" data-i18n="nav.packages">Get Games (.IPA / .APK)</a>
+        <a href="#controls-guide" data-i18n="nav.controls">Controls Guide</a>
         <a href="#comparison" data-i18n="nav.comparison">Comparison</a>
         <a href="#how-it-works" data-i18n="nav.guide">Quick Start</a>
         <a href="#faq" data-i18n="nav.faq">FAQ</a>
@@ -1435,6 +1570,133 @@
     </div>
   </section>
 
+  <!-- Controls Settings & Keymapping Guide Section -->
+  <section id="controls-guide" style="background: rgba(0, 0, 0, 0.3); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="ctrlguide.tag">Visual Keymapping & Controls</span>
+        <h2 class="section-title" data-i18n="ctrlguide.title">How to Configure Keyboard, Mouse & Gamepad</h2>
+        <p class="section-subtitle" data-i18n="ctrlguide.subtitle">
+          Turn any mobile game into a native PC title. Set up WASD movement, Numpad keys, 360° mouse look camera, and controllers in seconds with live game snapshots.
+        </p>
+      </div>
+
+      <!-- Live Mockup of Control Settings Dialog matching in-game UI -->
+      <div class="ctrl-mockup-window">
+        <div class="ctrl-mockup-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-weight: 700; color: #fff; font-size: 0.95rem;" data-i18n="ctrlguide.modal_title">Control settings</span>
+            <span style="padding: 2px 10px; border-radius: 999px; background: rgba(244,143,177,0.15); color: #f48fb1; font-size: 0.78rem; font-weight: 600; border: 1px solid rgba(244,143,177,0.3);">🎮 Identity V</span>
+          </div>
+          <span style="color: #64748b; font-size: 0.8rem; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px;" data-i18n="ctrlguide.shortcut_hint">Press ⌘K in-game</span>
+        </div>
+
+        <div class="ctrl-mockup-grid">
+          <!-- Left Col: Tools -->
+          <div class="ctrl-mockup-col">
+            <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #64748b; display: block; margin-bottom: 8px;" data-i18n="ctrlguide.add_ctrl">Add a control</span>
+            <button class="ctrl-pill-btn">+ Key button</button>
+            <button class="ctrl-pill-btn">+ WASD joystick</button>
+            <button class="ctrl-pill-btn">+ Numpad joystick</button>
+            <button class="ctrl-pill-btn">+ Mouse look</button>
+            <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #64748b; display: block; margin: 14px 0 8px;" data-i18n="ctrlguide.presets">Starter layouts</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+              <button class="ctrl-pill-btn" style="text-align: center; margin: 0;">MOBA</button>
+              <button class="ctrl-pill-btn" style="text-align: center; margin: 0;">FPS</button>
+            </div>
+          </div>
+
+          <!-- Center Col: Preview Stage -->
+          <div style="padding: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <div class="ctrl-screen-preview">
+              <!-- Joystick marker -->
+              <div class="ctrl-stage-marker ctrl-stage-joystick">
+                <span style="font-size: 0.8rem;">D-pad ↑</span>
+                <span style="font-size: 0.72rem; opacity: 0.85;">D-pad ←  D-pad →</span>
+                <span style="font-size: 0.8rem;">D-pad ↓</span>
+              </div>
+              <!-- Key buttons -->
+              <div class="ctrl-stage-marker ctrl-stage-button">Space</div>
+              <div class="ctrl-stage-marker ctrl-stage-button" style="right: 12%; bottom: 15%;">LMB</div>
+              <!-- Camera marker -->
+              <div class="ctrl-stage-marker ctrl-stage-camera">
+                <span>🎯</span>
+                <span style="font-size: 0.7rem;">Mouse Look</span>
+              </div>
+            </div>
+            <p style="text-align: center; font-size: 0.78rem; color: #64748b; margin: 0;" data-i18n="ctrlguide.preview_hint">
+              Drag controls to match on-screen buttons • Double-click a button to bind keys
+            </p>
+          </div>
+
+          <!-- Right Col: Properties -->
+          <div class="ctrl-mockup-col">
+            <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #64748b; display: block; margin-bottom: 8px;" data-i18n="ctrlguide.props">Selected joystick</span>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 12px;">
+              <span style="background: #1e2535; padding: 4px; border-radius: 4px; text-align: center; font-size: 0.7rem; color: #cbd5e1; font-weight: 700;">WASD</span>
+              <span style="background: #1e2535; padding: 4px; border-radius: 4px; text-align: center; font-size: 0.7rem; color: #cbd5e1; font-weight: 700;">Numpad</span>
+              <span style="background: #1e2535; padding: 4px; border-radius: 4px; text-align: center; font-size: 0.7rem; color: #cbd5e1; font-weight: 700;">Arrows</span>
+              <span style="background: rgba(255,156,74,0.2); border: 1px solid #ff9c4a; padding: 4px; border-radius: 4px; text-align: center; font-size: 0.7rem; color: #ff9c4a; font-weight: 700;">D-pad</span>
+            </div>
+            <div style="background: #151a24; padding: 8px; border-radius: 6px; border: 1px solid #232a38; font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span>Horizontal X:</span> <strong style="color: #fff;">16.7%</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Vertical Y:</span> <strong style="color: #fff;">75.2%</strong>
+              </div>
+            </div>
+            <div style="margin-top: 10px;">
+              <span style="font-size: 0.72rem; color: #94a3b8; display: block; margin-bottom: 4px;">Controller stick:</span>
+              <span style="display: block; background: #1e2433; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; color: #ffb573; border: 1px solid #ff9c4a44;">Left stick (L-Stick)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Actionable Guides Grid -->
+      <div class="steps-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+        <!-- Step 1 -->
+        <div class="ctrl-guide-card">
+          <div class="ctrl-badge" data-i18n="ctrlguide.s1_badge">Step 1</div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 10px;" data-i18n="ctrlguide.s1_title">Open Controls Editor</h3>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;" data-i18n="ctrlguide.s1_desc">
+            Press <strong>⌘K</strong> (Command+K) anytime during gameplay, or click <strong>Controls</strong> on the title bar. PigPort captures a real-time snapshot of the game screen so you can place controls with pixel perfection.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="ctrl-guide-card">
+          <div class="ctrl-badge" data-i18n="ctrlguide.s2_badge">Step 2</div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 10px;" data-i18n="ctrlguide.s2_title">Add & Map Control Types</h3>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;" data-i18n="ctrlguide.s2_desc">
+            • <strong>WASD / Numpad Joystick:</strong> Drag onto the game movement pad.<br>
+            • <strong>Key Buttons:</strong> Double-click to assign keyboard keys or mouse clicks (LMB/RMB).<br>
+            • <strong>Mouse Look:</strong> Enables 360° first/third-person FPS camera rotation.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="ctrl-guide-card">
+          <div class="ctrl-badge" data-i18n="ctrlguide.s3_badge">Step 3</div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 10px;" data-i18n="ctrlguide.s3_title">Gamepad & Starter Presets</h3>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;" data-i18n="ctrlguide.s3_desc">
+            Select <strong>MOBA</strong> (Honor of Kings/Wild Rift) or <strong>FPS</strong> (Identity V/Shooters) starter layouts. Plug in Xbox, PlayStation DualSense, or Bluetooth gamepads to map sticks, D-pad, and triggers.
+          </p>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="ctrl-guide-card">
+          <div class="ctrl-badge" data-i18n="ctrlguide.s4_badge">Step 4</div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 10px;" data-i18n="ctrlguide.s4_title">Save & Share Profiles</h3>
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;" data-i18n="ctrlguide.s4_desc">
+            Click <strong>Save controls</strong> to apply immediately. Use <strong>Export draft</strong> to generate portable <code>.json</code> keymap files to share with teammates, or <strong>Import</strong> profiles from the community.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Comparison Section -->
   <section id="comparison">
     <div class="container">
@@ -1698,6 +1960,7 @@
         "nav.downloads": "Downloads",
         "nav.features": "Features",
         "nav.packages": "Get Games (.IPA / .APK)",
+        "nav.controls": "Control Settings",
         "nav.comparison": "Comparison",
         "nav.guide": "Quick Start",
         "nav.faq": "FAQ",
@@ -1819,12 +2082,34 @@
         "modal.key_skills": "Skills & Sprint",
         "modal.key_cam": "360° Camera",
         "modal.ctrl_desc": "PigPort translates physical Mac keyboard keystrokes and mouse movements into multi-touch events in real time with zero perceived latency.",
-        "modal.trykeymap": "Get PigPort to Try Keymapping"
+        "modal.trykeymap": "Get PigPort to Try Keymapping",
+        "ctrlguide.tag": "Visual Keymapping & Controls",
+        "ctrlguide.title": "How to Configure Keyboard, Mouse & Gamepad",
+        "ctrlguide.subtitle": "Turn any mobile game into a native PC title. Set up WASD movement, Numpad keys, 360° mouse look camera, and controllers in seconds with live game snapshots.",
+        "ctrlguide.modal_title": "Control settings",
+        "ctrlguide.shortcut_hint": "Press ⌘K in-game",
+        "ctrlguide.add_ctrl": "Add a control",
+        "ctrlguide.presets": "Starter layouts",
+        "ctrlguide.preview_hint": "Drag controls to match on-screen buttons • Double-click a button to bind keys",
+        "ctrlguide.props": "Selected joystick",
+        "ctrlguide.s1_badge": "Step 1",
+        "ctrlguide.s1_title": "Open Controls Editor",
+        "ctrlguide.s1_desc": "Press <strong>⌘K</strong> (Command+K) anytime during gameplay, or click <strong>Controls</strong> on the title bar. PigPort captures a real-time snapshot of the game screen so you can place controls with pixel perfection.",
+        "ctrlguide.s2_badge": "Step 2",
+        "ctrlguide.s2_title": "Add & Map Control Types",
+        "ctrlguide.s2_desc": "• <strong>WASD / Numpad Joystick:</strong> Drag onto the game movement pad.<br>• <strong>Key Buttons:</strong> Double-click to assign keyboard keys or mouse clicks (LMB/RMB).<br>• <strong>Mouse Look:</strong> Enables 360° first/third-person FPS camera rotation.",
+        "ctrlguide.s3_badge": "Step 3",
+        "ctrlguide.s3_title": "Gamepad & Starter Presets",
+        "ctrlguide.s3_desc": "Select <strong>MOBA</strong> (Honor of Kings/Wild Rift) or <strong>FPS</strong> (Identity V/Shooters) starter layouts. Plug in Xbox, PlayStation DualSense, or Bluetooth gamepads to map sticks, D-pad, and triggers.",
+        "ctrlguide.s4_badge": "Step 4",
+        "ctrlguide.s4_title": "Save & Share Profiles",
+        "ctrlguide.s4_desc": "Click <strong>Save controls</strong> to apply immediately. Use <strong>Export draft</strong> to generate portable <code>.json</code> keymap files to share with teammates, or <strong>Import</strong> profiles from the community."
       },
       vi: {
         "nav.downloads": "Tải về",
         "nav.features": "Tính năng",
         "nav.packages": "Tìm Tải Game (.IPA / .APK)",
+        "nav.controls": "Cài đặt phím",
         "nav.comparison": "So sánh",
         "nav.guide": "Hướng dẫn",
         "nav.faq": "Hỏi đáp",
@@ -1946,7 +2231,28 @@
         "modal.key_skills": "Chiêu thức & Lướt",
         "modal.key_cam": "Xoay Camera 360°",
         "modal.ctrl_desc": "PigPort chuyển đổi thao tác phím và di chuột trên Mac thành cảm ứng đa điểm trong thời gian thực với độ trễ cực thấp.",
-        "modal.trykeymap": "Tải PigPort để gán phím"
+        "modal.trykeymap": "Tải PigPort để gán phím",
+        "ctrlguide.tag": "Gán phím thông minh (Keymapping)",
+        "ctrlguide.title": "Hướng Dẫn Cài Đặt Bàn Phím, Chuột & Tay Cầm",
+        "ctrlguide.subtitle": "Biến mọi tựa game di động thành trải nghiệm PC thực thụ. Tùy chỉnh cần gạt di chuyển WASD, cụm phím số Numpad, xoay chuột 360° và tay cầm Gamepad với ảnh chụp màn hình game trực quan.",
+        "ctrlguide.modal_title": "Cài đặt phím điều khiển",
+        "ctrlguide.shortcut_hint": "Bấm ⌘K khi đang chơi game",
+        "ctrlguide.add_ctrl": "Thêm phím mới",
+        "ctrlguide.presets": "Bố cục mẫu",
+        "ctrlguide.preview_hint": "Kéo thả nút phím tương ứng với vị trí trong game • Nhấp đúp vào nút để gán phím",
+        "ctrlguide.props": "Cần gạt Joystick đang chọn",
+        "ctrlguide.s1_badge": "Bước 1",
+        "ctrlguide.s1_title": "Mở trình cài đặt phím",
+        "ctrlguide.s1_desc": "Nhấn tổ hợp phím <strong>⌘K</strong> (Command+K) bất kỳ lúc nào khi đang chơi, hoặc nhấp vào nút <strong>Controls (Phím ảo)</strong>. PigPort sẽ tự động chụp ảnh màn hình game hiện tại làm nền giúp bạn căn chỉnh phím chuẩn xác 100%.",
+        "ctrlguide.s2_badge": "Bước 2",
+        "ctrlguide.s2_title": "Thêm & Gán các nút phím",
+        "ctrlguide.s2_desc": "• <strong>Joystick WASD / Numpad:</strong> Kéo vào vị trí cần di chuyển (hỗ trợ cả 8-4-2-6 bàn phím số).<br>• <strong>Nút phím đơn:</strong> Nhấp đúp để gán phím bàn phím hoặc chuột (LMB, RMB).<br>• <strong>Góc nhìn chuột (Mouse look):</strong> Bật tắt xoay camera 360° tự do như game FPS.",
+        "ctrlguide.s3_badge": "Bước 3",
+        "ctrlguide.s3_title": "Bố cục mẫu & Tay cầm Gamepad",
+        "ctrlguide.s3_desc": "Chọn ngay bố cục mẫu <strong>MOBA</strong> (Liên Quân, Tốc Chiến) hoặc <strong>FPS</strong> (Identity V, Free Fire). Kết nối tay cầm Xbox, PlayStation DualSense hoặc Bluetooth để gán cần Analog, D-pad và các nút cò.",
+        "ctrlguide.s4_badge": "Bước 4",
+        "ctrlguide.s4_title": "Lưu & Chia sẻ cấu hình phím",
+        "ctrlguide.s4_desc": "Nhấp <strong>Lưu cài đặt phím</strong> để áp dụng ngay. Bạn có thể bấm <strong>Xuất bản nháp (Export draft)</strong> để xuất file <code>.json</code> chia sẻ cho bạn bè, hoặc bấm <strong>Nhập cấu hình (Import)</strong> để dùng profile của người khác."
       }
     };
 
