@@ -1,11 +1,24 @@
-// Keymap profiles for the Android player.
+// Keymap profiles, shared by the Android player and the iOS input layer.
 //
 // Coordinates are normalized to the game's content area (0..1 on each axis),
 // so one profile keeps working when the window or stream resolution changes.
 // Keys use KeyboardEvent.code names ("KeyW", "Space", ...) plus the pseudo
-// codes MouseLeft / MouseRight / MouseMiddle.
+// codes MouseLeft / MouseRight / MouseMiddle and Pad* for controller buttons.
 
 export type KeyCode = string;
+
+/** Controller buttons in the W3C "standard" gamepad order (index = Gamepad.buttons index). */
+export const PAD_BUTTONS = ['PadA', 'PadB', 'PadX', 'PadY', 'PadLB', 'PadRB', 'PadLT', 'PadRT',
+  'PadBack', 'PadStart', 'PadL3', 'PadR3', 'PadUp', 'PadDown', 'PadLeft', 'PadRight'] as const;
+
+export type Stick = 'left' | 'right';
+
+export interface GamepadSettings {
+  /** Stick deflection ignored around the centre, 0..1. */
+  deadzone: number;
+  /** Camera turn speed for a full stick deflection, in content heights per second. */
+  lookSpeed: number;
+}
 
 export interface ButtonElement {
   type: 'button';
@@ -24,6 +37,8 @@ export interface JoystickElement {
   y: number;
   /** Thumb travel, as a fraction of the content height. */
   radius: number;
+  /** Controller stick that also drives this joystick, proportionally. */
+  stick?: Stick;
 }
 
 export interface CameraElement {
@@ -34,6 +49,8 @@ export interface CameraElement {
   radius: number;
   /** Touch pixels moved per mouse pixel. */
   sensitivity: number;
+  /** Controller stick that turns the camera. */
+  stick?: Stick;
 }
 
 export type KeymapElement = ButtonElement | JoystickElement | CameraElement;
@@ -43,10 +60,17 @@ export interface Keymap {
   /** Key that toggles mouse-look (pointer lock / hidden cursor). */
   mouseLookToggle: KeyCode;
   elements: KeymapElement[];
+  gamepad?: GamepadSettings;
 }
+
+export const DEFAULT_GAMEPAD: GamepadSettings = { deadzone: 0.15, lookSpeed: 1.2 };
 
 export function emptyKeymap(): Keymap {
   return { version: 1, mouseLookToggle: 'Backquote', elements: [] };
+}
+
+function parseStick(v: unknown): Stick | undefined {
+  return v === 'left' || v === 'right' ? v : undefined;
 }
 
 export function parseKeymap(text: string): Keymap {
@@ -66,12 +90,21 @@ export function parseKeymap(text: string): Keymap {
         up: String(e.up ?? 'KeyW'), down: String(e.down ?? 'KeyS'),
         left: String(e.left ?? 'KeyA'), right: String(e.right ?? 'KeyD'),
         radius: positive(e.radius, 0.1),
+        ...(parseStick(e.stick) ? { stick: parseStick(e.stick) } : {}),
       });
     } else if (e.type === 'camera') {
-      elements.push({ type: 'camera', x, y, radius: positive(e.radius, 0.2), sensitivity: positive(e.sensitivity, 1) });
+      elements.push({ type: 'camera', x, y, radius: positive(e.radius, 0.2), sensitivity: positive(e.sensitivity, 1),
+        ...(parseStick(e.stick) ? { stick: parseStick(e.stick) } : {}) });
     }
   }
-  return { version: 1, mouseLookToggle: String(raw.mouseLookToggle ?? 'Backquote'), elements };
+  const map: Keymap = { version: 1, mouseLookToggle: String(raw.mouseLookToggle ?? 'Backquote'), elements };
+  if (raw.gamepad && typeof raw.gamepad === 'object') {
+    map.gamepad = {
+      deadzone: Math.min(0.6, Math.max(0.02, positive(raw.gamepad.deadzone, DEFAULT_GAMEPAD.deadzone))),
+      lookSpeed: Math.min(5, Math.max(0.1, positive(raw.gamepad.lookSpeed, DEFAULT_GAMEPAD.lookSpeed))),
+    };
+  }
+  return map;
 }
 
 function clamp01(v: number): number {
@@ -133,28 +166,75 @@ export class TouchMapper {
     const out: TouchEvent[] = [];
     this.map.elements.forEach((e, i) => {
       if (e.type !== 'camera') return;
-      const id = this.pointerId(i);
-      const cx = e.x * this.width;
-      const cy = e.y * this.height;
-      let cur = this.active.get(id);
-      if (!cur) {
-        cur = { x: cx, y: cy };
-        this.active.set(id, cur);
-        out.push({ action: 'down', pointerId: id, x: cx, y: cy });
-      }
-      cur.x += dx * e.sensitivity;
-      cur.y += dy * e.sensitivity;
-      const limit = e.radius * this.height;
-      if (Math.hypot(cur.x - cx, cur.y - cy) > limit) {
-        // Out of drag room: lift and start a fresh drag from the centre.
-        out.push({ action: 'up', pointerId: id, x: cur.x, y: cur.y });
-        this.active.set(id, { x: cx, y: cy });
-        out.push({ action: 'down', pointerId: id, x: cx, y: cy });
-      } else {
-        out.push({ action: 'move', pointerId: id, x: cur.x, y: cur.y });
-      }
+      out.push(...this.dragCamera(e, i, dx * e.sensitivity, dy * e.sensitivity));
       this.cameraLastMove = now;
     });
+    return out;
+  }
+
+  /**
+   * Controller stick position (-1..1 per axis, y down), called every frame while a
+   * controller is connected. Joysticks bound to the stick follow it proportionally;
+   * cameras bound to it turn at the profile's look speed. dtMs: time since the last call.
+   */
+  stick(which: Stick, x: number, y: number, now: number, dtMs: number): TouchEvent[] {
+    const { deadzone, lookSpeed } = this.map.gamepad ?? DEFAULT_GAMEPAD;
+    const length = Math.hypot(x, y);
+    const amount = length <= deadzone ? 0 : Math.min(1, (length - deadzone) / (1 - deadzone));
+    const ux = amount ? (x / length) * amount : 0;
+    const uy = amount ? (y / length) * amount : 0;
+    const out: TouchEvent[] = [];
+    this.map.elements.forEach((e, i) => {
+      if (e.type === 'button' || e.stick !== which) return;
+      const id = this.pointerId(i);
+      if (e.type === 'camera') {
+        if (!amount) return; // tick() lifts the finger once the stick rests
+        const step = lookSpeed * this.height * e.sensitivity * Math.min(dtMs, 100) / 1000;
+        out.push(...this.dragCamera(e, i, ux * step, uy * step));
+        this.cameraLastMove = now;
+        return;
+      }
+      // Held joystick keys take precedence over the stick.
+      if ([e.up, e.down, e.left, e.right].some((k) => this.pressed.has(k))) return;
+      const cur = this.active.get(id);
+      if (!amount) {
+        if (cur) {
+          this.active.delete(id);
+          out.push({ action: 'up', pointerId: id, x: cur.x, y: cur.y });
+        }
+        return;
+      }
+      const r = e.radius * this.height;
+      const target = { x: e.x * this.width + ux * r, y: e.y * this.height + uy * r };
+      if (!cur) out.push({ action: 'down', pointerId: id, x: e.x * this.width, y: e.y * this.height });
+      else if (Math.hypot(target.x - cur.x, target.y - cur.y) < 0.5) return;
+      this.active.set(id, target);
+      out.push({ action: 'move', pointerId: id, x: target.x, y: target.y });
+    });
+    return out;
+  }
+
+  private dragCamera(e: CameraElement, index: number, dx: number, dy: number): TouchEvent[] {
+    const out: TouchEvent[] = [];
+    const id = this.pointerId(index);
+    const cx = e.x * this.width;
+    const cy = e.y * this.height;
+    let cur = this.active.get(id);
+    if (!cur) {
+      cur = { x: cx, y: cy };
+      this.active.set(id, cur);
+      out.push({ action: 'down', pointerId: id, x: cx, y: cy });
+    }
+    cur.x += dx;
+    cur.y += dy;
+    if (Math.hypot(cur.x - cx, cur.y - cy) > e.radius * this.height) {
+      // Out of drag room: lift and start a fresh drag from the centre.
+      out.push({ action: 'up', pointerId: id, x: cur.x, y: cur.y });
+      this.active.set(id, { x: cx, y: cy });
+      out.push({ action: 'down', pointerId: id, x: cx, y: cy });
+    } else {
+      out.push({ action: 'move', pointerId: id, x: cur.x, y: cur.y });
+    }
     return out;
   }
 

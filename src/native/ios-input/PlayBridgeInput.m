@@ -9,6 +9,7 @@
 // Native input mapping and window management implementation.
 
 #import <UIKit/UIKit.h>
+#import <GameController/GameController.h>
 #import <QuartzCore/QuartzCore.h>
 #import <Security/Security.h>
 #include <dlfcn.h>
@@ -125,7 +126,7 @@ static const struct { unsigned short key; const char *code; } kKeys[] = {
   {0x32, "Backquote"}, {0x33, "Backspace"}, {0x35, "Escape"}, {0x36, "MetaRight"}, {0x37, "MetaLeft"},
   {0x38, "ShiftLeft"}, {0x39, "CapsLock"}, {0x3A, "AltLeft"}, {0x3B, "ControlLeft"}, {0x3C, "ShiftRight"},
   {0x3D, "AltRight"}, {0x3E, "ControlRight"}, {0x41, "NumpadDecimal"}, {0x43, "NumpadMultiply"}, {0x45, "NumpadAdd"},
-  {0x4B, "NumpadDivide"}, {0x4C, "NumpadEnter"}, {0x4E, "NumpadSubtract"}, {0x51, "NumpadEqual"},
+  {0x47, "NumpadClear"}, {0x4B, "NumpadDivide"}, {0x4C, "NumpadEnter"}, {0x4E, "NumpadSubtract"}, {0x51, "NumpadEqual"},
   {0x52, "Numpad0"}, {0x53, "Numpad1"}, {0x54, "Numpad2"}, {0x55, "Numpad3"}, {0x56, "Numpad4"}, {0x57, "Numpad5"},
   {0x58, "Numpad6"}, {0x59, "Numpad7"}, {0x5B, "Numpad8"}, {0x5C, "Numpad9"}, {0x60, "F5"}, {0x61, "F6"},
   {0x62, "F7"}, {0x63, "F3"}, {0x64, "F8"}, {0x65, "F9"}, {0x67, "F11"}, {0x6D, "F10"}, {0x6F, "F12"},
@@ -156,11 +157,17 @@ static NSString *PBKeyLabel(NSString *code) {
     @"CapsLock": @"Caps", @"Minus": @"-", @"Equal": @"=", @"BracketLeft": @"[", @"BracketRight": @"]",
     @"Backslash": @"\\", @"Semicolon": @";", @"Quote": @"'", @"Comma": @",", @"Period": @".", @"Slash": @"/",
     @"MouseLeft": @"LMB", @"MouseRight": @"RMB", @"MouseMiddle": @"MMB",
+    @"PadA": @"Pad A", @"PadB": @"Pad B", @"PadX": @"Pad X", @"PadY": @"Pad Y", @"PadLB": @"LB", @"PadRB": @"RB",
+    @"PadLT": @"LT", @"PadRT": @"RT", @"PadBack": @"View", @"PadStart": @"Menu", @"PadL3": @"L3", @"PadR3": @"R3",
+    @"PadUp": @"D-pad ↑", @"PadDown": @"D-pad ↓", @"PadLeft": @"D-pad ←", @"PadRight": @"D-pad →",
+    @"NumpadDecimal": @"Num .", @"NumpadMultiply": @"Num *", @"NumpadAdd": @"Num +",
+    @"NumpadDivide": @"Num /", @"NumpadEnter": @"Num ↵", @"NumpadSubtract": @"Num -", @"NumpadEqual": @"Num =",
+    @"NumpadClear": @"Num Clear",
   };
   if (names[code]) return names[code];
   if ([code hasPrefix:@"Key"]) return [code substringFromIndex:3];
   if ([code hasPrefix:@"Digit"]) return [code substringFromIndex:5];
-  if ([code hasPrefix:@"Numpad"]) return [@"Num" stringByAppendingString:[code substringFromIndex:6]];
+  if ([code hasPrefix:@"Numpad"]) return [@"Num " stringByAppendingString:[code substringFromIndex:6]];
   return code;
 }
 
@@ -195,6 +202,8 @@ static NSString *PBString(id value, NSString *fallback) {
 @interface PBKeymap : NSObject <NSCopying>
 @property (nonatomic, copy) NSString *lookToggle;
 @property (nonatomic, strong) NSMutableArray<NSMutableDictionary *> *elements;
+/// Controller settings: @"deadzone" and @"lookSpeed" (see GamepadSettings in keymap.ts); nil = defaults.
+@property (nonatomic, copy) NSDictionary *gamepad;
 + (instancetype)loadFrom:(NSString *)path;
 - (BOOL)saveTo:(NSString *)path error:(NSError **)error;
 - (BOOL)binds:(NSString *)code;
@@ -222,7 +231,12 @@ static NSString *PBString(id value, NSString *fallback) {
       clean[@"radius"] = @(PBPositive(e[@"radius"], 0.2));
       clean[@"sensitivity"] = @(PBPositive(e[@"sensitivity"], 1));
     } else continue;
+    if (![clean[@"type"] isEqual:@"button"] && ([e[@"stick"] isEqual:@"left"] || [e[@"stick"] isEqual:@"right"])) clean[@"stick"] = e[@"stick"];
     [map.elements addObject:clean];
+  }
+  if ([raw[@"gamepad"] isKindOfClass:NSDictionary.class]) {
+    map.gamepad = @{ @"deadzone": @(fmin(0.6, fmax(0.02, PBPositive(raw[@"gamepad"][@"deadzone"], 0.15)))),
+                     @"lookSpeed": @(fmin(5, fmax(0.1, PBPositive(raw[@"gamepad"][@"lookSpeed"], 1.2)))) };
   }
   return map;
 }
@@ -230,14 +244,16 @@ static NSString *PBString(id value, NSString *fallback) {
 - (id)copyWithZone:(NSZone *)zone {
   PBKeymap *copy = [PBKeymap new];
   copy.lookToggle = self.lookToggle;
+  copy.gamepad = self.gamepad;
   copy.elements = [NSMutableArray array];
   for (NSDictionary *e in self.elements) [copy.elements addObject:[e mutableCopy]];
   return copy;
 }
 
 - (BOOL)saveTo:(NSString *)path error:(NSError **)error {
-  NSData *data = [NSJSONSerialization dataWithJSONObject:@{ @"version": @1, @"mouseLookToggle": self.lookToggle, @"elements": self.elements }
-                                                 options:NSJSONWritingPrettyPrinted error:error];
+  NSMutableDictionary *json = [@{ @"version": @1, @"mouseLookToggle": self.lookToggle, @"elements": self.elements } mutableCopy];
+  if (self.gamepad) json[@"gamepad"] = self.gamepad;
+  NSData *data = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:error];
   if (!data) return NO;
   if (![NSFileManager.defaultManager createDirectoryAtPath:path.stringByDeletingLastPathComponent withIntermediateDirectories:YES attributes:nil error:error]) return NO;
   return [data writeToFile:path options:NSDataWritingAtomic error:error];
@@ -338,6 +354,8 @@ static NSString *PBString(id value, NSString *fallback) {
 - (void)keyDown:(NSString *)code;
 - (void)keyUp:(NSString *)code;
 - (void)mouseMoveX:(double)dx y:(double)dy;
+/// Controller stick (-1..1, y down); dt in seconds since the last call.
+- (void)stick:(NSString *)which x:(double)x y:(double)y dt:(double)dt;
 - (void)tick;
 - (void)releaseAll;
 @end
@@ -406,20 +424,58 @@ static NSInteger PBPointer(NSUInteger index) { return (NSInteger)index + 1; }
   CGSize size = self.size;
   [self.map.elements enumerateObjectsUsingBlock:^(NSMutableDictionary *e, NSUInteger i, BOOL *stop) {
     if (![e[@"type"] isEqual:@"camera"]) return;
-    NSInteger ident = PBPointer(i);
-    CGPoint centre = CGPointMake([e[@"x"] doubleValue] * size.width, [e[@"y"] doubleValue] * size.height);
-    if (![self->_touches isDown:ident]) [self->_touches finger:ident phase:UITouchPhaseBegan at:centre];
-    CGPoint cur = [self->_touches locationOf:ident];
     double s = [e[@"sensitivity"] doubleValue];
-    cur.x += dx * s; cur.y += dy * s;
-    if (hypot(cur.x - centre.x, cur.y - centre.y) > [e[@"radius"] doubleValue] * size.height) {
-      // Out of drag room: lift and start a fresh drag from the centre.
-      [self->_touches finger:ident phase:UITouchPhaseEnded at:cur];
-      [self->_touches finger:ident phase:UITouchPhaseBegan at:centre];
-    } else {
-      [self->_touches finger:ident phase:UITouchPhaseMoved at:cur];
+    [self dragCamera:e pointer:PBPointer(i) dx:dx * s dy:dy * s size:size];
+  }];
+}
+
+- (void)dragCamera:(NSDictionary *)e pointer:(NSInteger)ident dx:(double)dx dy:(double)dy size:(CGSize)size {
+  CGPoint centre = CGPointMake([e[@"x"] doubleValue] * size.width, [e[@"y"] doubleValue] * size.height);
+  if (![_touches isDown:ident]) [_touches finger:ident phase:UITouchPhaseBegan at:centre];
+  CGPoint cur = [_touches locationOf:ident];
+  cur.x += dx; cur.y += dy;
+  if (hypot(cur.x - centre.x, cur.y - centre.y) > [e[@"radius"] doubleValue] * size.height) {
+    // Out of drag room: lift and start a fresh drag from the centre.
+    [_touches finger:ident phase:UITouchPhaseEnded at:cur];
+    [_touches finger:ident phase:UITouchPhaseBegan at:centre];
+  } else {
+    [_touches finger:ident phase:UITouchPhaseMoved at:cur];
+  }
+  _cameraLastMove = NSProcessInfo.processInfo.systemUptime;
+}
+
+// Same rules as TouchMapper.stick in keymap.ts.
+- (void)stick:(NSString *)which x:(double)x y:(double)y dt:(double)dt {
+  double deadzone = self.map.gamepad ? [self.map.gamepad[@"deadzone"] doubleValue] : 0.15;
+  double lookSpeed = self.map.gamepad ? [self.map.gamepad[@"lookSpeed"] doubleValue] : 1.2;
+  double length = hypot(x, y);
+  double amount = length <= deadzone ? 0 : fmin(1, (length - deadzone) / (1 - deadzone));
+  double ux = amount ? x / length * amount : 0, uy = amount ? y / length * amount : 0;
+  CGSize size = self.size;
+  [self.map.elements enumerateObjectsUsingBlock:^(NSMutableDictionary *e, NSUInteger i, BOOL *stop) {
+    if (![e[@"stick"] isEqual:which]) return;
+    NSInteger ident = PBPointer(i);
+    if ([e[@"type"] isEqual:@"camera"]) {
+      if (!amount) return; // tick lifts the finger once the stick rests
+      double step = lookSpeed * size.height * [e[@"sensitivity"] doubleValue] * fmin(dt, 0.1);
+      [self dragCamera:e pointer:ident dx:ux * step dy:uy * step size:size];
+      return;
     }
-    self->_cameraLastMove = NSProcessInfo.processInfo.systemUptime;
+    // Held joystick keys take precedence over the stick.
+    for (NSString *key in @[e[@"up"], e[@"down"], e[@"left"], e[@"right"]]) if ([self->_pressed containsObject:key]) return;
+    if (!amount) {
+      if ([self->_touches isDown:ident]) [self->_touches finger:ident phase:UITouchPhaseEnded at:[self->_touches locationOf:ident]];
+      return;
+    }
+    double r = [e[@"radius"] doubleValue] * size.height;
+    CGPoint centre = CGPointMake([e[@"x"] doubleValue] * size.width, [e[@"y"] doubleValue] * size.height);
+    CGPoint target = CGPointMake(centre.x + ux * r, centre.y + uy * r);
+    if (![self->_touches isDown:ident]) [self->_touches finger:ident phase:UITouchPhaseBegan at:centre];
+    else {
+      CGPoint cur = [self->_touches locationOf:ident];
+      if (hypot(target.x - cur.x, target.y - cur.y) < 0.5) return;
+    }
+    [self->_touches finger:ident phase:UITouchPhaseMoved at:target];
   }];
 }
 
@@ -458,7 +514,7 @@ static UIColor *PBAccent(void) { return [UIColor colorWithRed:1 green:0.8 blue:0
   NSString *_slot;
   UIStackView *_toolbar;
   UILabel *_hint;
-  UIButton *_lookButton, *_sizeUp, *_sizeDown, *_sensUp, *_sensDown, *_leftClick, *_delete;
+  UIButton *_lookButton, *_sizeUp, *_sizeDown, *_sensUp, *_sensDown, *_stickButton, *_keysButton, *_leftClick, *_delete;
   NSMutableArray<UIView *> *_controls;
 }
 
@@ -485,6 +541,8 @@ static UIColor *PBAccent(void) { return [UIColor colorWithRed:1 green:0.8 blue:0
   _sizeUp = [self button:@"Bigger" action:@selector(bigger)];
   _sensDown = [self button:@"Sens −" action:@selector(slower)];
   _sensUp = [self button:@"Sens +" action:@selector(faster)];
+  _stickButton = [self button:@"Stick" action:@selector(cycleStick)];
+  _keysButton = [self button:@"Keys" action:@selector(cycleJoystickKeys)];
   _leftClick = [self button:@"Left click" action:@selector(assignLeftClick)];
   _delete = [self button:@"Delete" action:@selector(deleteSelected)];
   _lookButton = [self button:@"" action:@selector(chooseLookKey)];
@@ -545,6 +603,7 @@ static UIColor *PBAccent(void) { return [UIColor colorWithRed:1 green:0.8 blue:0
   l.textAlignment = NSTextAlignmentCenter;
   l.font = [UIFont systemFontOfSize:size > 40 ? 15 : 12 weight:UIFontWeightBold];
   l.adjustsFontSizeToFitWidth = YES;
+  l.minimumScaleFactor = 0.5;
   l.textColor = selected ? UIColor.blackColor : UIColor.whiteColor;
   l.backgroundColor = selected ? PBAccent() : [UIColor colorWithWhite:0.1 alpha:0.75];
   l.layer.cornerRadius = size / 2;
@@ -579,7 +638,8 @@ static UIColor *PBAccent(void) { return [UIColor colorWithRed:1 green:0.8 blue:0
       }
     } else {
       UILabel *title = [UILabel new];
-      title.text = [NSString stringWithFormat:@"Mouse look\n×%.2g", [e[@"sensitivity"] doubleValue]];
+      title.text = [NSString stringWithFormat:@"Mouse look\n×%.2g%@", [e[@"sensitivity"] doubleValue],
+                    e[@"stick"] ? [NSString stringWithFormat:@" · %@ stick", e[@"stick"]] : @""];
       title.numberOfLines = 2;
       title.textAlignment = NSTextAlignmentCenter;
       title.textColor = UIColor.whiteColor;
@@ -616,12 +676,16 @@ static UIColor *PBAccent(void) { return [UIColor colorWithRed:1 green:0.8 blue:0
   BOOL round = [type isEqual:@"joystick"] || [type isEqual:@"camera"];
   _sizeUp.enabled = _sizeDown.enabled = round;
   _sensUp.enabled = _sensDown.enabled = [type isEqual:@"camera"];
+  _stickButton.enabled = round;
+  [_stickButton setTitle:[@"Stick: " stringByAppendingString:e[@"stick"] ?: @"none"] forState:UIControlStateNormal];
+  _keysButton.enabled = [type isEqual:@"joystick"];
+  [_keysButton setTitle:[self joystickKeysLabel:e] forState:UIControlStateNormal];
   _leftClick.enabled = [type isEqual:@"button"];
   _delete.enabled = e != nil;
   [_lookButton setTitle:_waitingForLookKey ? @"Look key: …" : [@"Look key: " stringByAppendingString:PBKeyLabel(_map.lookToggle)] forState:UIControlStateNormal];
   if (_waitingForLookKey) _hint.text = @"Press the key that turns mouse look on and off.";
-  else if ([type isEqual:@"button"]) _hint.text = @"Press a key for this button, or right/middle click. Drag to move.";
-  else if ([type isEqual:@"joystick"]) _hint.text = _slot ? [NSString stringWithFormat:@"Press a key for %@.", _slot] : @"Click a direction to change its key. Drag to move; Bigger/Smaller change travel.";
+  else if ([type isEqual:@"button"]) _hint.text = @"Press a key or controller button for this button, or right/middle click. Drag to move.";
+  else if ([type isEqual:@"joystick"]) _hint.text = _slot ? [NSString stringWithFormat:@"Press a key for %@.", _slot] : @"Click a direction to change its key, or tap Keys to cycle WASD/Numpad/Arrows/D-pad. Drag to move.";
   else if ([type isEqual:@"camera"]) _hint.text = @"Mouse look drags from here. Bigger/Smaller change drag room, Sens ± change speed.";
   else _hint.text = [NSString stringWithFormat:@"Drag controls onto the game, click one to change it. ⌘K %@ · Esc cancel.", _canSave ? @"save" : @"apply"];
 }
@@ -653,9 +717,9 @@ static UIColor *PBAccent(void) { return [UIColor colorWithRed:1 green:0.8 blue:0
 
 - (void)addButton { [self add:[@{ @"type": @"button", @"key": @"", @"x": @0.5, @"y": @0.5 } mutableCopy]]; }
 - (void)addJoystick {
-  [self add:[@{ @"type": @"joystick", @"x": @0.2, @"y": @0.7, @"radius": @0.12, @"up": @"KeyW", @"down": @"KeyS", @"left": @"KeyA", @"right": @"KeyD" } mutableCopy]];
+  [self add:[@{ @"type": @"joystick", @"x": @0.2, @"y": @0.7, @"radius": @0.12, @"up": @"KeyW", @"down": @"KeyS", @"left": @"KeyA", @"right": @"KeyD", @"stick": @"left" } mutableCopy]];
 }
-- (void)addCamera { [self add:[@{ @"type": @"camera", @"x": @0.7, @"y": @0.45, @"radius": @0.2, @"sensitivity": @1 } mutableCopy]]; }
+- (void)addCamera { [self add:[@{ @"type": @"camera", @"x": @0.7, @"y": @0.45, @"radius": @0.2, @"sensitivity": @1, @"stick": @"right" } mutableCopy]]; }
 
 - (void)scale:(NSString *)field by:(double)factor min:(double)min max:(double)max {
   NSMutableDictionary *e = self.selectedElement;
@@ -668,6 +732,41 @@ static UIColor *PBAccent(void) { return [UIColor colorWithRed:1 green:0.8 blue:0
 - (void)smaller { [self scale:@"radius" by:1 / 1.15 min:0.03 max:0.5]; }
 - (void)faster { [self scale:@"sensitivity" by:1.25 min:0.1 max:10]; }
 - (void)slower { [self scale:@"sensitivity" by:0.8 min:0.1 max:10]; }
+
+// Which controller stick drives the selected joystick or mouse-look area: none → left → right.
+- (void)cycleStick {
+  NSMutableDictionary *e = self.selectedElement;
+  if (![e[@"type"] isEqual:@"joystick"] && ![e[@"type"] isEqual:@"camera"]) return;
+  NSString *next = !e[@"stick"] ? @"left" : [e[@"stick"] isEqual:@"left"] ? @"right" : nil;
+  if (next) e[@"stick"] = next;
+  else [e removeObjectForKey:@"stick"];
+  [self rebuild];
+}
+
+- (NSString *)joystickKeysLabel:(NSDictionary *)e {
+  if (!e || ![e[@"type"] isEqual:@"joystick"]) return @"Keys: WASD";
+  if ([e[@"up"] isEqual:@"KeyW"] && [e[@"down"] isEqual:@"KeyS"] && [e[@"left"] isEqual:@"KeyA"] && [e[@"right"] isEqual:@"KeyD"]) return @"Keys: WASD";
+  if ([e[@"up"] isEqual:@"Numpad8"] && [e[@"down"] isEqual:@"Numpad2"] && [e[@"left"] isEqual:@"Numpad4"] && [e[@"right"] isEqual:@"Numpad6"]) return @"Keys: Num 8426";
+  if ([e[@"up"] isEqual:@"ArrowUp"] && [e[@"down"] isEqual:@"ArrowDown"] && [e[@"left"] isEqual:@"ArrowLeft"] && [e[@"right"] isEqual:@"ArrowRight"]) return @"Keys: Arrows";
+  if ([e[@"up"] isEqual:@"PadUp"] && [e[@"down"] isEqual:@"PadDown"] && [e[@"left"] isEqual:@"PadLeft"] && [e[@"right"] isEqual:@"PadRight"]) return @"Keys: D-pad";
+  return @"Keys: Custom";
+}
+
+// Cycles joystick directional keys: WASD → Numpad (8426) → Arrows → D-pad → WASD.
+- (void)cycleJoystickKeys {
+  NSMutableDictionary *e = self.selectedElement;
+  if (![e[@"type"] isEqual:@"joystick"]) return;
+  if ([e[@"up"] isEqual:@"KeyW"] && [e[@"down"] isEqual:@"KeyS"]) {
+    e[@"up"] = @"Numpad8"; e[@"down"] = @"Numpad2"; e[@"left"] = @"Numpad4"; e[@"right"] = @"Numpad6";
+  } else if ([e[@"up"] isEqual:@"Numpad8"] && [e[@"down"] isEqual:@"Numpad2"]) {
+    e[@"up"] = @"ArrowUp"; e[@"down"] = @"ArrowDown"; e[@"left"] = @"ArrowLeft"; e[@"right"] = @"ArrowRight";
+  } else if ([e[@"up"] isEqual:@"ArrowUp"] && [e[@"down"] isEqual:@"ArrowDown"]) {
+    e[@"up"] = @"PadUp"; e[@"down"] = @"PadDown"; e[@"left"] = @"PadLeft"; e[@"right"] = @"PadRight";
+  } else {
+    e[@"up"] = @"KeyW"; e[@"down"] = @"KeyS"; e[@"left"] = @"KeyA"; e[@"right"] = @"KeyD";
+  }
+  [self rebuild];
+}
 
 - (void)assign:(NSString *)code {
   NSMutableDictionary *e = self.selectedElement;
@@ -730,6 +829,8 @@ static NSString *gKeymapPath;
 @implementation PBInput {
   PBMapper *_mapper;
   PBEditor *_editor;
+  NSMutableSet<NSString *> *_padPressed;
+  NSTimeInterval _padLast;
   BOOL _mouseLook;
   NSUInteger _modifiers;
   NSTimer *_timer;
@@ -763,6 +864,9 @@ static NSString *gKeymapPath;
   NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
   [center addObserver:self selector:@selector(resignActive) name:UIApplicationWillResignActiveNotification object:nil];
   [center addObserver:self selector:@selector(becomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+  _padPressed = [NSMutableSet set];
+  NSTimer *pad = [NSTimer timerWithTimeInterval:1.0 / 60 repeats:YES block:^(NSTimer *t) { [weakSelf pollController]; }];
+  [NSRunLoop.mainRunLoop addTimer:pad forMode:NSRunLoopCommonModes];
   [self toast:[NSString stringWithFormat:@"PigPort controls: ⌘K edit · %@ mouse look", PBKeyLabel(_mapper.map.lookToggle)]];
 }
 
@@ -774,6 +878,52 @@ static NSString *gKeymapPath;
 - (void)resignActive {
   [self setMouseLook:NO];
   [_mapper releaseAll];
+  [_padPressed removeAllObjects];
+}
+
+#pragma mark Controller
+
+/// Controller buttons in the order of PAD_BUTTONS in keymap.ts (W3C standard gamepad order).
+static NSArray *PBPadButtons(GCExtendedGamepad *pad) {
+  id none = NSNull.null;
+  return @[pad.buttonA, pad.buttonB, pad.buttonX, pad.buttonY, pad.leftShoulder, pad.rightShoulder, pad.leftTrigger, pad.rightTrigger,
+           pad.buttonOptions ?: none, pad.buttonMenu, pad.leftThumbstickButton ?: none, pad.rightThumbstickButton ?: none,
+           pad.dpad.up, pad.dpad.down, pad.dpad.left, pad.dpad.right];
+}
+
+// Controller buttons press like keys; sticks drive joysticks and mouse-look areas bound to them.
+// Games with their own controller support still see the controller too.
+- (void)pollController {
+  static NSArray<NSString *> *codes;
+  if (!codes) codes = @[@"PadA", @"PadB", @"PadX", @"PadY", @"PadLB", @"PadRB", @"PadLT", @"PadRT",
+                        @"PadBack", @"PadStart", @"PadL3", @"PadR3", @"PadUp", @"PadDown", @"PadLeft", @"PadRight"];
+  GCExtendedGamepad *pad = (GCController.current ?: GCController.controllers.firstObject).extendedGamepad;
+  BOOL active = UIApplication.sharedApplication.applicationState == UIApplicationStateActive;
+  if (!pad || !active) {
+    if (!_editor) for (NSString *code in _padPressed) [_mapper keyUp:code];
+    [_padPressed removeAllObjects];
+    _padLast = 0;
+    return;
+  }
+  NSArray *buttons = PBPadButtons(pad);
+  [codes enumerateObjectsUsingBlock:^(NSString *code, NSUInteger i, BOOL *stop) {
+    id button = buttons[i];
+    BOOL down = [button isKindOfClass:GCControllerButtonInput.class] && ((GCControllerButtonInput *)button).isPressed;
+    if (down == [self->_padPressed containsObject:code]) return;
+    if (down) [self->_padPressed addObject:code];
+    else [self->_padPressed removeObject:code];
+    if (self->_editor) { if (down) [self->_editor keyDown:code command:NO]; }
+    else if (down) [self->_mapper keyDown:code];
+    else [self->_mapper keyUp:code];
+  }];
+  if (_editor) return;
+  NSTimeInterval now = NSProcessInfo.processInfo.systemUptime;
+  NSTimeInterval dt = _padLast ? now - _padLast : 1.0 / 60;
+  _padLast = now;
+  // GameController reports y up; touches use y down.
+  [_mapper stick:@"left" x:pad.leftThumbstick.xAxis.value y:-pad.leftThumbstick.yAxis.value dt:dt];
+  [_mapper stick:@"right" x:pad.rightThumbstick.xAxis.value y:-pad.rightThumbstick.yAxis.value dt:dt];
+  [_mapper tick];
 }
 
 - (id)handle:(id<PBAppKitEvent>)event {

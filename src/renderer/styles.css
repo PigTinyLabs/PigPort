@@ -654,3 +654,10 @@ body.dragging::after { content: "Drop IPA / APK / XAPK to install"; position: fi
   background: var(--surface-2);
 }
 .wifi-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* iPhone screen (AirPlay) */
+.note.airplay { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.note.airplay h3 { font-size: 15px; }
+.wifi-code { width: 112px; font-variant-numeric: tabular-nums; letter-spacing: 0.08em; }
+.wifi-manual summary { cursor: pointer; color: var(--muted); }
+.wifi-manual[open] { display: flex; flex-direction: column; gap: 8px; }

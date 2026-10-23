@@ -2,6 +2,7 @@ import type { PlayBridgeApi } from '../shared/api';
 import { ControlsEditor } from './controls-editor.js';
 import { emptyKeymap, Keymap, KeymapElement, TouchEvent, TouchMapper } from '../shared/keymap.js';
 import { H264Decoder } from './decoder.js';
+import { GamepadPoller } from './gamepad.js';
 import { el, keyLabel, toast } from './ui.js';
 
 declare const playbridge: PlayBridgeApi;
@@ -33,6 +34,11 @@ export class Player {
   private waitingFor?: Binding;
   private mouseDown = false;
   private tickTimer = 0;
+  // Controller buttons press like keys; sticks drive joysticks and mouse-look areas bound to them.
+  private pad = new GamepadPoller({
+    button: (code, down) => { if (!this.editing) this.send(down ? this.mapper.keyDown(code) : this.mapper.keyUp(code)); },
+    stick: (which, x, y, now, dt) => { if (!this.editing) this.send(this.mapper.stick(which, x, y, now, dt)); },
+  });
   private dirty = false;
   onExit: () => void = () => undefined;
 
@@ -85,6 +91,7 @@ export class Player {
       return;
     }
     this.tickTimer = window.setInterval(() => this.send(this.mapper.tick(performance.now())), 30);
+    this.pad.start();
   }
 
   close(): void {
@@ -95,6 +102,7 @@ export class Player {
 
   private teardown(): void {
     window.clearInterval(this.tickTimer);
+    this.pad.stop();
     if (document.pointerLockElement) document.exitPointerLock();
     this.send(this.mapper.releaseAll());
     this.decoder.close();

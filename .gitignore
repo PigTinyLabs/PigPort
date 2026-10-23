@@ -6,6 +6,7 @@ resources/platform-tools/
 release/
 *.log
 resources/ios-input/
+resources/airplay/
 .DS_Store
 
 # Signing secrets never belong in the repo

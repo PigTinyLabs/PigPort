@@ -66,3 +66,21 @@ test('parseKeymap clamps coordinates and rejects foreign files', () => {
   assert.equal(parsed.mouseLookToggle, 'Backquote');
   assert.throws(() => parseKeymap('{"hello":1}'));
 });
+
+test('joystick with Numpad keys moves and lifts correctly', () => {
+  const numpadMap: Keymap = {
+    version: 1,
+    mouseLookToggle: 'Backquote',
+    elements: [
+      { type: 'joystick', up: 'Numpad8', down: 'Numpad2', left: 'Numpad4', right: 'Numpad6', x: 0.2, y: 0.7, radius: 0.1 },
+    ],
+  };
+  const m = new TouchMapper(numpadMap, 1000, 500);
+  assert.ok(m.isBound('Numpad8'));
+  assert.ok(m.isBound('Numpad6'));
+  assert.deepEqual(m.keyDown('Numpad8'), [
+    { action: 'down', pointerId: 1, x: 200, y: 350 },
+    { action: 'move', pointerId: 1, x: 200, y: 300 },
+  ]);
+  assert.deepEqual(m.keyUp('Numpad8'), [{ action: 'up', pointerId: 1, x: 200, y: 300 }]);
+});

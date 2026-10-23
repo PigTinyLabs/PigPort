@@ -31,7 +31,7 @@ module.exports = {
   artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
   files: ['dist/main/**', 'dist/preload/**', 'dist/shared/**', 'dist/web/**', '!dist/test/**', '!**/*.map'],
   extraResources: [
-    { from: 'resources', to: '.', filter: ['scrcpy-server', 'scrcpy-server.version', 'platform-tools/**', 'ios-input/**'] },
+    { from: 'resources', to: '.', filter: ['scrcpy-server', 'scrcpy-server.version', 'platform-tools/**', 'ios-input/**', 'airplay/**'] },
   ],
   mac: {
     // Apple silicon and Intel builds. iOS games need Apple silicon; Intel Macs get Android games.

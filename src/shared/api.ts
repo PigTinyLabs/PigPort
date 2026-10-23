@@ -25,6 +25,20 @@ export interface RuntimePlan {
   token: string; bytes: number; packages: string[]; licenses: { id: string; text: string }[];
 }
 export interface RuntimeStatus { nativeIpa: boolean; managedAndroid: boolean; avds: string[] }
+/** Viewing an iPhone/iPad screen over AirPlay (view only). */
+export interface AirPlayStatus {
+  platform: 'mac' | 'windows' | 'unsupported';
+  /** Windows: the bundled receiver is present in this build. */
+  available: boolean;
+  /** Windows: receiver running. macOS: the built-in AirPlay Receiver is on. */
+  running: boolean;
+  /** Name to pick in the iPhone's Screen Mirroring list. */
+  name: string;
+  /** Device currently mirroring, when known. */
+  client?: string;
+  error?: string;
+}
+
 export interface PlayBridgeApi {
   packages: {
     inspect(file?: string): Promise<MobilePackage | undefined>;
@@ -63,6 +77,13 @@ export interface PlayBridgeApi {
     launch(serial: string, pkg: string): Promise<void>;
     diagnostics(serial: string, pkg: string): Promise<string>;
     forceStop(serial: string, pkg: string): Promise<void>;
+  };
+  airplay: {
+    status(): Promise<AirPlayStatus>;
+    /** Windows: start the receiver. macOS: open the AirPlay Receiver settings. */
+    start(): Promise<void>;
+    stop(): Promise<void>;
+    onStatus(cb: (status: AirPlayStatus) => void): void;
   };
   ios: {
     list(): Promise<IosApp[]>;

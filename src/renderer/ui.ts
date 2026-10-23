@@ -26,6 +26,11 @@ const NAMES: Record<string, string> = {
   Escape: 'Esc', CapsLock: 'Caps', Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']',
   Backslash: '\\', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/',
   MouseLeft: 'LMB', MouseRight: 'RMB', MouseMiddle: 'MMB',
+  PadA: 'Pad A', PadB: 'Pad B', PadX: 'Pad X', PadY: 'Pad Y', PadLB: 'LB', PadRB: 'RB', PadLT: 'LT', PadRT: 'RT',
+  PadBack: 'View', PadStart: 'Menu', PadL3: 'L3', PadR3: 'R3', PadUp: 'D-pad ↑', PadDown: 'D-pad ↓', PadLeft: 'D-pad ←', PadRight: 'D-pad →',
+  NumpadDecimal: 'Num .', NumpadMultiply: 'Num *', NumpadAdd: 'Num +',
+  NumpadDivide: 'Num /', NumpadEnter: 'Num ↵', NumpadSubtract: 'Num -', NumpadEqual: 'Num =',
+  NumpadClear: 'Num Clear',
 };
 
 export function keyLabel(code: string): string {
@@ -33,7 +38,7 @@ export function keyLabel(code: string): string {
   if (NAMES[code]) return NAMES[code];
   if (code.startsWith('Key')) return code.slice(3);
   if (code.startsWith('Digit')) return code.slice(5);
-  if (code.startsWith('Numpad')) return 'Num' + code.slice(6);
+  if (code.startsWith('Numpad')) return 'Num ' + code.slice(6);
   return code;
 }
 

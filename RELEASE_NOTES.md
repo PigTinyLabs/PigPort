@@ -1,10 +1,34 @@
-# PigPort v0.2.4 — Release Notes
+# PigPort v0.2.5 — Release Notes
 
 > **PigPort** (by PigTinyLabs): A smooth, high-performance launcher to play iOS (IPA) and Android (APK / XAPK) games on macOS and Windows with keyboard and mouse.
 
 <p align="center">
   <b>English</b> | <a href="#-tiếng-việt-ghi-chú-phát-hành">Tiếng Việt</a>
 </p>
+
+---
+
+## 🌟 What's New in v0.2.5
+
+### 1. 🎮 Gamepad & Controller Support
+- **Full Controller Compatibility**: Play using Xbox, PlayStation (DualShock / DualSense), Nintendo Switch Pro, or MFi controllers via USB or Bluetooth.
+- **Dual Stick Analog Control**:
+  - **Left Stick**: Drives on-screen movement joystick proportionally with adjustable dead zone.
+  - **Right Stick**: Smoothly controls camera/mouse look area with configurable speed multiplier.
+- **Controller Button Mapping**: Map any controller button (Pad A, B, X, Y, LB, RB, LT, RT, D-pad, L3, R3, Menu, View) directly to touches or actions.
+- **Unified Across Platforms**: Works seamlessly in both the desktop player (scrcpy) and the native iOS runner (`PlayBridgeInput.dylib`).
+
+### 2. 🔢 Numpad & Quick Joystick Presets
+- **Full Numpad Support**: Support for all Numpad keys (Num 0-9, Num ., Num *, Num +, Num -, Num /, Num Enter, Num Clear).
+- **One-Tap Directional Layouts**: Switch joystick controls instantly between **WASD**, **Numpad (8/4/2/6)**, **Arrow Keys (↑/←/↓/→)**, and **D-pad** in both desktop and ⌘K in-game editors.
+
+### 3. 📱 Wireless Phone Connections & AirPlay
+- **Wireless Android Debugging (Wi-Fi ADB)**: Automatically discover and pair physical Android phones on the local network via mDNS without USB cables.
+- **iPhone / iPad AirPlay Screen Mirroring**: View iOS device screens wirelessly on your Mac or Windows PC (native receiver on macOS, bundled UxPlay on Windows).
+
+### 4. 🌐 Official Landing Page & Typography
+- **Modern Landing Page**: Launched at [pigtinylabs.github.io/PigPort/](https://pigtinylabs.github.io/PigPort/) featuring Genshin Impact, Identity V, and Honkai: Star Rail.
+- **Be Vietnam Pro Typography**: Crystal-clear Vietnamese typography with native diacritics support.
 
 ---
 
@@ -67,6 +91,30 @@ Because the application is not signed with paid commercial certificates from App
 <br>
 
 # 🇻🇳 Tiếng Việt: Ghi Chú Phát Hành
+
+## 🌟 Điểm nổi bật trong bản cập nhật v0.2.5
+
+### 1. 🎮 Hỗ Trợ Tay Cầm Chơi Game (Gamepad / Controller)
+- **Hỗ trợ đa dạng tay cầm:** Chơi mượt mà với tay cầm Xbox, PlayStation (DualShock / DualSense), Nintendo Switch Pro hoặc MFi qua Bluetooth / USB.
+- **Cần gạt Analog 2 bên (Dual Stick):**
+  - **Cần trái (Left stick):** Điều hướng cụm joystick di chuyển mượt mà theo tỷ lệ góc và lực đẩy, có thể chỉnh vùng chết (deadzone).
+  - **Cần phải (Right stick):** Xoay góc nhìn camera / chuột 360° với hệ số tốc độ tùy chỉnh.
+- **Gán nút tay cầm toàn diện:** Gán nút A, B, X, Y, LB, RB, LT, RT, D-pad, L3, R3, Menu, View trực tiếp vào các điểm chạm trên màn hình hoặc hướng di chuyển.
+- **Hoạt động đồng bộ:** Hỗ trợ cả trên player Android (scrcpy) lẫn runner native iOS (`PlayBridgeInput.dylib`).
+
+### 2. 🔢 Hỗ Trợ Bàn Phím Số (Numpad) & Preset Joystick Nhanh
+- **Đầy đủ phím Numpad:** Nhận diện toàn bộ phím số (Num 0-9, Num ., Num *, Num +, Num -, Num /, Num Enter, Num Clear).
+- **Chuyển đổi layout 1 chạm:** Chuyển đổi nhanh 4 hướng joystick giữa **WASD**, **Numpad (8/4/2/6)**, **Phím mũi tên (↑/←/↓/→)**, và **D-pad tay cầm** trong cả trình chỉnh sửa desktop và overlay ⌘K trên iOS.
+
+### 3. 📱 Kết Nối Điện Thoại Không Dây & AirPlay
+- **Ghép nối Android qua Wi-Fi (Wireless ADB):** Tự động dò tìm và ghép nối điện thoại Android qua mạng nội bộ bằng mDNS không cần cắm cáp USB.
+- **Xem màn hình iPhone / iPad qua AirPlay:** Chiếu màn hình thiết bị Apple lên máy tính Mac hoặc Windows qua AirPlay không dây.
+
+### 4. 🌐 Trang Landing Page Chính Thức & Font Chữ Chuẩn
+- **Trang chủ mới:** Trải nghiệm tại [pigtinylabs.github.io/PigPort/](https://pigtinylabs.github.io/PigPort/) với các tựa game Genshin Impact, Identity V, Honkai: Star Rail.
+- **Font Be Vietnam Pro:** Khắc phục triệt để lỗi vỡ chữ tiếng Việt, hiển thị sắc nét trên mọi màn hình Retina.
+
+---
 
 ## 🌟 Điểm nổi bật trong bản cập nhật v0.2.4
 

@@ -1,4 +1,4 @@
-import type { AdbStatus, AppPackage, Device, IosApp, MobilePackage, PlayBridgeApi, Settings, RuntimeStatus } from '../shared/api';
+import type { AdbStatus, AirPlayStatus, AppPackage, Device, IosApp, MobilePackage, PlayBridgeApi, Settings, RuntimeStatus } from '../shared/api';
 import { Player } from './player.js';
 import { ControlsEditor } from './controls-editor.js';
 import { el, formatSize, prettyPackage, svgIcon, toast } from './ui.js';
@@ -15,6 +15,7 @@ const state = {
   serial: '',
   packages: [] as AppPackage[],
   iosApps: [] as IosApp[],
+  airplay: undefined as AirPlayStatus | undefined,
   imported: [] as MobilePackage[],
   filter: '',
   busy: false,
@@ -36,7 +37,9 @@ async function init(): Promise<void> {
   document.body.dataset.platform = info.platform;
   state.settings = await playbridge.settings.get();
 
-  $('tab-ios').hidden = !state.iosSupported;
+  // The tab also hosts iPhone screen viewing, which works on any Mac and on Windows.
+  $('tab-ios').hidden = !state.iosSupported && info.platform !== 'darwin' && info.platform !== 'win32';
+  playbridge.airplay.onStatus((s) => { state.airplay = s; if (state.tab === 'ios') renderMain(); });
   $('tab-packages').addEventListener('click', () => switchTab('packages'));
   $('tab-android').addEventListener('click', () => switchTab('android'));
   $('tab-ios').addEventListener('click', () => switchTab('ios'));
@@ -46,7 +49,7 @@ async function init(): Promise<void> {
     void refreshPackages();
   });
   $('open-wifi').addEventListener('click', () => openWifi());
-  $('wifi-pair').addEventListener('click', () => void pairWifi());
+  $('wifi-pair').addEventListener('click', () => void pairWifi($<HTMLInputElement>('wifi-pair-address').value.trim(), $<HTMLInputElement>('wifi-pair-code')));
   $('wifi-from-usb').addEventListener('click', () => void wifiFromUsb());
   $<HTMLInputElement>('search').addEventListener('input', (e) => {
     state.filter = (e.target as HTMLInputElement).value.trim().toLowerCase();
@@ -80,7 +83,7 @@ async function init(): Promise<void> {
   });
   switchTab('packages');
   await refreshDevices();
-  if (state.iosSupported) void refreshIos();
+  if (!$('tab-ios').hidden) void refreshIos();
 }
 
 function switchTab(tab: Tab): void {
@@ -90,6 +93,7 @@ function switchTab(tab: Tab): void {
   $('tab-packages').classList.toggle('active', tab === 'packages');
   $('device-panel').hidden = tab === 'ios';
   renderMain();
+  if (tab === 'ios') void refreshIos();
 }
 
 // ---- Android ----
@@ -129,11 +133,13 @@ async function refreshPackages(): Promise<void> {
 // ---- Wi-Fi ----
 
 let wifiScan: ReturnType<typeof setInterval> | undefined;
+let wifiShown = '';
 
 function openWifi(): void {
   const dialog = $<HTMLDialogElement>('wifi');
   const usb = state.devices.find((d) => d.serial === state.serial && d.state === 'device' && !/[:.]/.test(d.serial));
   $<HTMLButtonElement>('wifi-from-usb').disabled = !usb;
+  wifiShown = '';
   void scanWifi();
   // Phones appear and disappear as Wireless debugging screens open and close.
   wifiScan = setInterval(() => void scanWifi(), 3000);
@@ -144,18 +150,23 @@ function openWifi(): void {
 async function scanWifi(): Promise<void> {
   const found = await playbridge.adb.wireless().catch(() => []);
   const connected = new Set(state.devices.map((d) => d.serial));
-  $('wifi-found').replaceChildren(...(found.length ? found.map((s) => el('div', { class: 'wifi-row' },
-    el('span', { class: 'wifi-name', title: s.name }, s.name.replace(/^adb-/, '').replace(/-\w+$/, '')),
-    el('span', { class: 'muted small' }, `${s.kind === 'pairing' ? 'ready to pair' : 'paired'} · ${s.address}`),
-    s.kind === 'pairing'
-      ? el('button', { class: 'btn small', type: 'button', onclick: () => {
-        $<HTMLInputElement>('wifi-pair-address').value = s.address;
-        $<HTMLInputElement>('wifi-pair-code').focus();
-      } }, 'Use')
-      : connected.has(s.address)
+  // Redraw only when the list changes, so a half-typed pairing code is kept.
+  const key = JSON.stringify([found, [...connected]]);
+  if (key === wifiShown) return;
+  wifiShown = key;
+  $('wifi-found').replaceChildren(...(found.length ? found.map((s) => {
+    const name = el('span', { class: 'wifi-name', title: `${s.name} · ${s.address}` }, s.name.replace(/^adb-/, '').replace(/-\w+$/, ''));
+    if (s.kind === 'pairing') {
+      const code = el('input', { class: 'wifi-code', placeholder: '6-digit code', 'aria-label': 'Pairing code', inputmode: 'numeric', maxlength: '6', autocomplete: 'off' }) as HTMLInputElement;
+      code.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); void pairWifi(s.address, code); } });
+      return el('div', { class: 'wifi-row' }, name, code,
+        el('button', { class: 'btn small primary', type: 'button', onclick: () => void pairWifi(s.address, code) }, 'Pair'));
+    }
+    return el('div', { class: 'wifi-row' }, name, el('span', { class: 'muted small' }, 'Paired'),
+      connected.has(s.address)
         ? el('span', { class: 'muted small' }, 'Connected')
-        : el('button', { class: 'btn small', type: 'button', onclick: () => void connectWifi(s.address) }, 'Connect'),
-  )) : [el('p', { class: 'muted small' }, 'Looking for phones with Wireless debugging on… If none appears, type the address shown on the phone below.')]));
+        : el('button', { class: 'btn small', type: 'button', onclick: () => void connectWifi(s.address) }, 'Connect'));
+  }) : [el('p', { class: 'muted small' }, 'Looking for phones with Wireless debugging on… Keep the "Pair device with pairing code" screen open on the phone.')]));
 }
 
 async function connectWifi(address: string): Promise<void> {
@@ -166,12 +177,10 @@ async function connectWifi(address: string): Promise<void> {
   });
 }
 
-async function pairWifi(): Promise<void> {
-  const address = $<HTMLInputElement>('wifi-pair-address').value.trim();
-  const code = $<HTMLInputElement>('wifi-pair-code').value.trim();
+async function pairWifi(address: string, codeInput: HTMLInputElement): Promise<void> {
   await run(async () => {
-    toast(await playbridge.adb.pair(address, code));
-    $<HTMLInputElement>('wifi-pair-code').value = '';
+    toast(await playbridge.adb.pair(address, codeInput.value.trim()));
+    codeInput.value = '';
     await refreshDevices();
     void scanWifi();
   }, 'Pairing…');
@@ -219,8 +228,45 @@ async function uninstall(pkg: string): Promise<void> {
 // ---- iOS (macOS only) ----
 
 async function refreshIos(): Promise<void> {
-  state.iosApps = await playbridge.ios.list();
+  [state.iosApps, state.airplay] = await Promise.all([playbridge.ios.list(), playbridge.airplay.status().catch(() => undefined)]);
   if (state.tab === 'ios') renderMain();
+}
+
+// ---- iPhone screen (AirPlay, view only) ----
+
+function renderAirPlay(): HTMLElement {
+  const s = state.airplay;
+  const steps = (name: string) => el('p', { class: 'small' },
+    'On the iPhone or iPad (same Wi-Fi): open Control Center → ', el('b', {}, 'Screen Mirroring'), ' → choose ', el('b', {}, name), '.');
+  const body: (HTMLElement | string)[] = [];
+  if (!s) {
+    body.push(el('p', { class: 'muted small' }, 'Checking…'));
+  } else if (s.platform === 'mac') {
+    body.push(
+      el('p', { class: 'small' }, 'macOS has a built-in AirPlay Receiver. ',
+        s.running ? 'It is on.' : 'It is off: turn on AirPlay Receiver in System Settings.'),
+      steps(s.name),
+      el('div', { class: 'row' }, el('button', { class: 'btn', onclick: () => void run(() => playbridge.airplay.start()) }, 'Open AirPlay Receiver settings')));
+  } else if (s.platform === 'windows' && !s.available) {
+    body.push(el('p', { class: 'muted small' }, 'The AirPlay receiver is not included in this build of PigPort.'));
+  } else if (s.platform === 'windows') {
+    body.push(
+      el('p', { class: 'small' }, s.running
+        ? (s.client ? `Showing ${s.client}.` : 'Waiting for an iPhone or iPad…')
+        : 'Start the receiver, then mirror from the phone. The screen opens in its own window (Alt+Enter: full screen).'),
+      ...(s.running ? [steps(s.name)] : []),
+      ...(s.error ? [el('p', { class: 'small text-error' }, s.error)] : []),
+      el('div', { class: 'row' }, s.running
+        ? el('button', { class: 'btn', onclick: () => void run(() => playbridge.airplay.stop()) }, 'Stop receiver')
+        : el('button', { class: 'btn primary', onclick: () => void run(() => playbridge.airplay.start()) }, 'Start receiver')),
+      el('p', { class: 'muted small' }, 'If Windows asks, allow uxplay on private networks. The PC and phone must be on the same Wi-Fi.'));
+  } else {
+    body.push(el('p', { class: 'muted small' }, 'Viewing an iPhone screen is available on macOS and Windows.'));
+  }
+  return el('section', { class: 'note airplay' },
+    el('h3', {}, 'View iPhone screen'),
+    el('p', { class: 'muted small' }, 'View only: iOS does not let another device control the phone.'),
+    ...body);
 }
 
 // ---- rendering ----
@@ -240,7 +286,7 @@ function renderMain(): void {
     return;
   }
   if (state.tab === 'ios') {
-    title.textContent = 'iPhone & iPad games';
+    title.textContent = state.iosSupported ? 'iPhone & iPad games' : 'iPhone & iPad';
     actions.replaceChildren(el('button', { class: 'btn ghost', onclick: () => void refreshIos() }, 'Refresh'));
     main.replaceChildren(renderIos());
     return;
@@ -537,15 +583,17 @@ function renderAndroid(): HTMLElement {
 }
 
 function renderIos(): HTMLElement {
+  const airplay = renderAirPlay();
+  if (!state.iosSupported) return el('div', {}, airplay);
   const list = state.iosApps.filter((a) => !state.filter || a.name.toLowerCase().includes(state.filter));
   const note = el('p', { class: 'note' },
     'iPhone and iPad apps installed from the Mac App Store run natively on Apple Silicon. ',
     'For keyboard controls use the game\'s own keyboard/controller support or macOS Touch Alternatives (in the app\'s menu bar while it runs).');
   if (list.length === 0) {
-    return el('div', {}, note, empty(state.filter ? 'No matches' : 'No iPhone or iPad apps found',
+    return el('div', {}, airplay, note, empty(state.filter ? 'No matches' : 'No iPhone or iPad apps found',
       state.filter ? 'Try a different search.' : 'Install one from the Mac App Store (search, then pick the "iPhone & iPad Apps" tab).'));
   }
-  return el('div', {}, note, el('div', { class: 'grid' }, ...list.map((a) => {
+  return el('div', {}, airplay, note, el('div', { class: 'grid' }, ...list.map((a) => {
     const art = el('div', { class: 'card-art' });
     const icon = el('img', { class: 'icon', alt: a.name, hidden: '' });
     const av = avatar(a.bundleId);

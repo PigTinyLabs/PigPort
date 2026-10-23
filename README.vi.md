@@ -24,6 +24,18 @@
 
 ---
 
+## 📥 Tải về bản phát hành (v0.2.5)
+
+| Hệ điều hành | Bộ cài khuyên dùng | Bản nén Portable | Hỗ trợ thể loại game |
+|---|---|---|---|
+| **macOS Apple Silicon (M1/M2/M3/M4)** | [⬇️ `PigPort-0.2.5-mac-arm64.dmg`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-mac-arm64.dmg) | [📦 `PigPort-0.2.5-mac-arm64.zip`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-mac-arm64.zip) | **Cả iOS (.IPA)** và **Android (.APK / .XAPK)** |
+| **macOS Intel (x64)** | [⬇️ `PigPort-0.2.5-mac-x64.dmg`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-mac-x64.dmg) | [📦 `PigPort-0.2.5-mac-x64.zip`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-mac-x64.zip) | Android (.APK / .XAPK) |
+| **Windows 10/11 (x64)** | [⬇️ `PigPort-0.2.5-win-x64.exe`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-win-x64.exe) | [📦 `PigPort-0.2.5-win-x64.zip`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-win-x64.zip) | Android (.APK / .XAPK) + Xem màn hình iPhone AirPlay |
+
+> 💡 *Xem lại toàn bộ các bản phát hành hoặc mã checksum tại trang [GitHub Releases](https://github.com/PigTinyLabs/PigPort/releases).*
+
+---
+
 ## ⚡ Tính năng nổi bật cho game thủ
 
 - 🎯 **Kéo & Thả Cài Đặt 1 Chạm**: Kéo thả trực tiếp file `.ipa`, `.apk` hoặc `.xapk` vào PigPort để cài đặt và tự động cập nhật vào Thư viện Game.

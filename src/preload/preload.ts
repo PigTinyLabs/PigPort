@@ -27,6 +27,7 @@ const api: PlayBridgeApi = {
     forceStop: invoke('adb:forceStop'),
     diagnostics: invoke('adb:diagnostics'),
   },
+  airplay: { status: invoke('airplay:status'), start: invoke('airplay:start'), stop: invoke('airplay:stop'), onStatus: listen('airplay:status') },
   ios: { list: invoke('ios:list'), launch: invoke('ios:launch'), icon: invoke('ios:icon') },
   keymap: {
     load: invoke('keymap:load'),

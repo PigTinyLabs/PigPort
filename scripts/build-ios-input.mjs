@@ -26,6 +26,6 @@ const frameworks = path.join(sdk, 'System/iOSSupport/System/Library/Frameworks')
 mkdirSync(path.dirname(out), { recursive: true });
 execFileSync('/usr/bin/xcrun', ['clang', '-target', 'arm64-apple-ios15.0-macabi', '-isysroot', sdk, '-iframework', frameworks,
   '-fobjc-arc', '-O2', '-Wall', '-Wno-deprecated-declarations', '-dynamiclib', '-install_name', '@rpath/PlayBridgeInput.dylib',
-  '-framework', 'UIKit', '-framework', 'Foundation', '-framework', 'CoreGraphics', '-framework', 'QuartzCore', '-framework', 'IOKit', '-framework', 'Security', source, '-o', out], { stdio: 'inherit' });
+  '-framework', 'UIKit', '-framework', 'Foundation', '-framework', 'CoreGraphics', '-framework', 'QuartzCore', '-framework', 'GameController', '-framework', 'IOKit', '-framework', 'Security', source, '-o', out], { stdio: 'inherit' });
 execFileSync('/usr/bin/codesign', ['--force', '--sign', '-', out], { stdio: 'inherit' });
 console.log('Built', path.relative(root, out));

@@ -1,5 +1,6 @@
 import type { PlayBridgeApi } from '../shared/api';
-import { emptyKeymap, parseKeymap, type Keymap, type KeymapElement } from '../shared/keymap.js';
+import { DEFAULT_GAMEPAD, emptyKeymap, parseKeymap, type Keymap, type KeymapElement, type Stick } from '../shared/keymap.js';
+import { activePad, GamepadPoller } from './gamepad.js';
 import { el, keyLabel, toast } from './ui.js';
 declare const playbridge: PlayBridgeApi;
 
@@ -21,9 +22,13 @@ export class ControlsEditor {
   private stage = el('div', { class: 'ce-preview', 'aria-label': 'Control positions' });
   private details = el('aside', { class: 'ce-details' });
   private status = el('span', { class: 'ce-status', role: 'status' });
+  // While the dialog is open a controller button can be bound like a key.
+  private pad = new GamepadPoller({ button: (code, down) => { if (down) this.assign(code); } });
 
   constructor() {
     document.body.append(this.dialog);
+    this.dialog.addEventListener('close', () => this.pad.stop());
+    for (const type of ['gamepadconnected', 'gamepaddisconnected']) window.addEventListener(type, () => { if (this.dialog.open) this.renderDetails(); });
     this.dialog.addEventListener('cancel', (e) => { e.preventDefault(); this.close(); });
     this.dialog.addEventListener('keydown', (e) => this.key(e));
     this.dialog.addEventListener('keyup', (e) => e.stopPropagation());
@@ -36,7 +41,7 @@ export class ControlsEditor {
       this.original = JSON.stringify(this.map); this.appId = appId; this.name = name;
       this.image = options.image; this.aspect = options.aspect ?? 16 / 9; this.saved = options.saved;
       this.selected = this.map.elements.length ? 0 : -1; this.waiting = undefined;
-      this.render(); this.dialog.showModal();
+      this.render(); this.dialog.showModal(); this.pad.start();
     } catch (error) { toast((error as Error).message, 'error'); }
     finally { this.opening = false; }
   }
@@ -61,8 +66,13 @@ export class ControlsEditor {
   }
   private add(type: KeymapElement['type']): void {
     const element: KeymapElement = type === 'button' ? { type, key: '', x: 0.5, y: 0.5 }
-      : type === 'joystick' ? { type, x: 0.18, y: 0.73, radius: 0.12, up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' }
-      : { type, x: 0.65, y: 0.42, radius: 0.2, sensitivity: 1 };
+      : type === 'joystick' ? { type, x: 0.18, y: 0.73, radius: 0.12, up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', stick: 'left' }
+      : { type, x: 0.65, y: 0.42, radius: 0.2, sensitivity: 1, stick: 'right' };
+    this.map.elements.push(element); this.selected = this.map.elements.length - 1;
+    this.waiting = undefined; this.refresh();
+  }
+  private addNumpadJoystick(): void {
+    const element: KeymapElement = { type: 'joystick', x: 0.18, y: 0.73, radius: 0.12, up: 'Numpad8', down: 'Numpad2', left: 'Numpad4', right: 'Numpad6', stick: 'left' };
     this.map.elements.push(element); this.selected = this.map.elements.length - 1;
     this.waiting = undefined; this.refresh();
   }
@@ -81,6 +91,7 @@ export class ControlsEditor {
       el('h3', {}, 'Add a control'),
       this.button('+ Key button', () => this.add('button')),
       this.button('+ WASD joystick', () => this.add('joystick')),
+      this.button('+ Numpad joystick', () => this.addNumpadJoystick()),
       this.button('+ Mouse look', () => this.add('camera')),
       el('h3', {}, 'Starter layouts'),
       this.button('MOBA', () => this.preset('moba')), this.button('FPS', () => this.preset('fps')),
@@ -99,12 +110,14 @@ export class ControlsEditor {
   }
   private refresh(): void {
     this.list.replaceChildren(...this.map.elements.map((control, index) => {
-      const label = control.type === 'button' ? keyLabel(control.key) || 'Unassigned' : control.type === 'joystick' ? 'WASD joystick' : 'Mouse look';
+      const stick = control.type !== 'button' && control.stick ? ` + ${control.stick} stick` : '';
+      const joyType = control.type === 'joystick' ? (control.up === 'Numpad8' ? 'Numpad joystick' : control.up === 'ArrowUp' ? 'Arrow joystick' : control.up === 'PadUp' ? 'D-pad joystick' : 'WASD joystick') : '';
+      const label = (control.type === 'button' ? keyLabel(control.key) || 'Unassigned' : control.type === 'joystick' ? joyType : 'Mouse look') + stick;
       return el('button', { type: 'button', class: `ce-list-item ${index === this.selected ? 'active' : ''}`, onclick: () => { this.selected = index; this.waiting = undefined; this.refresh(); } }, `${index + 1}. ${label}`);
     }));
     if (!this.map.elements.length) this.list.append(el('p', { class: 'muted' }, 'No controls yet'));
     this.renderStage(); this.renderDetails();
-    this.status.textContent = this.waiting ? 'Press a key… Escape cancels binding.' : JSON.stringify(this.map) === this.original ? 'Saved profile' : 'Unsaved changes';
+    this.status.textContent = this.waiting ? 'Press a key or controller button… Escape cancels binding.' : JSON.stringify(this.map) === this.original ? 'Saved profile' : 'Unsaved changes';
   }
   private renderStage(): void {
     this.stage.replaceChildren(); this.stage.style.aspectRatio = String(this.aspect); this.stage.style.setProperty('--ce-aspect', String(this.aspect));
@@ -141,7 +154,7 @@ export class ControlsEditor {
   private binding(label: string, slot: string, value: string, index = this.selected): HTMLElement {
     const waiting = this.waiting?.index === index && this.waiting.slot === slot;
     return el('div', { class: 'field' }, el('span', {}, label),
-      this.button(waiting ? 'Press a key…' : keyLabel(value) || 'Set key', () => { this.waiting = { index, slot }; this.refresh(); }, 'ce-keycap'));
+      this.button(waiting ? 'Press a key or button…' : keyLabel(value) || 'Set key', () => { this.waiting = { index, slot }; this.refresh(); }, 'ce-keycap'));
   }
   private number(label: string, value: number, min: number, max: number, step: number, assign: (value: number) => void): HTMLElement {
     const input = el('input', { type: 'number', value: String(Math.round(value * 100) / 100), min: String(min), max: String(max), step: String(step) });
@@ -150,6 +163,28 @@ export class ControlsEditor {
       assign(Math.min(max, Math.max(min, input.valueAsNumber))); this.refresh();
     });
     return el('label', { class: 'field' }, el('span', {}, label), input);
+  }
+  private stickPicker(control: { stick?: Stick }, label: string): HTMLElement {
+    const select = el('select', {},
+      el('option', { value: '' }, 'None'), el('option', { value: 'left' }, 'Left stick'), el('option', { value: 'right' }, 'Right stick'));
+    select.value = control.stick ?? '';
+    select.addEventListener('change', () => {
+      if (select.value === 'left' || select.value === 'right') control.stick = select.value;
+      else delete control.stick;
+      this.refresh();
+    });
+    return el('label', { class: 'field' }, el('span', {}, label), select);
+  }
+  private controllerSettings(): HTMLElement[] {
+    const pad = activePad();
+    const settings = this.map.gamepad ?? DEFAULT_GAMEPAD;
+    const update = (change: Partial<typeof settings>) => { this.map.gamepad = { ...settings, ...change }; };
+    return [
+      el('h3', {}, 'Controller'),
+      el('p', { class: 'muted small' }, pad ? `Connected: ${pad.id.replace(/\s*\(.*\)\s*$/, '')}` : 'No controller detected. Connect one by USB or Bluetooth and press a button.'),
+      this.number('Stick dead zone %', settings.deadzone * 100, 2, 60, 1, (v) => update({ deadzone: v / 100 })),
+      this.number('Stick look speed', settings.lookSpeed, 0.1, 5, 0.1, (v) => update({ lookSpeed: v })),
+    ];
   }
   private renderDetails(): void {
     const control = this.map.elements[this.selected];
@@ -160,24 +195,39 @@ export class ControlsEditor {
         this.number('Vertical %', control.y * 100, 0, 100, 1, (v) => { control.y = v / 100; }));
       if (control.type === 'button') rows.push(this.binding('Key', 'key', control.key),
         el('div', { class: 'ce-mouse-buttons' }, ...['MouseLeft', 'MouseRight', 'MouseMiddle'].map((key) => this.button(keyLabel(key), () => { control.key = key; this.waiting = undefined; this.refresh(); }, 'small'))));
-      if (control.type === 'joystick') for (const slot of ['up', 'left', 'down', 'right'] as const) rows.push(this.binding(slot, slot, control[slot]));
+      if (control.type === 'joystick') {
+        rows.push(el('div', { class: 'ce-mouse-buttons' },
+          this.button('WASD', () => { control.up = 'KeyW'; control.down = 'KeyS'; control.left = 'KeyA'; control.right = 'KeyD'; this.refresh(); }, 'small'),
+          this.button('Numpad', () => { control.up = 'Numpad8'; control.down = 'Numpad2'; control.left = 'Numpad4'; control.right = 'Numpad6'; this.refresh(); }, 'small'),
+          this.button('Arrows', () => { control.up = 'ArrowUp'; control.down = 'ArrowDown'; control.left = 'ArrowLeft'; control.right = 'ArrowRight'; this.refresh(); }, 'small'),
+          this.button('D-pad', () => { control.up = 'PadUp'; control.down = 'PadDown'; control.left = 'PadLeft'; control.right = 'PadRight'; this.refresh(); }, 'small'),
+        ));
+        for (const slot of ['up', 'left', 'down', 'right'] as const) rows.push(this.binding(slot, slot, control[slot]));
+        rows.push(this.stickPicker(control, 'Controller stick'));
+      }
       if (control.type !== 'button') rows.push(this.number('Radius (% of height)', control.radius * 100, 3, 40, 1, (v) => { control.radius = v / 100; }));
-      if (control.type === 'camera') rows.push(this.number('Mouse sensitivity', control.sensitivity, .1, 4, .1, (v) => { control.sensitivity = v; }));
+      if (control.type === 'camera') rows.push(this.number('Mouse sensitivity', control.sensitivity, .1, 4, .1, (v) => { control.sensitivity = v; }),
+        this.stickPicker(control, 'Controller stick'));
       rows.push(this.button('Delete control', () => { this.map.elements.splice(this.selected, 1); this.selected = -1; this.waiting = undefined; this.refresh(); }, 'danger'));
     } else rows.push(el('p', { class: 'muted' }, 'Add a control or select one on the preview.'));
+    rows.push(...this.controllerSettings());
     this.details.replaceChildren(...rows);
   }
   private key(event: KeyboardEvent): void {
     event.stopPropagation();
     if (!this.waiting || this.saving) return;
     event.preventDefault(); if (event.repeat) return;
-    if (event.code !== 'Escape') {
-      if (this.waiting.slot === 'toggle') this.map.mouseLookToggle = event.code;
-      else {
-        const element = this.map.elements[this.waiting.index];
-        if (element?.type === 'button' && this.waiting.slot === 'key') element.key = event.code;
-        if (element?.type === 'joystick' && ['up', 'down', 'left', 'right'].includes(this.waiting.slot)) element[this.waiting.slot as 'up' | 'down' | 'left' | 'right'] = event.code;
-      }
+    if (event.code === 'Escape') { this.waiting = undefined; this.refresh(); }
+    else this.assign(event.code);
+  }
+  /** Binds a key or controller button (Pad*) to the slot waiting for one. */
+  private assign(code: string): void {
+    if (!this.waiting || this.saving) return;
+    if (this.waiting.slot === 'toggle') this.map.mouseLookToggle = code;
+    else {
+      const element = this.map.elements[this.waiting.index];
+      if (element?.type === 'button' && this.waiting.slot === 'key') element.key = code;
+      if (element?.type === 'joystick' && ['up', 'down', 'left', 'right'].includes(this.waiting.slot)) element[this.waiting.slot as 'up' | 'down' | 'left' | 'right'] = code;
     }
     this.waiting = undefined; this.refresh();
   }

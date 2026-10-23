@@ -1,7 +1,7 @@
 {
   "name": "playbridge",
   "productName": "PigPort",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "PigPort by PigTinyLabs: play iOS and Android games on Mac and Windows with keyboard and mouse",
   "main": "dist/main/main.js",
   "license": "MIT",

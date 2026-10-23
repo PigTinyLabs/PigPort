@@ -9,6 +9,7 @@ import { iosAppIcon, iosAppsSupported, launchIosApp, listIosApps } from './mac/i
 import { Settings, Store } from './store';
 import { avds, ensureAndroid, configureManagedAndroid } from './runtime/android';
 import { NativeIpaRuntime } from './runtime/ipa';
+import { AirPlayReceiver } from './airplay';
 import { ManagedAndroid, MANAGED_AVD } from './runtime/managedAndroid';
 import { inspectPackage } from './packages/packages';
 import { packageIcon } from './packages/icon';
@@ -24,6 +25,7 @@ const resourcesDir = app.isPackaged
 // Renamed from PlayBridge: keep the existing library, installed games and keymaps.
 app.setPath('userData', path.join(app.getPath('appData'), 'PlayBridge'));
 const store = new Store(app.getPath('userData'));
+const airplay = new AirPlayReceiver(path.join(resourcesDir, 'airplay'), app.getPath('userData'));
 let adb = new Adb(locateAdb(undefined, resourcesDir));
 let session: ScrcpySession | undefined;
 let win: BrowserWindow | undefined;
@@ -308,6 +310,10 @@ function registerIpc(): void {
   });
   handle('adb:forceStop', (serial: string, pkg: string) => adb.forceStop(serial, pkg));
 
+  handle('airplay:status', () => airplay.status());
+  handle('airplay:start', () => airplay.start());
+  handle('airplay:stop', () => airplay.stop());
+  airplay.on('status', () => void airplay.status().then((s) => win?.webContents.send('airplay:status', s)));
   handle('ios:list', () => listIosApps());
   handle('ios:launch', (appPath: string) => launchIosApp(appPath));
   handle('ios:icon', async (appPath: string) => {
@@ -378,5 +384,6 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   session?.stop();
+  airplay.stop();
   if (process.platform !== 'darwin') app.quit();
 });

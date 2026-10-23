@@ -99,11 +99,15 @@
       <h3>Android 11 or newer</h3>
       <p class="small">On the phone: Settings → Developer options → <b>Wireless debugging</b> → turn on → <b>Pair device with pairing code</b>.</p>
       <div id="wifi-found" class="wifi-found"></div>
-      <div class="row">
-        <input id="wifi-pair-address" placeholder="IP address & port, e.g. 192.168.1.23:41235" aria-label="Pairing address" autocomplete="off">
-        <input id="wifi-pair-code" placeholder="6-digit code" aria-label="Pairing code" inputmode="numeric" maxlength="6" autocomplete="off">
-        <button id="wifi-pair" class="btn primary" type="button">Pair</button>
-      </div>
+      <details class="wifi-manual">
+        <summary class="small">Phone not listed? Enter its address</summary>
+        <p class="muted small">Some routers hide phones from each other. Type the IP address &amp; port shown under "Pair device with pairing code".</p>
+        <div class="row">
+          <input id="wifi-pair-address" placeholder="e.g. 192.168.1.23:41235" aria-label="Pairing address" autocomplete="off">
+          <input id="wifi-pair-code" placeholder="6-digit code" aria-label="Pairing code" inputmode="numeric" maxlength="6" autocomplete="off">
+          <button id="wifi-pair" class="btn primary" type="button">Pair</button>
+        </div>
+      </details>
 
       <h3>Android 10 or older</h3>
       <p class="small">Connect the phone with USB once and allow USB debugging, select it under Device, then switch it to Wi-Fi. You can unplug the cable afterwards.</p>
