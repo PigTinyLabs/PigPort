@@ -20,6 +20,9 @@
 #include <stdlib.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
+#include <limits.h>
+#include <stdatomic.h>
+#include <sys/mount.h>
 
 #ifndef DYLD_INTERPOSE
 #define DYLD_INTERPOSE(_replacement, _replacee) \
@@ -1589,6 +1592,7 @@ DYLD_INTERPOSE(pb_SecItemUpdate, SecItemUpdate);
 static void pb_abort(void);
 static void pb_exit(int status);
 static void pb__exit(int status);
+static atomic_bool gPBTerminating;
 
 void *pb_dlsym(void *handle, const char *symbol) {
   void *realSym = dlsym(handle, symbol);
@@ -1651,14 +1655,69 @@ static void pb_abort(void) {
 DYLD_INTERPOSE(pb_abort, abort);
 
 static void pb_exit(int status) {
-  // Prevent anti-cheat suicide
+  // Prevent anti-cheat suicide - but let the game's own exit through once it is really quitting (see PBBeginTermination).
+  // Interposing does not apply inside this library, so exit() here is the real one.
+  if (atomic_load(&gPBTerminating)) exit(status);
 }
 DYLD_INTERPOSE(pb_exit, exit);
 
 static void pb__exit(int status) {
-  // Prevent anti-cheat suicide
+  // Prevent anti-cheat suicide (same exception as pb_exit)
+  if (atomic_load(&gPBTerminating)) _exit(status);
 }
 DYLD_INTERPOSE(pb__exit, _exit);
+
+#pragma mark - Clean shutdown
+
+// Swallowing exit() also swallowed the game's own exit when the player quit: NeoX games then call game.on_exit() in a loop
+// forever, logging each call (2026-10-22: Identity V wrote 64 GB of log in two hours and filled the disk) and the process
+// never dies. Once the app is really quitting - UIKit's will-terminate, or SIGTERM/SIGINT/SIGHUP sent from OUTSIDE the
+// process (kill/raise/pthread_kill on itself are still swallowed above, so anti-cheat cannot use this path) - exit() is let
+// through and, if the game still has not exited after a grace period, the process is ended.
+static const int kPBExitGraceSeconds = 5;
+static dispatch_source_t gPBSignalSources[3];
+static dispatch_source_t gPBDiskTimer;
+
+static void PBBeginTermination(NSString *reason) {
+  if (atomic_exchange(&gPBTerminating, true)) return;
+  NSLog(@"PigPort: %@ - letting the game exit (forced after %d s)", reason, kPBExitGraceSeconds);
+  // Not the main queue: a game stuck in its exit path keeps the main thread busy.
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)kPBExitGraceSeconds * NSEC_PER_SEC),
+                 dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+    NSLog(@"PigPort: game did not exit within %d s - ending it", kPBExitGraceSeconds);
+    _exit(0);
+  });
+}
+
+// Free space on the volume holding the game's data; ULLONG_MAX on error (a failed check never stops the game).
+static unsigned long long PBFreeBytes(void) {
+  struct statfs st;
+  if (statfs(NSHomeDirectory().fileSystemRepresentation, &st) != 0) return ULLONG_MAX;
+  return (unsigned long long)st.f_bavail * st.f_bsize;
+}
+
+static void PBInstallShutdownGuards(unsigned long long minFreeBytes) {
+  [NSNotificationCenter.defaultCenter addObserverForName:UIApplicationWillTerminateNotification object:nil queue:nil
+                                              usingBlock:^(NSNotification *note) { PBBeginTermination(@"app will terminate"); }];
+  // Signal sources see deliveries even when the game installed its own handler (kqueue EVFILT_SIGNAL).
+  const int sigs[] = {SIGTERM, SIGINT, SIGHUP};
+  for (int i = 0; i < 3; i++) {
+    int sig = sigs[i];
+    dispatch_source_t src = dispatch_source_create(DISPATCH_SOURCE_TYPE_SIGNAL, (uintptr_t)sig, 0,
+                                                   dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0));
+    dispatch_source_set_event_handler(src, ^{ PBBeginTermination([NSString stringWithFormat:@"received %s", strsignal(sig)]); });
+    dispatch_resume(src);
+    gPBSignalSources[i] = src;
+  }
+  // Last line of defence against any runaway writer: quit the game before the disk is full.
+  gPBDiskTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(QOS_CLASS_UTILITY, 0));
+  dispatch_source_set_timer(gPBDiskTimer, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), 30 * NSEC_PER_SEC, NSEC_PER_SEC);
+  dispatch_source_set_event_handler(gPBDiskTimer, ^{
+    unsigned long long left = PBFreeBytes();
+    if (left < minFreeBytes) PBBeginTermination([NSString stringWithFormat:@"only %llu MB of disk space left", left >> 20]);
+  });
+  dispatch_resume(gPBDiskTimer);
+}
 
 static void PBEmptyAbortAfterSendingReport(id self, SEL _cmd) {
   // Suppress CrashSight abort action
@@ -1813,10 +1872,14 @@ __attribute__((constructor)) static void PBInputInit(void) {
   if (path && *path) gKeymapPath = @(path);
   const char *dev = getenv("PLAYBRIDGE_DEVICE_TYPE");
   if (dev && *dev) gDeviceTypeOverride = @(dev);
+  const char *minFree = getenv("PLAYBRIDGE_MIN_FREE_MB");  // tests only; default 2 GB
+  unsigned long long minFreeBytes = (minFree && *minFree ? strtoull(minFree, NULL, 10) : 2048ULL) << 20;
   // Keep the injection out of child processes and out of the game's environment.
   unsetenv("DYLD_INSERT_LIBRARIES");
   unsetenv("PLAYBRIDGE_KEYMAP");
   unsetenv("PLAYBRIDGE_DEVICE_TYPE");
+  unsetenv("PLAYBRIDGE_MIN_FREE_MB");
+  PBInstallShutdownGuards(minFreeBytes);
   PBInstallDeviceSpoofing();
   PBInstallScreenCompatibility();
   __block id observer = [NSNotificationCenter.defaultCenter addObserverForName:UIApplicationDidFinishLaunchingNotification object:nil

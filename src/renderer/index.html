@@ -55,6 +55,9 @@
   <dialog id="settings">
     <form id="settings-form" method="dialog">
       <h2>Settings</h2>
+      <label class="field stacked"><span>Android graphics (next virtual-device start)</span><select id="set-android-graphics"><option value="auto">Automatic GPU</option><option value="software">Software — slower, try for GPU crashes</option></select></label>
+      <button id="restart-android" type="button" class="btn">Apply &amp; restart built-in Android (closes Android games)</button>
+      <p class="muted small">The built-in device cold boots as a tablet. Graphics changes require closing and restarting the Android emulator; game data is preserved.</p>
       <label class="field stacked"><span>Android virtual device</span><select id="set-avd"></select></label>
       <label class="field stacked"><span>adb path</span>
         <input id="set-adb" placeholder="adb" autocomplete="off">

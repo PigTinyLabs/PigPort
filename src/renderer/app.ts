@@ -1,5 +1,6 @@
 import type { AdbStatus, AppPackage, Device, IosApp, MobilePackage, PlayBridgeApi, Settings, RuntimeStatus } from '../shared/api';
 import { Player } from './player.js';
+import { ControlsEditor } from './controls-editor.js';
 import { el, formatSize, prettyPackage, svgIcon, toast } from './ui.js';
 
 declare const playbridge: PlayBridgeApi;
@@ -24,6 +25,7 @@ const state = {
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const player = new Player();
+const controlsEditor = new ControlsEditor();
 
 async function init(): Promise<void> {
   document.body.append(player.root);
@@ -51,6 +53,12 @@ async function init(): Promise<void> {
     state.filter = (e.target as HTMLInputElement).value.trim().toLowerCase();
     renderMain();
   });
+  $('restart-android').addEventListener('click', () => void run(async () => {
+    state.settings!.androidGraphics = $<HTMLSelectElement>('set-android-graphics').value === 'software' ? 'software' : 'auto';
+    await playbridge.settings.set(state.settings!);
+    try { await playbridge.runtime.restartAndroid(); await refreshDevices(); }
+    finally { activity(''); }
+  }));
   $('open-settings').addEventListener('click', openSettings);
   $('settings-form').addEventListener('submit', (e) => void saveSettings(e));
 
@@ -358,6 +366,17 @@ function renderFiles(): HTMLElement {
       )
     );
 
+    if (installed && pkg.kind !== 'ipa') actionButtons.push(el('button', {
+      class: 'btn ghost small', onclick: () => void run(async () => {
+        if (!state.serial) throw new Error('Start or connect the Android device first.');
+        toast('Saved Android diagnostics: ' + await playbridge.adb.diagnostics(state.serial, pkg.bundleId!));
+      })
+    }, 'Diagnostics'));
+
+    if (pkg.bundleId) actionButtons.push(el('button', {
+      class: 'btn ghost small', onclick: () => void controlsEditor.open(pkg.bundleId!, pkg.name)
+    }, 'Controls'));
+
     const metaInfo = el('div', { class: 'card-meta', title: [pkg.bundleId, pkg.file].filter(Boolean).join('\n') },
       el('span', { class: 'meta-size' }, formatSize(pkg.size)),
       pkg.version ? el('span', { class: 'meta-version' }, `v${pkg.version}`) : ''
@@ -409,6 +428,8 @@ function renderAndroid(): HTMLElement {
   }
   return el('div', { class: 'grid' }, ...list.map((p) => {
     const playBtn = el('button', { class: 'btn primary btn-play', onclick: () => void play(p.id) }, svgIcon('play'), el('span', {}, 'Play'));
+    const controlsBtn = el('button', { class: 'btn ghost small', onclick: () => void controlsEditor.open(p.id, prettyPackage(p.id)) }, 'Controls');
+    const diagnosticsBtn = el('button', { class: 'btn ghost small', onclick: () => void run(async () => { toast('Saved Android diagnostics: ' + await playbridge.adb.diagnostics(state.serial, p.id)); }) }, 'Diagnostics');
     const stopBtn = el('button', { class: 'btn ghost btn-icon', title: 'Force stop', onclick: () => void run(() => playbridge.adb.forceStop(state.serial, p.id)) }, svgIcon('stop'));
     const uninstallBtn = el('button', { class: 'btn ghost btn-icon danger', title: 'Uninstall', onclick: () => void uninstall(p.id) }, svgIcon('trash'));
 
@@ -424,7 +445,7 @@ function renderAndroid(): HTMLElement {
         el('h3', { title: prettyPackage(p.id) }, prettyPackage(p.id)),
         el('div', { class: 'card-meta', title: p.id }, el('span', { class: 'muted' }, p.id))
       ),
-      el('div', { class: 'card-actions' }, playBtn, stopBtn, uninstallBtn)
+      el('div', { class: 'card-actions' }, playBtn, controlsBtn, diagnosticsBtn, stopBtn, uninstallBtn)
     );
   }));
 }
@@ -492,6 +513,7 @@ function openSettings(): void {
   const s = state.settings!;
   $<HTMLSelectElement>('set-avd').replaceChildren(el('option', { value: '' }, 'Automatic (one virtual device)'),
     ...state.runtime.avds.map((name) => el('option', { value: name }, name)));
+  $<HTMLSelectElement>('set-android-graphics').value = s.androidGraphics ?? 'auto';
   $<HTMLSelectElement>('set-avd').value = s.androidAvd ?? '';
   $<HTMLInputElement>('set-adb').value = s.adbPath ?? '';
   $<HTMLInputElement>('set-adb').placeholder = state.adb?.binary ?? 'adb';
@@ -504,6 +526,7 @@ function openSettings(): void {
 async function saveSettings(e: Event): Promise<void> {
   if ((e as SubmitEvent).submitter?.getAttribute('value') !== 'save') return;
   const s = state.settings!;
+  s.androidGraphics = $<HTMLSelectElement>('set-android-graphics').value === 'software' ? 'software' : 'auto';
   s.androidAvd = $<HTMLSelectElement>('set-avd').value || undefined;
   s.adbPath = $<HTMLInputElement>('set-adb').value.trim() || undefined;
   s.stream = {

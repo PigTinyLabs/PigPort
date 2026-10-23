@@ -3,6 +3,7 @@ import { existsSync, readFileSync, promises as fs } from 'node:fs';
 import path from 'node:path';
 import { Keymap, parseKeymap } from '../shared/keymap';
 import { Adb, locateAdb } from './android/adb';
+import { assertAbi, waitForAndroid, pause } from './android/health';
 import { KEYCODE_APP_SWITCH, KEYCODE_BACK, KEYCODE_HOME, ScrcpySession } from './android/scrcpy';
 import { iosAppIcon, iosAppsSupported, launchIosApp, listIosApps } from './mac/iosApps';
 import { Settings, Store } from './store';
@@ -37,7 +38,25 @@ async function refreshAdb(): Promise<void> {
 }
 async function androidDevice(serial?: string): Promise<string> {
   const settings = await store.settings();
-  return ensureAndroid(adb, serial, settings.androidAvd ?? (await managedAndroid.ready() ? MANAGED_AVD : undefined));
+  return ensureAndroid(adb, serial, settings.androidAvd ?? (await managedAndroid.ready() ? MANAGED_AVD : undefined), settings.androidGraphics);
+}
+
+async function saveAndroidDiagnostic(report: string): Promise<string> {
+  const dir = path.join(app.getPath('userData'), 'diagnostics');
+  await fs.mkdir(dir, { recursive: true });
+  const file = path.join(dir, 'android-latest.txt');
+  await fs.writeFile(file, Buffer.from(report).subarray(-1024 * 1024));
+  return file;
+}
+async function launchAndroid(serial: string, pkg: string): Promise<void> {
+  progress('Opening Android game and checking startup…');
+  try { await adb.launch(serial, pkg); }
+  catch (error) {
+    let report: string;
+    try { report = await saveAndroidDiagnostic(await adb.diagnostics(serial, pkg)); }
+    catch { report = 'Diagnostic capture failed; check the ADB connection.'; }
+    throw new Error((error as Error).message + '\nDiagnostics: ' + report);
+  } finally { progress(''); }
 }
 
 function scrcpyServer(): { jar: string; version: string } {
@@ -116,6 +135,7 @@ function registerIpc(): void {
       if (pkg.kind === 'apk' || pkg.kind === 'xapk') {
         if (!pkg.bundleId) throw new Error(`Cannot read ${pkg.kind.toUpperCase()} package ID.`);
         const target = await androidDevice(serial);
+        await assertAbi(adb, target, pkg.architectures);
         if (pkg.kind === 'xapk') {
           await installXapk(adb, target, file, pkg.bundleId, progress);
         } else {
@@ -152,7 +172,8 @@ function registerIpc(): void {
     }
     const target = await androidDevice(serial);
     if (!(await adb.packages(target)).some((p) => p.id === pkg.bundleId)) throw new Error('Game is not installed on this device. Select the original device or install again.');
-    await adb.launch(target, pkg.bundleId);
+    await assertAbi(adb, target, pkg.architectures);
+    await launchAndroid(target, pkg.bundleId);
     return { appId: pkg.bundleId, serial: target };
   });
   handle('packages:uninstall', async (file: string, serial?: string) => {
@@ -201,6 +222,25 @@ function registerIpc(): void {
     return true;
   });
   handle('runtime:status', async () => ({ nativeIpa: await nativeIpa.available(), managedAndroid: await managedAndroid.ready(), avds: await avds().catch(() => []) }));
+  handle('runtime:android:restart', async () => {
+    if (installing) throw new Error('Wait for installation to finish.');
+    if (!await managedAndroid.ready()) throw new Error('Set up built-in Android first.');
+    progress('Restarting built-in Android; running Android games will close…');
+    try {
+      for (const device of await adb.devices()) {
+        if (!device.serial.startsWith('emulator-')) continue;
+        const name = (await adb.run(['-s', device.serial, 'emu', 'avd', 'name'], 5000)).split(/\r?\n/)[0].trim();
+        if (name !== MANAGED_AVD) continue;
+        await adb.run(['-s', device.serial, 'emu', 'kill'], 10000);
+        const deadline = Date.now() + 30000;
+        while ((await adb.devices()).some((d) => d.serial === device.serial)) {
+          if (Date.now() >= deadline) throw new Error('Android did not stop. Close the emulator before retrying.');
+          await pause(500);
+        }
+      }
+      await ensureAndroid(adb, undefined, MANAGED_AVD, (await store.settings()).androidGraphics, true);
+    } finally { progress(''); }
+  });
   handle('runtime:android:prepare', () => managedAndroid.prepare());
   handle('runtime:android:install', async (token: string, accepted: boolean) => {
     if (installing) throw new Error('Wait for the current game installation to finish.');
@@ -248,7 +288,11 @@ function registerIpc(): void {
     return true;
   });
   handle('adb:uninstall', (serial: string, pkg: string) => adb.uninstall(serial, pkg));
-  handle('adb:launch', (serial: string, pkg: string) => adb.launch(serial, pkg));
+  handle('adb:launch', async (serial: string, pkg: string) => { await waitForAndroid(adb, serial); await launchAndroid(serial, pkg); });
+  handle('adb:diagnostics', async (serial: string, pkg: string) => {
+    const report = await adb.diagnostics(serial, pkg);
+    return saveAndroidDiagnostic(report);
+  });
   handle('adb:forceStop', (serial: string, pkg: string) => adb.forceStop(serial, pkg));
 
   handle('ios:list', () => listIosApps());

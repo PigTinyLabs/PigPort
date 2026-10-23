@@ -1,5 +1,5 @@
 // Requires an Apple Silicon Mac and an iOS SDK for the test fixture only.
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -56,6 +56,38 @@ try {
   assert.match(iphoneSpoof, /model: iPhone/);
   assert.match(iphoneSpoof, /idiom: 0/);
   console.log('PASS: iOS environment spoofing verified (iPad & iPhone emulation, catalyst=NO, isiOSAppOnMac=NO).');
+
+  // Quitting must end the game even though exit() is swallowed during play (2026-10-22: a NeoX game stuck in its
+  // exit loop wrote 64 GB of log and filled the disk).
+  const demo = path.join(installed, 'Demo');
+  const injected = (extra = {}) => ({ ...process.env, DYLD_INSERT_LIBRARIES: dylib, ...extra });
+  const quit = spawnSync(demo, ['--check-exit', 'quit'], { encoding: 'utf8', env: injected(), timeout: 20000 });
+  assert.equal(quit.status, 7, `quit: status ${quit.status} signal ${quit.signal}`);
+  assert.match(quit.stdout, /exit blocked/); assert.doesNotMatch(quit.stdout, /NOT REACHED/);
+  const t0 = Date.now();
+  const hang = spawnSync(demo, ['--check-exit', 'hang'], { encoding: 'utf8', env: injected(), timeout: 20000 });
+  const hangSeconds = (Date.now() - t0) / 1000;
+  assert.equal(hang.status, 0, `hang: status ${hang.status} signal ${hang.signal}`);
+  assert.ok(hangSeconds >= 4 && hangSeconds < 12, `hang ended after ${hangSeconds}s, expected ~5s`);
+  const loopExit = async (extraEnv, sendSigterm) => {
+    const child = spawn(demo, ['--check-exit', 'loop'], { env: injected(extraEnv) });
+    let out = ''; child.stdout.on('data', (d) => { out += d; });
+    const done = new Promise((resolve) => child.on('exit', (code, signal) => resolve({ code, signal })));
+    while (!out.includes('ready') && child.exitCode === null) await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 1000));
+    const stillRunning = child.exitCode === null;
+    if (sendSigterm) child.kill('SIGTERM');
+    const t = Date.now();
+    const result = await Promise.race([done, new Promise((r) => setTimeout(() => r({ timeout: true }), 15000))]);
+    if (result.timeout) child.kill('SIGKILL');
+    return { ...result, stillRunning, seconds: (Date.now() - t) / 1000 };
+  };
+  const term = await loopExit({}, true);
+  assert.ok(term.stillRunning, 'exit() during play must stay swallowed');
+  assert.equal(term.code, 9, `SIGTERM: ${JSON.stringify(term)}`); assert.ok(term.seconds < 3, `SIGTERM took ${term.seconds}s`);
+  const lowDisk = await loopExit({ PLAYBRIDGE_MIN_FREE_MB: String(1024 ** 3) }, false);
+  assert.equal(lowDisk.code, 9, `low disk: ${JSON.stringify(lowDisk)}`);
+  console.log('PASS: clean shutdown (exit swallowed during play; allowed when quitting; stuck exit forced after 5 s; SIGTERM; low-disk stop).');
   const again = await runtime.install(ipa, 'io.playbridge.fixture'); assert.equal(again, installed);
   const installedBinary = path.join(installed, 'Demo');
   const before = createHash('sha256').update(readFileSync(installedBinary)).digest('hex');

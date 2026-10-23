@@ -56,6 +56,7 @@ test('multiple Android devices require explicit selection', async () => {
   const adb = new Adb('unused');
   adb.devices = async () => [{ serial: 'phone', state: 'device' }, { serial: 'emulator-5554', state: 'device' }];
   await assert.rejects(ensureAndroid(adb), /Choose/);
+  adb.shell = async (_serial, args) => args[0] === 'getprop' ? '1' : 'package:/system/framework/framework-res.apk';
   assert.equal(await ensureAndroid(adb, 'emulator-5554'), 'emulator-5554');
 });
 test('an unauthorized phone reports the authorization prompt', async () => {
@@ -63,8 +64,9 @@ test('an unauthorized phone reports the authorization prompt', async () => {
   await assert.rejects(ensureAndroid(adb), /Allow USB debugging/);
 });
 test('failed Android activity launch is not reported as success', async () => {
-  const adb = new Adb('unused'); adb.shell = async () => 'No activities found to run, monkey aborted.';
-  await assert.rejects(adb.launch('phone', 'io.demo.game'), /could not launch/);
-  adb.shell = async () => 'Events injected: 1';
-  await adb.launch('phone', 'io.demo.game');
+  const adb = new Adb('unused');
+  adb.shell = async (_serial, args) => args[0] === 'cmd' ? 'io.demo.game/.MainActivity' : 'Error: Activity not started';
+  await assert.rejects(adb.launch('phone', 'io.demo.game', 0), /could not launch/);
+  adb.shell = async (_serial, args) => args[0] === 'cmd' ? 'io.demo.game/.MainActivity' : args[0] === 'am' ? 'Status: ok' : '1234';
+  await adb.launch('phone', 'io.demo.game', 0);
 });

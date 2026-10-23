@@ -536,3 +536,37 @@ body.dragging::after { content: "Drop IPA / APK / XAPK to install"; position: fi
 #runtime-license { width: 100%; box-sizing: border-box; background: #13161e; color: #e3e6ed; padding: 12px; border: 1px solid #444; }
 #runtime-terms p { line-height: 1.5; }
 .card-text p { white-space: normal; overflow-wrap: anywhere; }
+
+/* Visual keymap settings */
+.controls-dialog { width: min(1400px, 96vw); max-width: none; max-height: 94vh; padding: 0; background: #151820; color: #e9edf5; border: 1px solid #383e4b; border-radius: 16px; box-shadow: 0 25px 90px #000a; }
+.controls-dialog::backdrop { background: #060910d9; }
+.ce-header, .ce-footer { display: flex; align-items: center; gap: 12px; padding: 16px 20px; }
+.ce-header { justify-content: space-between; border-bottom: 1px solid #303642; }
+.ce-header h2, .ce-header p { margin: 0; }
+.ce-header p { margin-top: 4px; }
+.ce-body { display: grid; grid-template-columns: 185px minmax(300px, 1fr) 235px; min-height: 430px; }
+.ce-tools, .ce-details { padding: 16px; overflow-y: auto; max-height: 63vh; }
+.ce-tools { border-right: 1px solid #303642; display: flex; flex-direction: column; gap: 8px; }
+.ce-details { border-left: 1px solid #303642; }
+.ce-tools h3, .ce-details h3 { margin: 12px 0 8px; font-size: 13px; }
+.ce-center { min-width: 0; padding: 18px; display: flex; flex-direction: column; justify-content: center; }
+.ce-center p { font-size: 12px; line-height: 1.5; }
+.ce-preview { align-self: center; max-width: calc(54vh * var(--ce-aspect, 1.7777778)); position: relative; overflow: hidden; width: 100%; max-height: 54vh; border: 1px solid #3b4454; border-radius: 12px; background-color: #10151d; background-image: linear-gradient(#ffffff08 1px, transparent 1px), linear-gradient(90deg, #ffffff08 1px, transparent 1px); background-size: 24px 24px; }
+.ce-preview-label { position: absolute; inset: 0; display: grid; place-items: center; letter-spacing: 5px; color: #465066; font-size: 13px; pointer-events: none; }
+.ce-game-image { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.ce-marker { position: absolute; transform: translate(-50%, -50%); border: 2px solid #e4e8f399; border-radius: 50%; color: white; background: #283447c9; white-space: pre; text-align: center; font-weight: 600; touch-action: none; cursor: grab; z-index: 1; }
+.ce-marker.selected { border-color: #ff9c4a; box-shadow: 0 0 0 4px #ff9c4a25; background: #9c4e1ac9; z-index: 2; }
+.ce-marker:focus-visible, .ce-list-item:focus-visible { outline: 2px solid #ffbf89; outline-offset: 3px; }
+.ce-button { width: 46px; height: 46px; font-size: 12px; }
+.ce-camera { border-style: dashed; border-radius: 20%; font-size: 11px; }
+.ce-joystick { font-size: 12px; line-height: 1.7; }
+.ce-control-list { display: flex; flex-direction: column; gap: 5px; }
+.ce-list-item { border: 1px solid transparent; background: #202631; color: #d5dce8; padding: 9px; border-radius: 7px; cursor: pointer; text-align: left; }
+.ce-list-item.active { color: #ffbd88; border-color: #ce783c; background: #463021; }
+.ce-details .field { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-bottom: 14px; font-size: 12px; }
+.ce-details input { width: 100%; min-width: 0; box-sizing: border-box; }
+.ce-keycap { color: #ffbd88; border-color: #92603e; }
+.ce-mouse-buttons { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.ce-footer { border-top: 1px solid #303642; flex-wrap: wrap; }
+.ce-status { margin-right: auto; color: #abb8ca; font-size: 12px; }
+@media (max-width: 1000px) { .ce-body { grid-template-columns: 150px minmax(200px, 1fr) 190px; } .ce-tools, .ce-details, .ce-center { padding: 10px; } }

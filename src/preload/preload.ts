@@ -10,7 +10,7 @@ const api: PlayBridgeApi = {
   packages: { inspect: invoke('packages:inspect'), list: invoke('packages:list'), install: invoke('packages:install'),
     play: invoke('packages:play'), uninstall: invoke('packages:uninstall'), remove: invoke('packages:remove'), icon: invoke('packages:icon'),
     pathForFile: (file: unknown) => webUtils.getPathForFile(file as Parameters<typeof webUtils.getPathForFile>[0]) },
-  runtime: { status: invoke('runtime:status'), prepareAndroid: invoke('runtime:android:prepare'), installAndroid: invoke('runtime:android:install'), onProgress: listen('runtime:progress') },
+  runtime: { status: invoke('runtime:status'), restartAndroid: invoke('runtime:android:restart'), prepareAndroid: invoke('runtime:android:prepare'), installAndroid: invoke('runtime:android:install'), onProgress: listen('runtime:progress') },
   info: invoke('app:info'),
   settings: { get: invoke('settings:get'), set: invoke('settings:set') },
   adb: {
@@ -22,6 +22,7 @@ const api: PlayBridgeApi = {
     uninstall: invoke('adb:uninstall'),
     launch: invoke('adb:launch'),
     forceStop: invoke('adb:forceStop'),
+    diagnostics: invoke('adb:diagnostics'),
   },
   ios: { list: invoke('ios:list'), launch: invoke('ios:launch'), icon: invoke('ios:icon') },
   keymap: {

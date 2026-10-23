@@ -1,4 +1,5 @@
 import type { PlayBridgeApi } from '../shared/api';
+import { ControlsEditor } from './controls-editor.js';
 import { emptyKeymap, Keymap, KeymapElement, TouchEvent, TouchMapper } from '../shared/keymap.js';
 import { H264Decoder } from './decoder.js';
 import { el, keyLabel, toast } from './ui.js';
@@ -26,6 +27,7 @@ export class Player {
   private appId = '_device';
   private frameW = 0;
   private frameH = 0;
+  private controlsEditor?: ControlsEditor;
   private editing = false;
   private selected = -1;
   private waitingFor?: Binding;
@@ -153,7 +155,7 @@ export class Player {
 
   private bindInput(): void {
     window.addEventListener('keydown', (e) => {
-      if (this.root.hidden || isTyping(e)) return;
+      if (this.root.hidden || document.querySelector('dialog.controls-dialog[open]') || isTyping(e)) return;
       if (this.editing) return this.editorKey(e);
       if (e.code === this.keymap.mouseLookToggle) {
         e.preventDefault();
@@ -168,7 +170,7 @@ export class Player {
       }
     });
     window.addEventListener('keyup', (e) => {
-      if (this.root.hidden || this.editing) return;
+      if (this.root.hidden || document.querySelector('dialog.controls-dialog[open]') || this.editing) return;
       this.send(this.mapper.keyUp(e.code));
     });
     window.addEventListener('blur', () => this.send(this.mapper.releaseAll()));
@@ -190,7 +192,7 @@ export class Player {
       this.send([{ action: 'down', pointerId: 0, ...p }]);
     });
     window.addEventListener('mousemove', (e) => {
-      if (this.root.hidden || this.editing) return;
+      if (this.root.hidden || document.querySelector('dialog.controls-dialog[open]') || this.editing) return;
       if (document.pointerLockElement === this.canvas) {
         this.send(this.mapper.mouseMove(e.movementX, e.movementY, performance.now()));
       } else if (this.mouseDown) {
@@ -198,7 +200,7 @@ export class Player {
       }
     });
     window.addEventListener('mouseup', (e) => {
-      if (this.root.hidden || this.editing) return;
+      if (this.root.hidden || document.querySelector('dialog.controls-dialog[open]') || this.editing) return;
       if (document.pointerLockElement === this.canvas) {
         this.send(this.mapper.keyUp(MOUSE_CODES[e.button] ?? 'MouseLeft'));
       } else if (this.mouseDown && e.button === 0) {
@@ -230,12 +232,24 @@ export class Player {
         nav('back', '◁', 'Back'), nav('home', '○', 'Home'), nav('recents', '▢', 'Recent apps'),
         el('span', { class: 'tb-sep' }),
         el('span', { class: 'hint' }, `${keyLabel(this.keymap.mouseLookToggle)} mouse look`),
-        el('button', { class: 'btn', onclick: () => this.startEditing() }, 'Edit controls'));
+        el('button', { class: 'btn primary', onclick: () => void this.openControls() }, 'Control settings'),
+        el('button', { class: 'btn ghost', onclick: () => this.startEditing() }, 'Quick edit'));
     this.toolbar.replaceChildren(left, right);
     this.root.classList.toggle('editing', this.editing);
   }
 
   // ---- editor ----
+
+  private async openControls(): Promise<void> {
+    if (document.pointerLockElement) document.exitPointerLock();
+    this.send(this.mapper.releaseAll());
+    this.controlsEditor ??= new ControlsEditor();
+    await this.controlsEditor.open(this.appId, this.root.dataset.title ?? this.appId, {
+      map: this.keymap, image: this.frameW ? this.canvas.toDataURL('image/png') : undefined,
+      aspect: this.frameW && this.frameH ? this.frameW / this.frameH : 16 / 9,
+      saved: (map) => { this.keymap = map; this.send(this.mapper.setKeymap(map)); this.renderToolbar(); this.renderOverlay(); },
+    });
+  }
 
   private startEditing(): void {
     if (document.pointerLockElement) document.exitPointerLock();

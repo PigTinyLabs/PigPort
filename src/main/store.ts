@@ -5,6 +5,7 @@ import type { MobilePackage } from '../shared/api';
 import { StreamOptions } from './android/scrcpy';
 
 export interface Settings {
+  androidGraphics?: 'auto' | 'software';
   adbPath?: string;
   androidAvd?: string;
   stream: StreamOptions;

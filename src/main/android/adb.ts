@@ -1,6 +1,7 @@
 import { execFile, spawn, ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { launchComponent, packageId, pause } from './health';
 
 export interface Device {
   serial: string;
@@ -99,9 +100,37 @@ export class Adb {
     if (!/Success/.test(out)) throw new Error(out.trim() || 'Uninstall failed');
   }
 
-  async launch(serial: string, pkg: string): Promise<void> {
-    const out = await this.shell(serial, ['monkey', '-p', pkg, '-c', 'android.intent.category.LAUNCHER', '1']);
-    if (!/Events injected:\s*[1-9]/.test(out) || /No activities found|monkey aborted|Error:/i.test(out)) throw new Error(`${pkg} could not launch: ${out.trim()}`);
+  async launch(serial: string, pkg: string, observationMs = 3000): Promise<void> {
+    packageId(pkg);
+    const component = launchComponent(await this.shell(serial,
+      ['cmd', 'package', 'resolve-activity', '--brief', '-a', 'android.intent.action.MAIN', '-c', 'android.intent.category.LAUNCHER', pkg], 15000), pkg);
+    const out = await this.shell(serial, ['am', 'start', '-W', '-n', component], 30000);
+    if (/Error:|Exception|Status:\s*(?:timeout|failed)/i.test(out) || !/Status:\s*ok/i.test(out)) throw new Error(`${pkg} could not launch: ${out.trim()}`);
+    // Sending a launch request is not proof that the process survived startup.
+    const deadline = Date.now() + observationMs;
+    do {
+      const alive = (await this.shell(serial, ['sh', '-c', `pidof ${pkg} || true`], 5000)).trim();
+      if (!alive) throw new Error(`${pkg} exited during startup. Open Android diagnostics to see the recent crash buffer. This may be a crash or an intentional game exit.`);
+      if (Date.now() >= deadline) break;
+      await pause(Math.min(750, Math.max(1, deadline - Date.now())));
+    } while (true);
+  }
+
+  async diagnostics(serial: string, pkg: string): Promise<string> {
+    packageId(pkg);
+    const sections: string[] = [`Package: ${pkg}`, `Device: ${serial}`, `Captured: ${new Date().toISOString()}`];
+    for (const [name, args] of [
+      ['CPU ABIs', ['getprop', 'ro.product.cpu.abilist']],
+      ['Android version', ['getprop', 'ro.build.version.release']],
+      ['Data storage', ['df', '-k', '/data']],
+      ['Graphics', ['getprop', 'ro.hardware.egl']],
+    ] as [string, string[]][]) {
+      sections.push(`\n${name}:\n` + await this.shell(serial, args, 5000).catch((e) => String(e)));
+    }
+    // Snapshot only; never start an unbounded logcat writer or clear device logs.
+    sections.push('\nRecent device crash buffer (may include older or other-app crashes):\n' +
+      await this.run(['-s', serial, 'logcat', '-b', 'crash', '-d', '-t', '160', '-v', 'threadtime'], 10000).catch((e) => String(e)));
+    return sections.join('\n');
   }
 
   async forceStop(serial: string, pkg: string): Promise<void> {

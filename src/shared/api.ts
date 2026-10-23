@@ -7,7 +7,8 @@ export interface IosApp { name: string; bundleId: string; path: string }
 export interface StreamMeta { deviceName: string; codec: string; width: number; height: number }
 export interface StreamPacket { config: boolean; key: boolean; pts: number; data: Uint8Array }
 export interface StreamOptions { maxSize: number; maxFps: number; bitRate: number }
-export interface Settings { adbPath?: string; androidAvd?: string; stream: StreamOptions; recentAddresses: string[] }
+export interface Settings { androidGraphics?: 'auto' | 'software';
+  adbPath?: string; androidAvd?: string; stream: StreamOptions; recentAddresses: string[] }
 export type AdbStatus = { ok: true; binary: string; version: string } | { ok: false; binary: string; error: string };
 export type NavButton = 'back' | 'home' | 'recents';
 export interface MobilePackage {
@@ -39,6 +40,7 @@ export interface PlayBridgeApi {
   };
   runtime: {
     status(): Promise<RuntimeStatus>;
+    restartAndroid(): Promise<void>;
     prepareAndroid(): Promise<RuntimePlan>;
     installAndroid(token: string, accepted: boolean): Promise<void>;
     onProgress(cb: (message: string) => void): void;
@@ -53,6 +55,7 @@ export interface PlayBridgeApi {
     install(serial: string): Promise<boolean>;
     uninstall(serial: string, pkg: string): Promise<void>;
     launch(serial: string, pkg: string): Promise<void>;
+    diagnostics(serial: string, pkg: string): Promise<string>;
     forceStop(serial: string, pkg: string): Promise<void>;
   };
   ios: {
