@@ -118,13 +118,27 @@ export async function packageIcon(file: string, cacheDir: string, installedPath?
           } catch {}
         }
       } else if (ext === '.xapk') {
-        const iconName = names.find((n) => n.toLowerCase() === 'icon.png' || n.toLowerCase().endsWith('/icon.png'));
+        let iconName: string | undefined;
+        if (names.includes('manifest.json')) {
+          try {
+            const raw = await read('manifest.json');
+            const json = JSON.parse(raw.toString('utf8'));
+            if (json.icon && names.includes(json.icon)) iconName = json.icon;
+          } catch {}
+        }
+        if (!iconName) {
+          iconName = names.find((n) => /^icon\.(png|webp|jpg)$/i.test(n) || /\/icon\.(png|webp|jpg)$/i.test(n) || /app[_-]?icon.*\.(png|webp|jpg)$/i.test(n));
+        }
+        if (!iconName) {
+          iconName = names.find((n) => !n.includes('/') && /\.(png|webp|jpg)$/i.test(n));
+        }
         if (iconName) {
           try {
             const buf = await read(iconName);
-            if (buf && buf.length > 500) {
+            if (buf && buf.length > 100) {
               await fs.writeFile(cachedFile, buf);
-              return `data:image/png;base64,${buf.toString('base64')}`;
+              const mime = iconName.toLowerCase().endsWith('.webp') ? 'image/webp' : iconName.toLowerCase().endsWith('.jpg') ? 'image/jpeg' : 'image/png';
+              return `data:${mime};base64,${buf.toString('base64')}`;
             }
           } catch {}
         }

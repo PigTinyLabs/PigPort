@@ -51,7 +51,7 @@ export function formatSize(bytes: number): string {
   return `${(bytes / 1024).toFixed(0)} KB`;
 }
 
-export function svgIcon(name: 'play' | 'refresh' | 'trash' | 'download' | 'stop' | 'remove'): SVGElement {
+export function svgIcon(name: 'play' | 'refresh' | 'trash' | 'download' | 'stop' | 'remove' | 'gamepad' | 'diagnostics'): SVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('class', 'btn-svg');
@@ -93,6 +93,16 @@ export function svgIcon(name: 'play' | 'refresh' | 'trash' | 'download' | 'stop'
     rect.setAttribute('x', '6'); rect.setAttribute('y', '6'); rect.setAttribute('width', '12'); rect.setAttribute('height', '12');
     rect.setAttribute('fill', 'currentColor');
     svg.append(rect);
+  } else if (name === 'gamepad') {
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', '2'); rect.setAttribute('y', '6'); rect.setAttribute('width', '20'); rect.setAttribute('height', '12'); rect.setAttribute('rx', '4');
+    const p1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p1.setAttribute('d', 'M6 12h4M8 10v4M15 13h.01M18 11h.01');
+    svg.append(rect, p1);
+  } else if (name === 'diagnostics') {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M22 12h-4l-3 9L9 3l-3 9H2');
+    svg.append(path);
   }
   return svg;
 }

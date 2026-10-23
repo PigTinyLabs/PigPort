@@ -323,41 +323,6 @@ function renderFiles(): HTMLElement {
     }, svgIcon('remove'));
     const art = renderAppIcon(pkg.file, pkg.bundleId ?? pkg.name, pkg.name);
 
-    let actionButtons: HTMLElement[] = [];
-    if (installed) {
-      const playBtn = el('button', {
-        class: 'btn primary btn-play',
-        ...(!supported ? { disabled: '' } : {}),
-        onclick: () => void run(() => playGame(pkg))
-      }, svgIcon('play'), el('span', {}, 'Play'));
-
-      const reinstallBtn = el('button', {
-        class: 'btn ghost btn-icon',
-        title: 'Reinstall game',
-        onclick: () => void run(() => installGame(pkg))
-      }, svgIcon('refresh'));
-
-      const uninstallBtn = el('button', {
-        class: 'btn ghost btn-icon danger',
-        title: 'Uninstall game',
-        onclick: () => void run(() => uninstallGame(pkg))
-      }, svgIcon('trash'));
-
-      actionButtons = [playBtn, reinstallBtn, uninstallBtn];
-    } else if (pkg.status === 'pending') {
-      actionButtons = [el('button', {
-        class: 'btn primary btn-play',
-        ...(!supported ? { disabled: '' } : {}),
-        onclick: () => void run(() => installGame(pkg))
-      }, svgIcon('refresh'), el('span', {}, 'Retry installation')), removeBtn];
-    } else {
-      actionButtons = [el('button', {
-        class: 'btn primary btn-play',
-        ...(!supported ? { disabled: '' } : {}),
-        onclick: () => void run(() => installGame(pkg))
-      }, svgIcon('download'), el('span', {}, 'Install & Play')), removeBtn];
-    }
-
     const badges = el('div', { class: 'card-badges' },
       el('span', { class: `badge badge-${pkg.kind}` }, pkg.kind.toUpperCase()),
       el('span', { class: `badge-status ${installed ? 'status-installed' : pkg.status === 'error' || pkg.missing ? 'status-error' : 'status-ready'}` },
@@ -365,17 +330,6 @@ function renderFiles(): HTMLElement {
         installed ? 'Installed' : pkg.missing ? 'Missing' : pkg.status === 'error' ? 'Error' : 'Ready'
       )
     );
-
-    if (installed && pkg.kind !== 'ipa') actionButtons.push(el('button', {
-      class: 'btn ghost small', onclick: () => void run(async () => {
-        if (!state.serial) throw new Error('Start or connect the Android device first.');
-        toast('Saved Android diagnostics: ' + await playbridge.adb.diagnostics(state.serial, pkg.bundleId!));
-      })
-    }, 'Diagnostics'));
-
-    if (pkg.bundleId) actionButtons.push(el('button', {
-      class: 'btn ghost small', onclick: () => void controlsEditor.open(pkg.bundleId!, pkg.name)
-    }, 'Controls'));
 
     const metaInfo = el('div', { class: 'card-meta', title: [pkg.bundleId, pkg.file].filter(Boolean).join('\n') },
       el('span', { class: 'meta-size' }, formatSize(pkg.size)),
@@ -389,10 +343,85 @@ function renderFiles(): HTMLElement {
         ? el('span', { class: 'muted' }, document.body.dataset.platform === 'win32' ? 'iOS games cannot run on Windows' : 'Needs an Apple Silicon Mac')
         : pkg.status === 'error'
         ? el('span', { class: 'text-error' }, pkg.error ?? 'Installation failed')
-        : installed && pkg.kind === 'ipa'
-          ? el('span', { class: 'card-hint' }, el('kbd', {}, '⌘K'), ' controls')
-          : el('span', { class: 'muted' }, installed ? 'Ready to play' : 'Ready to install')
+        : el('span', { class: 'muted' }, pkg.bundleId ?? (installed ? 'Installed' : 'Ready to install'))
     );
+
+    let actionsEl: HTMLElement;
+    if (installed) {
+      const playBtn = el('button', {
+        class: 'btn primary btn-play',
+        ...(!supported ? { disabled: '' } : {}),
+        onclick: () => void run(() => playGame(pkg))
+      }, svgIcon('play'), el('span', {}, 'Play'));
+
+      const controlsBtn = pkg.bundleId ? el('button', {
+        class: 'btn ghost btn-controls',
+        title: pkg.kind === 'ipa' ? 'Controls editor (or press ⌘K in game)' : 'Edit keymap controls',
+        onclick: () => void controlsEditor.open(pkg.bundleId!, pkg.name)
+      }, svgIcon('gamepad'), el('span', {}, 'Controls')) : null;
+
+      const mainRow = el('div', { class: 'card-actions-row' },
+        playBtn,
+        ...(controlsBtn ? [controlsBtn] : [])
+      );
+
+      const tools: HTMLElement[] = [];
+      if (pkg.kind !== 'ipa') {
+        tools.push(el('button', {
+          class: 'btn ghost btn-icon',
+          title: 'Android diagnostics & crash logs',
+          onclick: () => void run(async () => {
+            if (!state.serial) throw new Error('Start or connect the Android device first.');
+            toast('Saved Android diagnostics: ' + await playbridge.adb.diagnostics(state.serial, pkg.bundleId!));
+          })
+        }, svgIcon('diagnostics')));
+      }
+
+      tools.push(el('button', {
+        class: 'btn ghost btn-icon',
+        title: 'Reinstall game',
+        onclick: () => void run(() => installGame(pkg))
+      }, svgIcon('refresh')));
+
+      tools.push(el('button', {
+        class: 'btn ghost btn-icon danger',
+        title: 'Uninstall game',
+        onclick: () => void run(() => uninstallGame(pkg))
+      }, svgIcon('trash')));
+
+      const hintEl = pkg.kind === 'ipa'
+        ? el('span', { class: 'card-hint' }, el('kbd', {}, '⌘K'), ' in-game')
+        : el('span', { class: 'muted text-xs' }, 'Ready to play');
+
+      const subRow = el('div', { class: 'card-actions-sub' },
+        hintEl,
+        el('div', { class: 'card-actions-tools' }, ...tools)
+      );
+
+      actionsEl = el('div', { class: 'card-actions' }, mainRow, subRow);
+    } else if (pkg.status === 'pending') {
+      actionsEl = el('div', { class: 'card-actions' },
+        el('div', { class: 'card-actions-row' },
+          el('button', {
+            class: 'btn primary btn-play btn-full',
+            ...(!supported ? { disabled: '' } : {}),
+            onclick: () => void run(() => installGame(pkg))
+          }, svgIcon('refresh'), el('span', {}, 'Retry installation')),
+          removeBtn
+        )
+      );
+    } else {
+      actionsEl = el('div', { class: 'card-actions' },
+        el('div', { class: 'card-actions-row' },
+          el('button', {
+            class: 'btn primary btn-play btn-full',
+            ...(!supported ? { disabled: '' } : {}),
+            onclick: () => void run(() => installGame(pkg))
+          }, svgIcon('download'), el('span', {}, 'Install & Play')),
+          removeBtn
+        )
+      );
+    }
 
     return el('article', { class: `card ${installed ? 'is-installed' : ''}` },
       el('div', { class: 'card-top' }, art, badges),
@@ -401,7 +430,7 @@ function renderFiles(): HTMLElement {
         metaInfo,
         statusDesc
       ),
-      el('div', { class: 'card-actions' }, ...actionButtons)
+      actionsEl
     );
   })));
 }
@@ -427,11 +456,21 @@ function renderAndroid(): HTMLElement {
       state.filter ? 'Try a different search.' : 'Install an APK to get started.');
   }
   return el('div', { class: 'grid' }, ...list.map((p) => {
-    const playBtn = el('button', { class: 'btn primary btn-play', onclick: () => void play(p.id) }, svgIcon('play'), el('span', {}, 'Play'));
-    const controlsBtn = el('button', { class: 'btn ghost small', onclick: () => void controlsEditor.open(p.id, prettyPackage(p.id)) }, 'Controls');
-    const diagnosticsBtn = el('button', { class: 'btn ghost small', onclick: () => void run(async () => { toast('Saved Android diagnostics: ' + await playbridge.adb.diagnostics(state.serial, p.id)); }) }, 'Diagnostics');
-    const stopBtn = el('button', { class: 'btn ghost btn-icon', title: 'Force stop', onclick: () => void run(() => playbridge.adb.forceStop(state.serial, p.id)) }, svgIcon('stop'));
-    const uninstallBtn = el('button', { class: 'btn ghost btn-icon danger', title: 'Uninstall', onclick: () => void uninstall(p.id) }, svgIcon('trash'));
+    const playBtn = el('button', { class: 'btn primary btn-play', onclick: () => void play(p.id) },
+      svgIcon('play'), el('span', {}, 'Play'));
+    const controlsBtn = el('button', { class: 'btn ghost btn-controls', title: 'Edit keymap controls', onclick: () => void controlsEditor.open(p.id, prettyPackage(p.id)) },
+      svgIcon('gamepad'), el('span', {}, 'Controls'));
+
+    const mainRow = el('div', { class: 'card-actions-row' }, playBtn, controlsBtn);
+
+    const subRow = el('div', { class: 'card-actions-sub' },
+      el('span', { class: 'muted text-xs' }, 'Ready to play'),
+      el('div', { class: 'card-actions-tools' },
+        el('button', { class: 'btn ghost btn-icon', title: 'Force stop', onclick: () => void run(() => playbridge.adb.forceStop(state.serial, p.id)) }, svgIcon('stop')),
+        el('button', { class: 'btn ghost btn-icon', title: 'Android diagnostics & crash log', onclick: () => void run(async () => { toast('Saved Android diagnostics: ' + await playbridge.adb.diagnostics(state.serial, p.id)); }) }, svgIcon('diagnostics')),
+        el('button', { class: 'btn ghost btn-icon danger', title: 'Uninstall from device', onclick: () => void uninstall(p.id) }, svgIcon('trash'))
+      )
+    );
 
     return el('article', { class: 'card is-installed' },
       el('div', { class: 'card-top' },
@@ -445,7 +484,7 @@ function renderAndroid(): HTMLElement {
         el('h3', { title: prettyPackage(p.id) }, prettyPackage(p.id)),
         el('div', { class: 'card-meta', title: p.id }, el('span', { class: 'muted' }, p.id))
       ),
-      el('div', { class: 'card-actions' }, playBtn, controlsBtn, diagnosticsBtn, stopBtn, uninstallBtn)
+      el('div', { class: 'card-actions' }, mainRow, subRow)
     );
   }));
 }
