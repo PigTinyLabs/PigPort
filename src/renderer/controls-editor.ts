@@ -88,8 +88,22 @@ export class ControlsEditor {
     this.dialog.addEventListener('close', () => this.pad.stop());
     for (const type of ['gamepadconnected', 'gamepaddisconnected']) window.addEventListener(type, () => { if (this.dialog.open) this.renderDetails(); });
     this.dialog.addEventListener('cancel', (e) => { e.preventDefault(); this.close(); });
-    this.dialog.addEventListener('keydown', (e) => this.key(e));
-    this.dialog.addEventListener('keyup', (e) => e.stopPropagation());
+    window.addEventListener('keydown', (e) => { if (this.dialog.open) this.key(e); }, true);
+    window.addEventListener('keyup', (e) => { if (this.dialog.open) e.stopPropagation(); }, true);
+    window.addEventListener('mousedown', (e) => {
+      if (!this.dialog.open || !this.waiting || this.saving) return;
+      if (e.button === 1 || e.button === 2) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.assign(e.button === 1 ? 'MouseMiddle' : 'MouseRight');
+      }
+    }, true);
+    this.dialog.addEventListener('contextmenu', (e) => {
+      if (this.waiting) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
   }
 
   async open(appId: string, name: string, options: { map?: Keymap; image?: string; aspect?: number; saved?: (map: Keymap) => void } = {}): Promise<void> {
@@ -266,7 +280,10 @@ export class ControlsEditor {
   private binding(label: string, slot: string, value: string, index = this.selected): HTMLElement {
     const waiting = this.waiting?.index === index && this.waiting.slot === slot;
     return el('div', { class: 'field' }, el('span', { class: 'field-label' }, label),
-      this.button(waiting ? T.pressKey : keyLabel(value) || T.setKey, () => { this.waiting = { index, slot }; this.refresh(); }, `ce-keycap ${waiting ? 'waiting' : ''}`));
+      this.button(waiting ? T.pressKey : keyLabel(value) || T.setKey, () => {
+        this.waiting = waiting ? undefined : { index, slot };
+        this.refresh();
+      }, `ce-keycap ${waiting ? 'waiting' : ''}`));
   }
 
   private number(label: string, value: number, min: number, max: number, step: number, assign: (value: number) => void): HTMLElement {
@@ -336,14 +353,37 @@ export class ControlsEditor {
     } else rows.push(el('p', { class: 'muted small' }, T.selectOrAdd));
     rows.push(...this.controllerSettings());
     this.details.replaceChildren(...rows);
+    if (this.waiting) {
+      const waitBtn = this.details.querySelector<HTMLButtonElement>('.ce-keycap.waiting');
+      waitBtn?.focus();
+    }
   }
 
   private key(event: KeyboardEvent): void {
+    if (!this.dialog.open) return;
+    const target = event.target as HTMLElement | null;
+    const isInput = target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA');
+    if (!this.waiting || this.saving) {
+      if (event.code === 'Escape' && !isInput) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.close();
+      }
+      return;
+    }
+    if (isInput && event.code === 'Escape') {
+      target?.blur();
+      return;
+    }
+    event.preventDefault();
     event.stopPropagation();
-    if (!this.waiting || this.saving) return;
-    event.preventDefault(); if (event.repeat) return;
-    if (event.code === 'Escape') { this.waiting = undefined; this.refresh(); }
-    else this.assign(event.code);
+    if (event.repeat) return;
+    if (event.code === 'Escape') {
+      this.waiting = undefined;
+      this.refresh();
+    } else {
+      this.assign(event.code);
+    }
   }
 
   /** Binds a key or controller button (Pad*) to the slot waiting for one. */
