@@ -389,5 +389,8 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => {
   session?.stop();
   airplay.stop();
-  if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') {
+    void managedAndroid.stopRunning().finally(() => app.quit());
+  }
 });
+
