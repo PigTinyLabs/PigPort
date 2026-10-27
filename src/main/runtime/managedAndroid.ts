@@ -121,7 +121,7 @@ export class ManagedAndroid {
     }
   }
   /** On Windows a running emulator or adb server locks the files that setup replaces. */
-  private async stopRunning(): Promise<void> {
+  async stopRunning(): Promise<void> {
     if (!existsSync(this.adbPath)) return;
     const adb = (args: string[]) => execute(this.adbPath, args, { timeout: 15000, windowsHide: true }).then((r) => r.stdout, () => '');
     const serials = (await adb(['devices'])).split(/\r?\n/).map((l) => l.split(/\s+/)[0]).filter((s) => s.startsWith('emulator-'));

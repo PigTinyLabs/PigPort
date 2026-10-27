@@ -1,10 +1,29 @@
-# PigPort v0.2.5 — Release Notes
+# PigPort v0.2.6 — Release Notes
 
 > **PigPort** (by PigTinyLabs): A smooth, high-performance launcher to play iOS (IPA) and Android (APK / XAPK) games on macOS and Windows with keyboard and mouse.
 
 <p align="center">
   <b>English</b> | <a href="#-tiếng-việt-ghi-chú-phát-hành">Tiếng Việt</a>
 </p>
+
+---
+
+## 🌟 What's New in v0.2.6
+
+### 1. 🪟 Windows Clean Shutdown & Background Resource Cleanup
+- **No More Orphaned Emulator Processes**: Ensures the Android emulator (`qemu-system-*`) and ADB server are cleanly terminated whenever the application window is closed on Windows.
+- **Disk Space Overflow Prevention**: Prevents background emulator processes from remaining active after quitting, resolving uncontrolled log file growth (`pigport-stderr.log`) that could fill up disk drives.
+
+### 2. ⌨️ Key Binding & Capture Fix in Controls Editor
+- **Global Key Capture in Rebind Modal**: Fixed an issue in the visual Controls Editor where pressing a key or clicking a mouse button inside the "Set Key" dialog failed to register or bind the key. Events are now reliably captured during the event capture phase.
+- **Enhanced Keyboard & Mouse Binding**: Smoothly bind any key on the keyboard, Numpad, and mouse buttons (LMB, RMB, MMB) to controls widgets without interference from background editor listeners.
+
+### 3. 🚀 Android Launch Crash Detection Improvements
+- **Startup Grace Period**: Added a 4-second grace period and direct `pidof` verification during Android activity launches.
+- **No More False Positive Crash Alerts**: Fixes false-positive "process exited immediately" warnings on apps that fork or switch activities quickly during initialization.
+
+### 4. 📖 Updated Controls & Setup Documentation
+- **Controls & Keymapping Guide**: Added comprehensive visual and text guides for WASD, Numpad, Mouse Look, and Gamepad controller mappings in the official docs in English and Vietnamese.
 
 ---
 
@@ -64,9 +83,9 @@
 
 | Platform | Installer File | Supported Games |
 |---|---|---|
-| **Mac Apple Silicon (M1/M2/M3/M4)** | `PigPort-0.2.4-mac-arm64.dmg` | **Both iOS (IPA)** and **Android (APK/XAPK)** |
-| **Mac Intel (x64)** | `PigPort-0.2.4-mac-x64.dmg` | Android (APK/XAPK) |
-| **Windows (x64)** | `PigPort-0.2.4-win-x64.exe` or portable `.zip` | Android (APK/XAPK) |
+| **Mac Apple Silicon (M1/M2/M3/M4)** | `PigPort-0.2.6-mac-arm64.dmg` | **Both iOS (IPA)** and **Android (APK/XAPK)** |
+| **Mac Intel (x64)** | `PigPort-0.2.6-mac-x64.dmg` | Android (APK/XAPK) |
+| **Windows (x64)** | `PigPort-0.2.6-win-x64.exe` or portable `.zip` | Android (APK/XAPK) |
 
 ---
 
@@ -91,6 +110,25 @@ Because the application is not signed with paid commercial certificates from App
 <br>
 
 # 🇻🇳 Tiếng Việt: Ghi Chú Phát Hành
+
+## 🌟 Điểm nổi bật trong bản cập nhật v0.2.6
+
+### 1. 🪟 Tắt Sạch Máy Ảo Trên Windows & Ngăn Tràn Dung Lượng Ổ Đĩa
+- **Dọn dẹp triệt để tiến trình chạy ngầm**: Tự động tắt sạch máy ảo Android (`qemu-system-*`) và ADB server ngay khi người dùng đóng cửa sổ PigPort trên Windows.
+- **Khắc phục lỗi đầy ổ cứng do log**: Chấm dứt tình trạng tiến trình giả lập tiếp tục chạy ngầm vô hạn sau khi thoát app, gây ghi tràn file log (`pigport-stderr.log`) chiếm dụng hàng chục gigabyte ổ đĩa.
+
+### 2. ⌨️ Sửa Lỗi Gán Phím (Key Binding) Trong Trình Chỉnh Sửa Phím
+- **Bắt phím chuẩn xác trong hộp thoại Set Key**: Khắc phục lỗi bấm phím bàn phím hoặc click chuột mà không gán được phím khi cấu hình Controls Editor. Sử dụng capture phase ở cấp độ window giúp nhận diện tức thì mọi phím bấm và nút chuột.
+- **Hỗ trợ đầy đủ phím bấm**: Gán mượt mà mọi phím chữ, phím số Numpad, chuột trái/phải/giữa mà không bị xung đột với các sự kiện nền.
+
+### 3. 🚀 Cải Tiến Nhận Diện Khởi Động Game Android
+- **Thời gian chờ khởi động (Grace Period)**: Bổ sung 4 giây theo dõi và kiểm tra trực tiếp qua `pidof` khi khởi chạy package Android.
+- **Loại bỏ cảnh báo crash sai**: Khắc phục hoàn toàn tình trạng báo lỗi "game thoát ngay sau khi mở" đối với các tựa game phân tách tiến trình (fork/splash screen) khi khởi động.
+
+### 4. 📖 Bổ Sung Hướng Dẫn Điều Khiển & Phím Tắt
+- **Tài liệu hướng dẫn trực quan**: Bổ sung chi tiết hướng dẫn gán phím di chuyển WASD, Numpad, lia góc nhìn chuột 360° và kết nối tay cầm Gamepad trên trang tài liệu [pigtinylabs.github.io/PigPort/](https://pigtinylabs.github.io/PigPort/) (song ngữ Anh - Việt).
+
+---
 
 ## 🌟 Điểm nổi bật trong bản cập nhật v0.2.5
 

@@ -24,13 +24,13 @@
 
 ---
 
-## 📥 Downloads (v0.2.5)
+## 📥 Downloads (v0.2.6)
 
 | Platform | Recommended Installer | Alternative Portable | Supported Games |
 |---|---|---|---|
-| **macOS Apple Silicon (M1/M2/M3/M4)** | [⬇️ `PigPort-0.2.5-mac-arm64.dmg`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-mac-arm64.dmg) | [📦 `PigPort-0.2.5-mac-arm64.zip`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-mac-arm64.zip) | **Both iOS (.IPA)** and **Android (.APK / .XAPK)** |
-| **macOS Intel (x64)** | [⬇️ `PigPort-0.2.5-mac-x64.dmg`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-mac-x64.dmg) | [📦 `PigPort-0.2.5-mac-x64.zip`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-mac-x64.zip) | Android (.APK / .XAPK) |
-| **Windows 10/11 (x64)** | [⬇️ `PigPort-0.2.5-win-x64.exe`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-win-x64.exe) | [📦 `PigPort-0.2.5-win-x64.zip`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.5/PigPort-0.2.5-win-x64.zip) | Android (.APK / .XAPK) + AirPlay Viewer |
+| **macOS Apple Silicon (M1/M2/M3/M4)** | [⬇️ `PigPort-0.2.6-mac-arm64.dmg`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.6/PigPort-0.2.6-mac-arm64.dmg) | [📦 `PigPort-0.2.6-mac-arm64.zip`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.6/PigPort-0.2.6-mac-arm64.zip) | **Both iOS (.IPA)** and **Android (.APK / .XAPK)** |
+| **macOS Intel (x64)** | [⬇️ `PigPort-0.2.6-mac-x64.dmg`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.6/PigPort-0.2.6-mac-x64.dmg) | [📦 `PigPort-0.2.6-mac-x64.zip`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.6/PigPort-0.2.6-mac-x64.zip) | Android (.APK / .XAPK) |
+| **Windows 10/11 (x64)** | [⬇️ `PigPort-0.2.6-win-x64.exe`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.6/PigPort-0.2.6-win-x64.exe) | [📦 `PigPort-0.2.6-win-x64.zip`](https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.6/PigPort-0.2.6-win-x64.zip) | Android (.APK / .XAPK) + AirPlay Viewer |
 
 > 💡 *Looking for all past builds or checksums? Check the official [GitHub Releases](https://github.com/PigTinyLabs/PigPort/releases) page.*
 
