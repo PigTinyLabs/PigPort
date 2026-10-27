@@ -157,14 +157,26 @@ export class Adb {
       ['cmd', 'package', 'resolve-activity', '--brief', '-a', 'android.intent.action.MAIN', '-c', 'android.intent.category.LAUNCHER', pkg], 15000), pkg);
     const out = await this.shell(serial, ['am', 'start', '-W', '-n', component], 30000);
     if (/Error:|Exception|Status:\s*(?:timeout|failed)/i.test(out) || !/Status:\s*ok/i.test(out)) throw new Error(`${pkg} could not launch: ${out.trim()}`);
-    // Sending a launch request is not proof that the process survived startup.
+    // Wait for the process to appear (grace period up to 4s)
+    const startupDeadline = Date.now() + 4000;
+    let alive = '';
+    while (Date.now() < startupDeadline) {
+      alive = (await this.shell(serial, ['pidof', pkg], 5000).catch(() => '')).trim();
+      if (alive) break;
+      await pause(300);
+    }
+    if (!alive) {
+      throw new Error(`${pkg} exited during startup. Open Android diagnostics to see the recent crash buffer. This may be a crash or an intentional game exit.`);
+    }
+    // Sending a launch request is not proof that the process survived startup. Ensure it stays alive.
     const deadline = Date.now() + observationMs;
-    do {
-      const alive = (await this.shell(serial, ['pidof', pkg], 5000).catch(() => '')).trim();
-      if (!alive) throw new Error(`${pkg} exited during startup. Open Android diagnostics to see the recent crash buffer. This may be a crash or an intentional game exit.`);
-      if (Date.now() >= deadline) break;
+    while (Date.now() < deadline) {
       await pause(Math.min(750, Math.max(1, deadline - Date.now())));
-    } while (true);
+      alive = (await this.shell(serial, ['pidof', pkg], 5000).catch(() => '')).trim();
+      if (!alive) {
+        throw new Error(`${pkg} exited during startup. Open Android diagnostics to see the recent crash buffer. This may be a crash or an intentional game exit.`);
+      }
+    }
   }
 
   async diagnostics(serial: string, pkg: string): Promise<string> {
