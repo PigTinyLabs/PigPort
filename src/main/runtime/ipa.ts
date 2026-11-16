@@ -110,10 +110,12 @@ export class NativeIpaRuntime {
     const seal = await fs.stat(path.join(target, '_CodeSignature', 'CodeResources'));
     const stamp = `${target}:${seal.ino}:${seal.mtimeMs}`;
     if (await fs.readFile(stampFile, 'utf8').catch(() => '') !== stamp || !await fs.access(clone).then(() => true, () => false)) {
-      // Clones share storage with the installed game, so this is fast and uses no extra space.
+      // On the same volume the launch copy can share storage with the installed game.
       const temp = clone + '.cloning-' + randomUUID();
       try {
-        await execute('/bin/cp', ['-c', '-R', target, temp], { timeout: 300000 });
+        const cacheVolume = (await fs.stat(path.dirname(clone))).dev;
+        if (seal.dev === cacheVolume) await execute('/bin/cp', ['-c', '-R', target, temp], { timeout: 300000 });
+        else await execute('/usr/bin/ditto', [target, temp], { timeout: 300000 });
         await fs.rm(clone, { recursive: true, force: true }); await fs.rename(temp, clone);
       } finally { await fs.rm(temp, { recursive: true, force: true }); }
       await fs.writeFile(stampFile, stamp);
@@ -138,6 +140,14 @@ export class NativeIpaRuntime {
     return (parseInt(out, 10) || 0) * 1024;
   }
 
+  async assertAllStopped(): Promise<void> {
+    if (!await this.available() || !await fs.stat(this.root).catch(() => undefined)) return;
+    const cloneDir = path.join(await this.runDirectory(), 'Applications') + path.sep;
+    const appsDir = path.join(await fs.realpath(this.root), 'Applications') + path.sep;
+    const processes = (await execute('/bin/ps', ['-wwaxo', 'args='], { maxBuffer: 16 * 1024 * 1024 })).stdout.split('\n');
+    if (processes.some((p) => p.startsWith(cloneDir) || p.startsWith(appsDir))) throw new Error('Quit all PigPort iOS games before moving game storage.');
+  }
+
   /** Removes the installed game and its launch copy; game data only when asked. */
   async uninstall(bundleId: string, removeData: boolean): Promise<void> {
     const target = await this.find(bundleId);
@@ -154,9 +164,13 @@ export class NativeIpaRuntime {
   }
 
   private async runPaths(bundleId: string): Promise<{ clone: string; home: string }> {
+    const run = await this.runDirectory();
+    return { clone: path.join(run, 'Applications', bundleId + '.app'), home: path.join(run, 'Homes', bundleId) };
+  }
+
+  private async runDirectory(): Promise<string> {
     const cache = (await execute('/usr/bin/getconf', ['DARWIN_USER_CACHE_DIR'])).stdout.trim();
     if (!path.isAbsolute(cache)) throw new Error('Could not locate the macOS user cache folder.');
-    const run = path.join(await fs.realpath(cache), 'io.playbridge.ios');
-    return { clone: path.join(run, 'Applications', bundleId + '.app'), home: path.join(run, 'Homes', bundleId) };
+    return path.join(await fs.realpath(cache), 'io.playbridge.ios');
   }
 }

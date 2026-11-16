@@ -13,6 +13,7 @@ const api: PlayBridgeApi = {
   runtime: { status: invoke('runtime:status'), restartAndroid: invoke('runtime:android:restart'), prepareAndroid: invoke('runtime:android:prepare'), installAndroid: invoke('runtime:android:install'), onProgress: listen('runtime:progress') },
   info: invoke('app:info'),
   settings: { get: invoke('settings:get'), set: invoke('settings:set') },
+  storage: { status: invoke('storage:status'), choose: invoke('storage:choose') },
   adb: {
     status: invoke('adb:status'),
     devices: invoke('adb:devices'),

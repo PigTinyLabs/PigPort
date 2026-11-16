@@ -51,6 +51,13 @@
   <dialog id="settings">
     <form id="settings-form" method="dialog">
       <h2>Settings</h2>
+      <section aria-labelledby="storage-heading">
+        <h3 id="storage-heading">Game storage</h3>
+        <p id="storage-path" class="muted small"></p>
+        <button id="choose-game-storage" type="button" class="btn">Move game storage…</button>
+        <p class="muted small">Moves installed IPA games, their data, and built-in Android into a PigPort Data folder. Close iOS games first. Built-in Android will stop for the move. Keep the drive connected while playing.</p>
+        <p id="storage-progress" class="small" role="status" aria-live="polite" hidden></p>
+      </section>
       <label class="field stacked"><span>Android graphics (next virtual-device start)</span><select id="set-android-graphics"><option value="auto">Automatic GPU</option><option value="software">Software — slower, try for GPU crashes</option></select></label>
       <button id="restart-android" type="button" class="btn">Apply &amp; restart built-in Android (closes Android games)</button>
       <p class="muted small">The built-in device cold boots as a tablet. Graphics changes require closing and restarting the Android emulator; game data is preserved.</p>

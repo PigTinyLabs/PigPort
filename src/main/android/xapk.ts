@@ -17,9 +17,10 @@ export async function installXapk(
   serial: string,
   xapkFile: string,
   bundleId: string,
-  onProgress?: (message: string) => void
+  onProgress?: (message: string) => void,
+  tempRoot = os.tmpdir(),
 ): Promise<void> {
-  const stage = await fs.mkdtemp(path.join(os.tmpdir(), 'pb-xapk-'));
+  const stage = await fs.mkdtemp(path.join(tempRoot, 'pb-xapk-'));
   try {
     onProgress?.('Extracting XAPK archive…');
     await extractZip(xapkFile, stage);

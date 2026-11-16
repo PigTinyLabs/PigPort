@@ -39,6 +39,15 @@ export class Store {
     await this.writeJson('settings.json', s);
   }
 
+  async storagePath(): Promise<string | undefined> {
+    const saved = await this.readJson<string>('game-storage.json');
+    return typeof saved === 'string' && path.isAbsolute(saved) ? saved : undefined;
+  }
+
+  async saveStoragePath(dir: string): Promise<void> {
+    await this.writeJson('game-storage.json', dir);
+  }
+
   async keymap(appId: string): Promise<Keymap> {
     const text = await fs.readFile(this.keymapPath(appId), 'utf8').catch(() => undefined);
     return text ? parseKeymap(text) : emptyKeymap();

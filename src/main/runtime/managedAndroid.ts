@@ -26,6 +26,17 @@ export class ManagedAndroid {
   get imageId(): string { return `system-images;android-35;${this.tag};${this.abi}`; }
   private imageDir(sdk: string): string { return path.join(sdk, 'system-images', 'android-35', this.tag, this.abi); }
   get adbPath(): string { return path.join(this.sdk, 'platform-tools', process.platform === 'win32' ? 'adb.exe' : 'adb'); }
+  async relocateAvd(destination: ManagedAndroid): Promise<void> {
+    const avd = MANAGED_AVD + '.avd';
+    const ini = path.join(this.avdHome, MANAGED_AVD + '.ini');
+    if (!existsSync(ini)) return;
+    const configFile = path.join(this.avdHome, avd, 'config.ini');
+    const [iniText, config] = await Promise.all([fs.readFile(ini, 'utf8'), fs.readFile(configFile, 'utf8')]);
+    await fs.writeFile(ini, iniText.replace(/^path=.*$/m, () => `path=${path.join(destination.avdHome, avd)}`));
+    await fs.writeFile(configFile, config.replace(/^image\.sysdir\.1=.*$/m,
+      () => `image.sysdir.1=${destination.imageDir(destination.sdk)}${path.sep}`));
+  }
+
   async ready(): Promise<boolean> {
     const marker = await fs.readFile(path.join(this.root, 'installed.json'), 'utf8').catch(() => '');
     try {
@@ -121,16 +132,26 @@ export class ManagedAndroid {
     }
   }
   /** On Windows a running emulator or adb server locks the files that setup replaces. */
-  async stopRunning(): Promise<void> {
+  async stopRunning(verify = false): Promise<void> {
     if (!existsSync(this.adbPath)) return;
-    const adb = (args: string[]) => execute(this.adbPath, args, { timeout: 15000, windowsHide: true }).then((r) => r.stdout, () => '');
-    const serials = (await adb(['devices'])).split(/\r?\n/).map((l) => l.split(/\s+/)[0]).filter((s) => s.startsWith('emulator-'));
+    const adb = (args: string[]) => execute(this.adbPath, args, { timeout: 15000, windowsHide: true }).then((r) => r.stdout, (error) => {
+      if (verify) throw error;
+      return '';
+    });
+    const emulators = async () => (await adb(['devices'])).split(/\r?\n/).map((l) => l.split(/\s+/)[0]).filter((s) => s.startsWith('emulator-'));
     let stopped = false;
-    for (const serial of serials) {
+    for (const serial of await emulators()) {
       if ((await adb(['-s', serial, 'emu', 'avd', 'name'])).split(/\r?\n/)[0].trim() !== MANAGED_AVD) continue;
       await adb(['-s', serial, 'emu', 'kill']); stopped = true;
     }
-    await adb(['kill-server']);
     if (stopped) await new Promise((resolve) => setTimeout(resolve, 5000));
+    if (stopped && verify) {
+      for (const serial of await emulators()) {
+        if ((await adb(['-s', serial, 'emu', 'avd', 'name'])).split(/\r?\n/)[0].trim() === MANAGED_AVD) {
+          throw new Error('Built-in Android did not stop. Close it before moving game storage.');
+        }
+      }
+    }
+    await adb(['kill-server']);
   }
 }

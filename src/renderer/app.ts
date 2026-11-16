@@ -1,4 +1,4 @@
-import type { AdbStatus, AirPlayStatus, AppPackage, Device, IosApp, MobilePackage, PlayBridgeApi, Settings, RuntimeStatus } from '../shared/api';
+import type { AdbStatus, AirPlayStatus, AppPackage, Device, IosApp, MobilePackage, PlayBridgeApi, Settings, RuntimeStatus, StorageStatus } from '../shared/api';
 import { Player } from './player.js';
 import { ControlsEditor } from './controls-editor.js';
 import { el, formatSize, prettyPackage, svgIcon, toast } from './ui.js';
@@ -22,6 +22,7 @@ const state = {
   activity: '',
   runtime: { nativeIpa: false, managedAndroid: false, avds: [] } as RuntimeStatus,
   settings: undefined as Settings | undefined,
+  storage: undefined as StorageStatus | undefined,
 };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -36,6 +37,7 @@ async function init(): Promise<void> {
   state.iosSupported = info.iosApps;
   document.body.dataset.platform = info.platform;
   state.settings = await playbridge.settings.get();
+  state.storage = await playbridge.storage.status();
 
   // The tab also hosts iPhone screen viewing, which works on any Mac and on Windows.
   $('tab-ios').hidden = !state.iosSupported && info.platform !== 'darwin' && info.platform !== 'win32';
@@ -62,6 +64,7 @@ async function init(): Promise<void> {
     finally { activity(''); }
   }));
   $('open-settings').addEventListener('click', openSettings);
+  $('choose-game-storage').addEventListener('click', () => void run(moveStorage));
   $('settings-form').addEventListener('submit', (e) => void saveSettings(e));
 
   state.imported = await playbridge.packages.list();
@@ -303,6 +306,8 @@ function renderMain(): void {
 function activity(text: string): void {
   state.activity = text;
   const banner = $('install-progress'); banner.textContent = text; banner.hidden = !text;
+  const storageProgress = $('storage-progress');
+  if (!storageProgress.hidden && text) storageProgress.textContent = text;
 }
 
 async function importAndInstall(file?: string): Promise<void> {
@@ -395,6 +400,8 @@ function renderAppIcon(fileOrId: string, id: string, name: string): HTMLElement 
 function renderFiles(): HTMLElement {
   const note = el('div', { class: 'note' },
     el('p', {}, 'Drop IPA / APK / XAPK files to install and play. Your game library is saved automatically.'),
+    el('div', { class: 'row' }, el('span', { class: 'small', title: state.storage?.path ?? '' }, storageLabel()),
+      el('button', { class: 'btn small', type: 'button', onclick: openSettings }, 'Storage settings…')),
     el('p', {}, state.runtime.nativeIpa
       ? 'iOS: built-in installer ready. Unencrypted arm64 IPA files are converted and signed here. In game, press ⌘K to edit controls.'
       : 'iOS: local IPA playback requires an Apple Silicon Mac with iOSSupport frameworks. Windows does not have a local iOS runtime.'),
@@ -662,6 +669,7 @@ function empty(title: string, body: string, action?: HTMLElement): HTMLElement {
 
 function openSettings(): void {
   const s = state.settings!;
+  $('storage-path').textContent = storageLabel();
   $<HTMLSelectElement>('set-avd').replaceChildren(el('option', { value: '' }, 'Automatic (one virtual device)'),
     ...state.runtime.avds.map((name) => el('option', { value: name }, name)));
   $<HTMLSelectElement>('set-android-graphics').value = s.androidGraphics ?? 'auto';
@@ -672,6 +680,32 @@ function openSettings(): void {
   $<HTMLSelectElement>('set-fps').value = String(s.stream.maxFps);
   $<HTMLSelectElement>('set-bitrate').value = String(s.stream.bitRate);
   $<HTMLDialogElement>('settings').showModal();
+}
+
+function storageLabel(): string {
+  return state.storage?.available ? state.storage.path : `Reconnect game storage at ${state.storage?.path ?? ''}`;
+}
+
+async function moveStorage(): Promise<void> {
+  const button = $<HTMLButtonElement>('choose-game-storage');
+  const progress = $('storage-progress');
+  button.disabled = true;
+  progress.hidden = false;
+  progress.textContent = 'Preparing to move game storage…';
+  try {
+    const result = await playbridge.storage.choose();
+    if (!result) return;
+    state.storage = result;
+    state.runtime = await playbridge.runtime.status();
+    $('storage-path').textContent = storageLabel();
+    await refreshDevices();
+    renderMain();
+    if (result.remaining.length) toast(`Storage moved. Old files could not be removed: ${result.remaining.join(', ')}`, 'error');
+    else toast('Game storage is set to ' + result.path);
+  } finally {
+    button.disabled = false;
+    progress.hidden = true;
+  }
 }
 
 async function saveSettings(e: Event): Promise<void> {

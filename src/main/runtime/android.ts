@@ -10,7 +10,7 @@ const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 const booting = new Map<string, Promise<string>>();
 let managed: { sdk: string; avdHome: string } | undefined;
-export function configureManagedAndroid(sdk: string, avdHome: string): void { managed = { sdk, avdHome }; }
+export function configureManagedAndroid(sdk?: string, avdHome?: string): void { managed = sdk && avdHome ? { sdk, avdHome } : undefined; }
 const emulatorEnv = () => managed ? { ...process.env, ANDROID_HOME: managed.sdk, ANDROID_SDK_ROOT: managed.sdk, ANDROID_AVD_HOME: managed.avdHome } : process.env;
 
 export function sdkRoots(): string[] {

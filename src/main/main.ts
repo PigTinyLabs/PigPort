@@ -11,10 +11,11 @@ import { avds, ensureAndroid, configureManagedAndroid } from './runtime/android'
 import { NativeIpaRuntime } from './runtime/ipa';
 import { AirPlayReceiver } from './airplay';
 import { ManagedAndroid, MANAGED_AVD } from './runtime/managedAndroid';
+import { moveGameStorage } from './runtime/storage';
 import { inspectPackage } from './packages/packages';
 import { packageIcon } from './packages/icon';
 import { installXapk, matchDeviceAbis } from './android/xapk';
-import type { MobilePackage } from '../shared/api';
+import type { MobilePackage, StorageStatus } from '../shared/api';
 
 const imported = new Map<string, MobilePackage>();
 
@@ -24,21 +25,44 @@ const resourcesDir = app.isPackaged
 
 // Renamed from PlayBridge: keep the existing library, installed games and keymaps.
 app.setPath('userData', path.join(app.getPath('appData'), 'PlayBridge'));
-const store = new Store(app.getPath('userData'));
+const userData = app.getPath('userData');
+const store = new Store(userData);
 const airplay = new AirPlayReceiver(path.join(resourcesDir, 'airplay'), app.getPath('userData'));
 let adb = new Adb(locateAdb(undefined, resourcesDir));
 let session: ScrcpySession | undefined;
 let win: BrowserWindow | undefined;
 const progress = (message: string) => win?.webContents.send('runtime:progress', message);
-const nativeIpa = new NativeIpaRuntime(path.join(app.getPath('userData'), 'ios'), progress);
-const managedAndroid = new ManagedAndroid(path.join(app.getPath('userData'), 'runtime/android'), progress);
+let storageRoot = userData;
+let nativeIpa = new NativeIpaRuntime(path.join(storageRoot, 'ios'), progress);
+let managedAndroid = new ManagedAndroid(path.join(storageRoot, 'runtime', 'android'), progress);
+let movingStorage = false;
+let runtimeJobs = 0;
+const storageJobs = new Set(['packages:install', 'packages:play', 'packages:uninstall', 'runtime:android:prepare',
+  'runtime:android:install', 'runtime:android:restart', 'adb:install', 'adb:launch', 'adb:uninstall', 'stream:start']);
+
+function useStorageRoot(dir: string): void {
+  storageRoot = dir;
+  nativeIpa = new NativeIpaRuntime(path.join(dir, 'ios'), progress);
+  managedAndroid = new ManagedAndroid(path.join(dir, 'runtime', 'android'), progress);
+}
+
+async function storageStatus(): Promise<StorageStatus> {
+  const available = storageRoot === userData || await fs.stat(storageRoot).then((stat) => stat.isDirectory(), () => false);
+  return { path: storageRoot, available };
+}
+
+async function requireGameStorage(): Promise<void> {
+  if (!(await storageStatus()).available) throw new Error(`Reconnect the drive that contains PigPort Data at ${storageRoot}.`);
+}
+
 async function refreshAdb(): Promise<void> {
   const settings = await store.settings();
   const ready = await managedAndroid.ready();
-  if (ready) configureManagedAndroid(managedAndroid.sdk, managedAndroid.avdHome);
+  configureManagedAndroid(ready ? managedAndroid.sdk : undefined, ready ? managedAndroid.avdHome : undefined);
   adb = new Adb(locateAdb(settings.adbPath ?? (ready ? managedAndroid.adbPath : undefined), resourcesDir));
 }
 async function androidDevice(serial?: string): Promise<string> {
+  await refreshAdb();
   const settings = await store.settings();
   return ensureAndroid(adb, serial, settings.androidAvd ?? (await managedAndroid.ready() ? MANAGED_AVD : undefined), settings.androidGraphics);
 }
@@ -95,7 +119,16 @@ function createWindow(): void {
 }
 
 function handle<A extends unknown[], R>(channel: string, fn: (...args: A) => Promise<R> | R): void {
-  ipcMain.handle(channel, (_e, ...args) => fn(...(args as A)));
+  ipcMain.handle(channel, async (_e, ...args) => {
+    if (!storageJobs.has(channel)) return fn(...(args as A));
+    if (movingStorage) throw new Error('Wait until PigPort finishes moving game storage.');
+    runtimeJobs++;
+    try {
+      return await fn(...(args as A));
+    } finally {
+      runtimeJobs--;
+    }
+  });
 }
 
 function registerIpc(): void {
@@ -109,7 +142,8 @@ function registerIpc(): void {
       pkg = [...imported.values()].find((p) => p.bundleId === fileOrId || p.file === fileOrId);
     }
     const targetFile = pkg?.file ?? fileOrId;
-    const icon = await packageIcon(targetFile, path.join(app.getPath('userData'), 'icon-cache'), pkg?.installedPath);
+    const installedPath = pkg?.kind === 'ipa' && pkg.bundleId ? await nativeIpa.find(pkg.bundleId) : pkg?.installedPath;
+    const icon = await packageIcon(targetFile, path.join(userData, 'icon-cache'), installedPath);
     if (!icon) throw new Error('No icon');
     return icon;
   });
@@ -135,6 +169,7 @@ function registerIpc(): void {
     installing = true;
     let pkg = imported.get(file)!;
     try {
+      if (pkg.kind !== 'apk') await requireGameStorage();
       pkg = { ...await inspectPackage(file), status: 'installing' };
       imported.set(file, pkg);
       await saveLibrary();
@@ -145,7 +180,7 @@ function registerIpc(): void {
         const presentBefore = (await adb.packages(target)).some((p) => p.id === pkg.bundleId);
         if (!presentBefore) {
           if (pkg.kind === 'xapk') {
-            await installXapk(adb, target, file, pkg.bundleId, progress);
+            await installXapk(adb, target, file, pkg.bundleId, progress, storageRoot === userData ? undefined : storageRoot);
           } else {
             await adb.install(target, await matchDeviceAbis(adb, target, [file]));
           }
@@ -174,6 +209,7 @@ function registerIpc(): void {
     const pkg = imported.get(file);
     if (!pkg || pkg.status !== 'installed' || !pkg.bundleId) throw new Error('Finish installing this game first.');
     if (pkg.kind === 'ipa') {
+      await requireGameStorage();
       // In-game keyboard/mouse controls; the game still runs without them if the layer was not built.
       const library = path.join(resourcesDir, 'ios-input', 'PlayBridgeInput.dylib');
       const input = await fs.access(library).then(() => ({ library, keymap: store.keymapPath(pkg.bundleId!) }), () => undefined);
@@ -189,6 +225,7 @@ function registerIpc(): void {
   handle('packages:uninstall', async (file: string, serial?: string) => {
     const pkg = imported.get(file);
     if (!pkg || pkg.status !== 'installed' || !pkg.bundleId) throw new Error('This game is not installed.');
+    if (pkg.kind === 'ipa') await requireGameStorage();
     if (installing) throw new Error('Wait for the current installation to finish.');
     const size = pkg.kind === 'ipa' ? await nativeIpa.dataSize(pkg.bundleId) : 0;
     const { response, checkboxChecked: removeEntry } = await dialog.showMessageBox(win!, {
@@ -233,6 +270,8 @@ function registerIpc(): void {
   });
   handle('runtime:status', async () => ({ nativeIpa: await nativeIpa.available(), managedAndroid: await managedAndroid.ready(), avds: await avds().catch(() => []) }));
   handle('runtime:android:restart', async () => {
+    await requireGameStorage();
+    await refreshAdb();
     if (installing) throw new Error('Wait for installation to finish.');
     if (!await managedAndroid.ready()) throw new Error('Set up built-in Android first.');
     progress('Restarting built-in Android; running Android games will close…');
@@ -251,13 +290,49 @@ function registerIpc(): void {
       await ensureAndroid(adb, undefined, MANAGED_AVD, (await store.settings()).androidGraphics, true);
     } finally { progress(''); }
   });
-  handle('runtime:android:prepare', () => managedAndroid.prepare());
+  handle('runtime:android:prepare', async () => { await requireGameStorage(); return managedAndroid.prepare(); });
   handle('runtime:android:install', async (token: string, accepted: boolean) => {
+    await requireGameStorage();
     if (installing) throw new Error('Wait for the current game installation to finish.');
     await managedAndroid.install(token, accepted);
     await refreshAdb();
   });
   handle('app:info', () => ({ platform: process.platform, iosApps: iosAppsSupported(), version: app.getVersion() }));
+
+  handle('storage:status', storageStatus);
+  handle('storage:choose', async () => {
+    if (movingStorage || runtimeJobs || session) throw new Error('Close games and finish any installations before moving game storage.');
+    movingStorage = true;
+    try {
+      await requireGameStorage();
+      const pick = await dialog.showOpenDialog(win!, {
+        title: 'Choose where to move PigPort game data',
+        defaultPath: storageRoot === userData ? undefined : path.dirname(storageRoot),
+        properties: ['openDirectory', 'createDirectory'],
+      });
+      if (pick.canceled || !pick.filePaths[0]) return undefined;
+      const current = await fs.realpath(storageRoot);
+      const selected = await fs.realpath(pick.filePaths[0]);
+      if (selected === current || path.join(selected, 'PigPort Data') === current) {
+        return { ...await storageStatus(), remaining: [] };
+      }
+      await nativeIpa.assertAllStopped();
+      if (await managedAndroid.ready()) await managedAndroid.stopRunning(true);
+      const result = await moveGameStorage(storageRoot, pick.filePaths[0], async (staging, destination) => {
+        await nativeIpa.assertAllStopped();
+        await new ManagedAndroid(path.join(staging, 'runtime', 'android'))
+          .relocateAvd(new ManagedAndroid(path.join(destination, 'runtime', 'android')));
+      }, (destination) => store.saveStoragePath(destination), progress);
+      if (result.path !== storageRoot) {
+        useStorageRoot(result.path);
+        await refreshAdb();
+      }
+      return { ...await storageStatus(), remaining: result.remaining };
+    } finally {
+      movingStorage = false;
+      progress('');
+    }
+  });
 
   handle('settings:get', () => store.settings());
   handle('settings:set', async (s: Settings) => {
@@ -267,6 +342,7 @@ function registerIpc(): void {
 
   handle('adb:status', async () => {
     try {
+      await refreshAdb();
       return { ok: true, binary: adb.binary, version: await adb.version() };
     } catch (e) {
       return { ok: false, binary: adb.binary, error: (e as Error).message };
@@ -298,9 +374,10 @@ function registerIpc(): void {
     });
     if (pick.canceled || pick.filePaths.length === 0) return false;
     if (pick.filePaths.length === 1 && pick.filePaths[0].toLowerCase().endsWith('.xapk')) {
+      await requireGameStorage();
       const pkg = await inspectPackage(pick.filePaths[0]);
       if (!pkg.bundleId) throw new Error('Cannot read XAPK package ID.');
-      await installXapk(adb, serial, pick.filePaths[0], pkg.bundleId, progress);
+      await installXapk(adb, serial, pick.filePaths[0], pkg.bundleId, progress, storageRoot === userData ? undefined : storageRoot);
       return true;
     }
     await adb.install(serial, pick.filePaths);
@@ -377,6 +454,7 @@ function registerIpc(): void {
 app.whenReady().then(async () => {
   // Packaged builds take the icon from the bundle; `npm start` would show Electron's.
   if (!app.isPackaged) app.dock?.setIcon(path.join(__dirname, '..', 'web', 'renderer', 'logo.png'));
+  useStorageRoot(await store.storagePath() ?? userData);
   await refreshAdb();
   for (const pkg of await store.library()) imported.set(pkg.file, pkg);
   registerIpc();
@@ -385,6 +463,8 @@ app.whenReady().then(async () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+
+app.on('before-quit', (event) => { if (movingStorage) event.preventDefault(); });
 
 app.on('window-all-closed', () => {
   session?.stop();

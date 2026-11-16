@@ -25,6 +25,7 @@ export interface RuntimePlan {
   token: string; bytes: number; packages: string[]; licenses: { id: string; text: string }[];
 }
 export interface RuntimeStatus { nativeIpa: boolean; managedAndroid: boolean; avds: string[] }
+export interface StorageStatus { path: string; available: boolean }
 /** Viewing an iPhone/iPad screen over AirPlay (view only). */
 export interface AirPlayStatus {
   platform: 'mac' | 'windows' | 'unsupported';
@@ -61,6 +62,10 @@ export interface PlayBridgeApi {
   };
   info(): Promise<{ platform: string; iosApps: boolean; version: string }>;
   settings: { get(): Promise<Settings>; set(s: Settings): Promise<void> };
+  storage: {
+    status(): Promise<StorageStatus>;
+    choose(): Promise<(StorageStatus & { remaining: string[] }) | undefined>;
+  };
   adb: {
     status(): Promise<AdbStatus>;
     devices(): Promise<Device[]>;
