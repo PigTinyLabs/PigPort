@@ -93,6 +93,7 @@ static const uint32_t kFieldDigitizerIsDisplayIntegrated = 0xB0019;
 - (CGRect)frame;
 - (BOOL)isVisible;
 - (NSUInteger)styleMask;
+- (void)setStyleMask:(NSUInteger)style;
 - (void)setContentAspectRatio:(CGSize)ratio;
 - (CGRect)contentRectForFrameRect:(CGRect)frame;
 - (CGRect)frameRectForContentRect:(CGRect)content;
@@ -103,7 +104,9 @@ static const uint32_t kFieldDigitizerIsDisplayIntegrated = 0xB0019;
 - (CGRect)visibleFrame;
 @end
 
+static const NSUInteger kTitledStyle = 1 << 0;
 static const NSUInteger kFullScreenStyle = 1 << 14;
+static const NSUInteger kFullSizeContentViewStyle = 1 << 15;
 
 enum {
   kLeftMouseDown = 1, kLeftMouseUp = 2, kRightMouseDown = 3, kRightMouseUp = 4, kMouseMoved = 5,
@@ -958,13 +961,14 @@ static NSArray *PBPadButtons(GCExtendedGamepad *pad) {
     return nil;
   }
   if (down && command && [code isEqual:@"KeyK"]) { [self openEditor]; return nil; }
-  if (command || PBTextInputActive()) return event;
-  if ([code isEqual:_mapper.map.lookToggle]) {
-    if (down && !event.isARepeat) [self setMouseLook:!_mouseLook];
-    return nil;
-  }
+  if (command) return event;
   if (_mouseLook && [code isEqual:@"Escape"]) {
     if (down) [self setMouseLook:NO];
+    return nil;
+  }
+  if (PBTextInputActive()) return event;
+  if ([code isEqual:_mapper.map.lookToggle]) {
+    if (down && !event.isARepeat) [self setMouseLook:!_mouseLook];
     return nil;
   }
   if (![_mapper.map binds:code]) return event;
@@ -1136,6 +1140,7 @@ static NSString *PBDeviceModelName(void);
 
 static NSString *gDisplayReport;
 static BOOL gFitScheduled;
+static char kTitleBarAdjusted;
 // Consecutive window resizes that did not reach the target shape. Some windows round or
 // clamp the size we ask for; give up instead of resizing forever.
 static int gSnapAttempts;
@@ -1145,6 +1150,9 @@ static int gSnapAttempts;
                            @"NSWindowDidEnterFullScreenNotification", @"NSWindowDidChangeScreenNotification"]) {
     [NSNotificationCenter.defaultCenter addObserverForName:name object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *note) {
       if (![name isEqual:@"NSWindowDidResizeNotification"]) gSnapAttempts = 0;
+      if ([name isEqual:@"NSWindowDidExitFullScreenNotification"]) {
+        objc_setAssociatedObject(note.object, &kTitleBarAdjusted, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+      }
       [self scheduleFit];
     }];
   }
@@ -1196,24 +1204,40 @@ static int gSnapAttempts;
   id<PBAppKitClasses> app = [(id<PBAppKitClasses>)(id)objc_getClass("NSApplication") sharedApplication];
   for (id<PBAppKitWindow> window in app.windows) {
     if (![NSStringFromClass([(id)window class]) isEqual:@"UINSWindow"] || !window.isVisible) continue;
+    NSUInteger style = window.styleMask;
+    BOOL canFit = !(style & kFullScreenStyle) && !window.inLiveResize;
+    if (canFit && (style & kTitledStyle) && (style & kFullSizeContentViewStyle) &&
+        !objc_getAssociatedObject(window, &kTitleBarAdjusted)) {
+      // Games drawing to the entire UIKit scene otherwise extend under the Mac title bar.
+      objc_setAssociatedObject(window, &kTitleBarAdjusted, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+      [window setStyleMask:style & ~kFullSizeContentViewStyle];
+    }
     [window setContentAspectRatio:target];
     CGRect content = [window contentRectForFrameRect:window.frame];
     [self report:window content:content layer:layer];
-    if ((window.styleMask & kFullScreenStyle) || window.inLiveResize) continue;
+    if (!canFit || CGRectIsEmpty(content)) continue;
     double want = target.width / target.height, have = content.size.width / content.size.height;
-    if (fabs(want / have - 1) < 0.005) { gSnapAttempts = 0; continue; }
+    CGRect visible = [window.screen visibleFrame];
+    CGSize room = [window contentRectForFrameRect:visible].size;
+    BOOL limited = room.width > 0 && room.height > 0;
+    BOOL fitsScreen = !limited || (content.size.width <= room.width && content.size.height <= room.height);
+    if (fabs(want / have - 1) < 0.005 && fitsScreen) { gSnapAttempts = 0; continue; }
     if (gSnapAttempts >= 3) continue;
     gSnapAttempts++;
     // Keep the area and top edge, within the screen's visible area.
-    CGSize room = [window contentRectForFrameRect:[window.screen visibleFrame]].size;
     CGFloat area = content.size.width * content.size.height;
     CGSize size = CGSizeMake(round(sqrt(area * want)), round(sqrt(area / want)));
-    if (room.width > 0 && room.height > 0 && (size.width > room.width || size.height > room.height)) {
+    if (limited && (size.width > room.width || size.height > room.height)) {
       CGFloat shrink = fmin(room.width / size.width, room.height / size.height);
       size = CGSizeMake(floor(size.width * shrink), floor(size.height * shrink));
     }
     CGRect next = CGRectMake(content.origin.x, CGRectGetMaxY(content) - size.height, size.width, size.height);
-    [window setFrame:[window frameRectForContentRect:next] display:YES];
+    CGRect frame = [window frameRectForContentRect:next];
+    if (limited) {
+      frame.origin.x = fmax(CGRectGetMinX(visible), fmin(frame.origin.x, CGRectGetMaxX(visible) - frame.size.width));
+      frame.origin.y = fmax(CGRectGetMinY(visible), fmin(frame.origin.y, CGRectGetMaxY(visible) - frame.size.height));
+    }
+    if (!CGRectEqualToRect(window.frame, frame)) [window setFrame:frame display:YES];
   }
 }
 
@@ -1821,7 +1845,7 @@ DYLD_INTERPOSE(pb__exit, _exit);
 
 // Swallowing exit() also swallowed the game's own exit when the player quit: NeoX games then call game.on_exit() in a loop
 // forever, logging each call (2026-10-22: Identity V wrote 64 GB of log in two hours and filled the disk) and the process
-// never dies. Once the app is really quitting - UIKit's will-terminate, or SIGTERM/SIGINT/SIGHUP sent from OUTSIDE the
+// never dies. Once the app is really quitting - UIKit's termination callback, or SIGTERM/SIGINT/SIGHUP sent from OUTSIDE the
 // process (kill/raise/pthread_kill on itself are still swallowed above, so anti-cheat cannot use this path) - exit() is let
 // through and, if the game still has not exited after a grace period, the process is ended.
 static const int kPBExitGraceSeconds = 5;
@@ -1837,6 +1861,20 @@ static void PBBeginTermination(NSString *reason) {
     NSLog(@"PigPort: game did not exit within %d s - ending it", kPBExitGraceSeconds);
     _exit(0);
   });
+}
+
+static void PBGuardApplicationDelegateShutdown(UIApplication *application) {
+  Class delegateClass = [application.delegate class];
+  SEL selector = @selector(applicationWillTerminate:);
+  Method method = class_getInstanceMethod(delegateClass, selector);
+  if (!method) return;
+  void (*original)(id, SEL, UIApplication *) = (void (*)(id, SEL, UIApplication *))method_getImplementation(method);
+  IMP guarded = imp_implementationWithBlock(^(id delegate, UIApplication *app) {
+    // The delegate can get stuck in game.on_exit() before the notification reaches our observer.
+    PBBeginTermination(@"application delegate will terminate");
+    original(delegate, selector, app);
+  });
+  class_replaceMethod(delegateClass, selector, guarded, method_getTypeEncoding(method));
 }
 
 // Free space on the volume holding the game's data; ULLONG_MAX on error (a failed check never stops the game).
@@ -2035,6 +2073,7 @@ __attribute__((constructor)) static void PBInputInit(void) {
   __block id observer = [NSNotificationCenter.defaultCenter addObserverForName:UIApplicationDidFinishLaunchingNotification object:nil
                                                                          queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *note) {
     [NSNotificationCenter.defaultCenter removeObserver:observer];
+    PBGuardApplicationDelegateShutdown(note.object);
     // Give the game a moment to create its window before showing the controls hint.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{
       [PBWindowFit start];

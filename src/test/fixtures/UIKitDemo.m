@@ -23,6 +23,23 @@ extern int BridgeAnswer(void);
   [self.window makeKeyAndVisible]; return YES;
 }
 @end
+
+// Simulate UIKit calling a blocking delegate before it can post the termination notification.
+@interface DemoQuitDelegate : NSObject <UIApplicationDelegate>
+@end
+@implementation DemoQuitDelegate
+- (void)applicationWillTerminate:(UIApplication *)application {
+  puts("entered applicationWillTerminate:");
+  for (;;) usleep(10000);
+}
+@end
+
+@interface DemoApplicationStub : NSObject
+@property (strong, nonatomic) id<UIApplicationDelegate> delegate;
+@end
+@implementation DemoApplicationStub
+@end
+
 int main(int argc, char **argv) {
   if (argc > 1 && strcmp(argv[1], "--self-test") == 0) {
     @autoreleasepool { printf("UIKit loaded: %s\n", NSClassFromString(@"UIApplication") ? "YES" : "NO"); }
@@ -74,6 +91,15 @@ int main(int argc, char **argv) {
       [NSNotificationCenter.defaultCenter postNotificationName:UIApplicationWillTerminateNotification object:nil];
       printf("terminating\n");
       for (;;) usleep(10000);
+    }
+    if (strcmp(mode, "delegate") == 0) {
+      @autoreleasepool {
+        DemoApplicationStub *application = [DemoApplicationStub new];
+        application.delegate = [DemoQuitDelegate new];
+        [NSNotificationCenter.defaultCenter postNotificationName:UIApplicationDidFinishLaunchingNotification object:application];
+        [application.delegate applicationWillTerminate:(UIApplication *)(id)application];
+      }
+      return 1;
     }
     if (strcmp(mode, "loop") == 0) {  // NeoX-style exit loop: keeps calling exit() until it works
       signal(SIGTERM, SIG_IGN);  // like the stuck game: SIGTERM alone does not end it
