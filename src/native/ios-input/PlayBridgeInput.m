@@ -113,6 +113,7 @@ enum {
   kLeftMouseDragged = 6, kRightMouseDragged = 7, kKeyDown = 10, kKeyUp = 11, kFlagsChanged = 12,
   kOtherMouseDown = 25, kOtherMouseUp = 26, kOtherMouseDragged = 27,
 };
+static const NSUInteger kShiftFlag = 1 << 17;
 static const NSUInteger kCommandFlag = 1 << 20;
 
 #pragma mark - Key names (KeyboardEvent.code, as in the Android player)
@@ -824,6 +825,29 @@ static UIColor *PBAccent(void) { return [UIColor colorWithRed:1 green:0.8 blue:0
 
 static BOOL PBTextInputActive(void);
 
+static BOOL gShowTouchMarkers;
+static void (*gOriginalSendEvent)(id, SEL, UIEvent *);
+
+static void PBSendEventWithTouchMarkers(id application, SEL selector, UIEvent *event) {
+  if (gShowTouchMarkers && event.type == UIEventTypeTouches) {
+    UIWindow *window = PBGameWindow();
+    for (UITouch *touch in event.allTouches) {
+      if (!window || touch.window != window || touch.phase != UITouchPhaseBegan) continue;
+      UIView *marker = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 24, 24)];
+      marker.center = [touch locationInView:window];
+      marker.userInteractionEnabled = NO;
+      marker.backgroundColor = [PBAccent() colorWithAlphaComponent:0.6];
+      marker.layer.cornerRadius = 12;
+      marker.layer.borderWidth = 2;
+      marker.layer.borderColor = UIColor.whiteColor.CGColor;
+      [window addSubview:marker];
+      [UIView animateWithDuration:0.3 delay:0.15 options:0 animations:^{ marker.alpha = 0; }
+                       completion:^(BOOL finished) { [marker removeFromSuperview]; }];
+    }
+  }
+  gOriginalSendEvent(application, selector, event);
+}
+
 @interface PBInput : NSObject
 @end
 
@@ -956,6 +980,10 @@ static NSArray *PBPadButtons(GCExtendedGamepad *pad) {
   NSString *code = PBKeyCode(event.keyCode);
   BOOL command = (event.modifierFlags & kCommandFlag) != 0;
   if (!code) return event;
+  if (command && (event.modifierFlags & kShiftFlag) && [code isEqual:@"KeyK"]) {
+    if (down && !event.isARepeat) [self toggleTouchMarkers];
+    return nil;
+  }
   if (_editor) {
     if (down) [_editor keyDown:code command:command];
     return nil;
@@ -975,6 +1003,21 @@ static NSArray *PBPadButtons(GCExtendedGamepad *pad) {
   if (down) [_mapper keyDown:code];
   else [_mapper keyUp:code];
   return nil;
+}
+
+- (void)toggleTouchMarkers {
+  static dispatch_once_t once;
+  dispatch_once(&once, ^{
+    Class cls = UIApplication.sharedApplication.class;
+    SEL selector = @selector(sendEvent:);
+    Method method = class_getInstanceMethod(cls, selector);
+    if (!method) return;
+    gOriginalSendEvent = (void (*)(id, SEL, UIEvent *))method_getImplementation(method);
+    class_replaceMethod(cls, selector, (IMP)PBSendEventWithTouchMarkers, method_getTypeEncoding(method));
+  });
+  if (!gOriginalSendEvent) return;
+  gShowTouchMarkers = !gShowTouchMarkers;
+  [self toast:gShowTouchMarkers ? @"Touch markers on · ⌘⇧K to hide" : @"Touch markers off"];
 }
 
 - (id)modifiers:(id<PBAppKitEvent>)event {
@@ -1197,10 +1240,18 @@ static int gSnapAttempts;
   }
   CAMetalLayer *layer = [self renderLayer];
   CGSize drawn = layer.drawableSize, shown = layer.bounds.size;
-  UIViewController *root = PBGameWindow().rootViewController;
+  UIWindow *gameWindow = PBGameWindow();
+  UIViewController *root = gameWindow.rootViewController;
   if (root && gRotationsSent < 3 && PBSupportedOrientation() > 0 && drawn.width > 0 && drawn.width < drawn.height && shown.width > shown.height) PBSendLandscapeRotation(root);
   CGSize target = [self targetFor:layer];
   if (target.width <= 0 || target.height <= 0) return;
+  CGSize gameSize = gameWindow.bounds.size;
+  CGFloat renderScale = layer.contentsScale;
+  // Keep Identity V's UIKit window at the same logical size as its Metal drawable.
+  BOOL matchCanvasSize = [NSBundle.mainBundle.bundleIdentifier isEqual:@"com.netease.idv"] &&
+      drawn.width >= drawn.height && drawn.height > 0 && renderScale > 0 &&
+      gameSize.width > 0 && gameSize.height > 0;
+  if (matchCanvasSize) target = CGSizeMake(drawn.width / renderScale, drawn.height / renderScale);
   id<PBAppKitClasses> app = [(id<PBAppKitClasses>)(id)objc_getClass("NSApplication") sharedApplication];
   for (id<PBAppKitWindow> window in app.windows) {
     if (![NSStringFromClass([(id)window class]) isEqual:@"UINSWindow"] || !window.isVisible) continue;
@@ -1221,16 +1272,24 @@ static int gSnapAttempts;
     CGSize room = [window contentRectForFrameRect:visible].size;
     BOOL limited = room.width > 0 && room.height > 0;
     BOOL fitsScreen = !limited || (content.size.width <= room.width && content.size.height <= room.height);
-    if (fabs(want / have - 1) < 0.005 && fitsScreen) { gSnapAttempts = 0; continue; }
-    if (gSnapAttempts >= 3) continue;
-    gSnapAttempts++;
-    // Keep the area and top edge, within the screen's visible area.
+    if (!matchCanvasSize && fabs(want / have - 1) < 0.005 && fitsScreen) { gSnapAttempts = 0; continue; }
     CGFloat area = content.size.width * content.size.height;
     CGSize size = CGSizeMake(round(sqrt(area * want)), round(sqrt(area / want)));
+    if (matchCanvasSize) {
+      CGFloat macPointsPerGamePoint = fmin(content.size.width / gameSize.width, content.size.height / gameSize.height);
+      size = CGSizeMake(round(target.width * macPointsPerGamePoint), round(target.height * macPointsPerGamePoint));
+    }
     if (limited && (size.width > room.width || size.height > room.height)) {
       CGFloat shrink = fmin(room.width / size.width, room.height / size.height);
       size = CGSizeMake(floor(size.width * shrink), floor(size.height * shrink));
     }
+    if (matchCanvasSize && fitsScreen && fabs(content.size.width - size.width) <= 1 && fabs(content.size.height - size.height) <= 1) {
+      gSnapAttempts = 0;
+      continue;
+    }
+    if (size.width <= 0 || size.height <= 0 || gSnapAttempts >= 3) continue;
+    gSnapAttempts++;
+    // Keep the top edge within the screen's visible area.
     CGRect next = CGRectMake(content.origin.x, CGRectGetMaxY(content) - size.height, size.width, size.height);
     CGRect frame = [window frameRectForContentRect:next];
     if (limited) {
