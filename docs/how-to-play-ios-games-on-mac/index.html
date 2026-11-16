@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How to Play iOS Games on Mac | PigPort</title>
+  <meta name="description" content="Play iPhone and iPad games on your Mac using the Mac App Store, PigPort for compatible IPA files, or Apple's iPhone Mirroring.">
+  <link rel="canonical" href="https://pigtinylabs.github.io/PigPort/how-to-play-ios-games-on-mac/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="How to Play iOS Games on Mac">
+  <meta property="og:description" content="Choose the Mac App Store, PigPort, or iPhone Mirroring based on your Mac and which game you want to play.">
+  <meta property="og:url" content="https://pigtinylabs.github.io/PigPort/how-to-play-ios-games-on-mac/">
+  <meta property="og:image" content="https://pigtinylabs.github.io/PigPort/icon.png">
+  <link rel="icon" type="image/svg+xml" href="../icon.svg">
+  <link rel="stylesheet" href="guide.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "How to Play iOS Games on Mac",
+    "description": "How to play iPhone and iPad games on a Mac using the Mac App Store, a compatible IPA in PigPort, or iPhone Mirroring.",
+    "inLanguage": "en",
+    "datePublished": "2026-11-16",
+    "mainEntityOfPage": "https://pigtinylabs.github.io/PigPort/how-to-play-ios-games-on-mac/",
+    "author": {
+      "@type": "Organization",
+      "name": "PigTinyLabs",
+      "url": "https://github.com/PigTinyLabs"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="shell" aria-label="Main navigation">
+      <a class="brand" href="../"><img src="../icon.svg" width="34" height="34" alt="">PigPort</a>
+      <a href="../#downloads">Downloads</a>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <article>
+      <header class="intro">
+        <h1>How to Play iOS Games on Mac</h1>
+        <p>On an Apple silicon Mac, start with the Mac App Store. If the game is missing and you have a compatible unencrypted <code>.ipa</code>, you can try PigPort. If the game is already installed on your iPhone, Apple’s iPhone Mirroring can let you play it from your Mac.</p>
+      </header>
+
+      <nav class="contents" aria-label="On this page">
+        <a href="#app-store">Mac App Store</a>
+        <a href="#pigport">Import an IPA with PigPort</a>
+        <a href="#iphone-mirroring">iPhone Mirroring</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+      </nav>
+
+      <section id="app-store">
+        <h2>Install a game from the Mac App Store</h2>
+        <p>Check <strong>Apple menu → About This Mac</strong>. A chip name such as Apple M1 or M4 means you have Apple silicon.</p>
+        <ol>
+          <li>Open the Mac App Store and search for the game. Choose <strong>iPhone &amp; iPad Apps</strong> when the search filter is available.</li>
+          <li>Look for <strong>Designed for iPhone</strong> or <strong>Designed for iPad</strong>, or choose the Mac edition if the publisher offers one.</li>
+          <li>Click <strong>Get</strong> or the download button and open the game from Applications. For touch gestures, check the game’s settings in the menu bar for Touch Alternatives.</li>
+        </ol>
+        <p><a href="https://support.apple.com/guide/app-store/iphone-ipad-apps-mac-apple-silicon-fird2c7092da/mac">Apple’s guide to iPhone and iPad apps on Mac</a></p>
+      </section>
+
+      <section id="pigport">
+        <h2>Install a compatible iOS game with PigPort</h2>
+        <p>You’ll need an Apple silicon Mac and an unencrypted arm64 <code>.ipa</code> you have permission to install, such as a build provided by the developer. Game compatibility depends on the title and version.</p>
+        <ol>
+          <li>Download the <strong>macOS (Apple Silicon)</strong> build of PigPort from the <a href="../#downloads">official downloads</a>.</li>
+          <li>Open the disk image, drag PigPort to Applications, and open the app.</li>
+          <li>In PigPort’s Game Library, drop the <code>.ipa</code> into the window or choose <strong>Install IPA / APK / XAPK</strong>. After installation, choose <strong>Play</strong> on the game card.</li>
+          <li>Choose <strong>Controls</strong> on the game card to map keys. In supported games, press <kbd>⌘K</kbd> to open the editor while playing.</li>
+        </ol>
+        <div class="actions">
+          <a class="primary" href="../#downloads">Download PigPort for Apple silicon</a>
+          <a href="../#controls-guide">Configure keyboard and mouse controls</a>
+        </div>
+      </section>
+
+      <section id="iphone-mirroring">
+        <h2>Play a game installed on your iPhone</h2>
+        <p>Open <strong>iPhone Mirroring</strong> on your Mac, follow the pairing prompts, and open the game in the mirrored iPhone window. The game runs on your nearby iPhone. Apple requires iOS 18 or later and macOS Sequoia 15 or later on an Apple silicon Mac or an Intel Mac with a T2 chip.</p>
+        <p><a href="https://support.apple.com/en-us/120421">Check Apple’s iPhone Mirroring requirements</a></p>
+      </section>
+
+      <section id="troubleshooting">
+        <h2>If the game won’t install or launch</h2>
+        <dl>
+          <dt>The game is missing from the Mac App Store</dt>
+          <dd>Check whether the publisher offers a native Mac version. For a game installed on your iPhone, try iPhone Mirroring if your devices meet Apple’s requirements.</dd>
+          <dt>PigPort reports that the IPA is encrypted</dt>
+          <dd>PigPort needs a compatible unencrypted build. Ask the developer for a build they permit you to install, or use the App Store or iPhone Mirroring.</dd>
+          <dt>The game installs and then closes</dt>
+          <dd>Some games depend on iPhone-specific services or check the device environment. Check whether your game and version are supported before reinstalling or changing controls.</dd>
+          <dt>About This Mac says Intel</dt>
+          <dd>The Intel build of PigPort supports Android packages. To play an iOS game, check for a Mac edition or see if your Intel Mac supports iPhone Mirroring.</dd>
+        </dl>
+      </section>
+    </article>
+  </main>
+
+  <footer class="shell site-footer">
+    <a href="../">PigPort home</a>
+    <a href="https://github.com/PigTinyLabs/PigPort">PigPort source code</a>
+  </footer>
+</body>
+</html>

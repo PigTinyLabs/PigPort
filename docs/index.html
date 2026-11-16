@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- Primary Meta Tags -->
-  <title>PigPort - Play iOS & Android Games on Mac (Apple Silicon & Intel) | Sideload IPA & APK</title>
-  <meta name="title" content="PigPort - Play iOS & Android Games on Mac (Apple Silicon & Intel) | Sideload IPA & APK">
-  <meta name="description" content="PigPort is a free, modern open-source game launcher for macOS. Sideload and play iOS (.ipa) and Android (.apk, .xapk) games natively on Apple Silicon (M1/M2/M3/M4) & Intel Macs with visual mouse & keyboard keymapping.">
-  <meta name="keywords" content="play ios games on mac, run ipa on macbook, ios sideload mac, apple silicon ios gaming, play android games on mac, identity v mac, genshin impact mac, decrypted ipa macos, pigport launcher">
+  <title>PigPort | iOS Game Launcher for Apple Silicon Macs</title>
+  <meta name="description" content="Use PigPort to play compatible iPhone and iPad games from unencrypted IPA files on Apple silicon Macs, with keyboard and mouse controls. Android also runs on Mac and Windows.">
   <meta name="author" content="PigTinyLabs">
   <meta name="robots" content="index, follow">
   <meta name="google-site-verification" content="gtdUTAOarh58JYdYaLKk5S2biQq1pf6lxPBfpYLM2xM" />
@@ -17,15 +15,15 @@
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://pigtinylabs.github.io/PigPort/">
-  <meta property="og:title" content="PigPort - Play iOS & Android Games on Mac (Apple Silicon & Intel)">
-  <meta property="og:description" content="Free open-source launcher for macOS. Sideload and play iOS (.ipa) & Android (.apk/.xapk) mobile games on Mac with visual keymapping.">
+  <meta property="og:title" content="PigPort | iOS Game Launcher for Apple Silicon Macs">
+  <meta property="og:description" content="Play compatible iPhone and iPad games on Apple silicon Macs with keyboard and mouse controls. Android also runs on Mac and Windows.">
   <meta property="og:image" content="https://pigtinylabs.github.io/PigPort/icon.png">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://pigtinylabs.github.io/PigPort/">
-  <meta property="twitter:title" content="PigPort - Play iOS & Android Games on Mac (Apple Silicon & Intel)">
-  <meta property="twitter:description" content="Sideload .IPA, .APK, .XAPK and play games natively on macOS with keyboard & mouse mapping.">
+  <meta property="twitter:title" content="PigPort | iOS Game Launcher for Apple Silicon Macs">
+  <meta property="twitter:description" content="Play compatible iPhone and iPad games on Apple silicon Macs with keyboard and mouse controls. Android also runs on Mac and Windows.">
   <meta property="twitter:image" content="https://pigtinylabs.github.io/PigPort/icon.png">
 
   <!-- Favicon -->
@@ -38,68 +36,28 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap" rel="stylesheet">
 
-  <!-- Structured Data: SoftwareApplication & FAQPage for Rich Google Snippets -->
+  <!-- Structured data for the launcher -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "SoftwareApplication",
-        "name": "PigPort",
-        "operatingSystem": "macOS 12.0 or later (Apple Silicon M1/M2/M3/M4 & Intel)",
-        "applicationCategory": "GameApplication",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "description": "PigPort is a modern, lightweight, open-source game launcher for macOS that enables users to sideload and play iOS (.ipa) and Android (.apk, .xapk) games natively with custom keymapping.",
-        "softwareVersion": "v0.2.6",
-        "author": {
-          "@type": "Organization",
-          "name": "PigTinyLabs",
-          "url": "https://github.com/PigTinyLabs"
-        },
-        "downloadUrl": "https://github.com/PigTinyLabs/PigPort/releases/latest"
-      },
-      {
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "Can Apple Silicon (M1/M2/M3/M4) Macs run iOS games natively with PigPort?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes! PigPort is optimized for Apple Silicon (M1/M2/M3/M4). Because M-series Macs share the ARM64 architecture with iPhone and iPad, iOS games run natively at 60-120 FPS with minimal battery drain."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Where can I find .IPA and .APK game packages?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "For iOS games (.ipa), you can find decrypted IPAs on trusted databases such as decrypt.day (https://decrypt.day/) or dump them from your personal Apple ID. For Android games (.apk, .xapk), search for '[Game Name] apk' or '[Game Name] xapk' on reputable repositories like APKPure, APKMirror, or QooApp."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Does PigPort support keyboard and mouse keymapping?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. PigPort includes a built-in Visual Keymap Editor (Press ⌘K in-game or click Controls). You can map WASD movement, skill keys, free-look camera, and mouse clicks seamlessly."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Is PigPort safe, free, and open-source?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "PigPort is 100% free and open-source under the MIT License on GitHub. It contains zero ads, zero tracking, and no bloatware."
-            }
-          }
-        ]
-      }
-    ]
+    "@type": "SoftwareApplication",
+    "name": "PigPort",
+    "url": "https://pigtinylabs.github.io/PigPort/",
+    "operatingSystem": "macOS, Windows",
+    "applicationCategory": "GameApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "An open-source launcher for compatible iOS IPA files on Apple silicon Macs and Android APK or XAPK files on Mac and Windows.",
+    "softwareVersion": "0.2.6",
+    "author": {
+      "@type": "Organization",
+      "name": "PigTinyLabs",
+      "url": "https://github.com/PigTinyLabs"
+    },
+    "downloadUrl": "https://github.com/PigTinyLabs/PigPort/releases/latest"
   }
   </script>
 
@@ -1136,17 +1094,6 @@
       gap: 6px;
     }
 
-    /* SEO Keyword Cloud for Search Engines */
-    .seo-keyword-block {
-      margin-top: 40px;
-      padding: 20px;
-      border-top: 1px solid rgba(255,255,255,0.04);
-      font-size: 0.75rem;
-      color: #555b6e;
-      text-align: center;
-      line-height: 1.8;
-    }
-
     /* Control Settings Guide Section Styles */
     .ctrl-mockup-window {
       background: #11141c;
@@ -1378,11 +1325,11 @@
       </div>
 
       <h1 data-i18n="hero.title">
-        Play <span class="gradient-text">iOS & Android</span> Games<br>On Mac Natively, No Lag
+        Play iOS Games on <span class="gradient-text">Apple Silicon Macs</span>
       </h1>
 
       <p class="hero-desc" data-i18n="hero.desc">
-        Modern open-source launcher optimized for macOS. Sideload and install <strong>.IPA, .APK, and .XAPK</strong> packages with 1-click, customize mouse & keyboard keymapping, and enjoy ultra-lightweight performance. The ultimate alternative to bloated, heavy emulators.
+        PigPort is a free, open-source launcher for compatible iPhone and iPad games from unencrypted <strong>.ipa</strong> files. Map keyboard and mouse controls, or use the built-in Android emulator for <strong>.apk</strong> and <strong>.xapk</strong> games on Mac and Windows.
       </p>
 
       <div class="cta-group">
@@ -1392,8 +1339,8 @@
           </svg>
           <span data-i18n="hero.cta_download">Download PigPort v0.2.6 (Free)</span>
         </a>
-        <a href="https://github.com/PigTinyLabs/PigPort" target="_blank" class="btn-secondary">
-          <span data-i18n="hero.cta_source">⭐ Source Code on GitHub</span>
+        <a href="how-to-play-ios-games-on-mac/" class="btn-secondary" hreflang="en">
+          <span data-i18n="ios.guide_link">How to Play iOS Games on Mac</span>
         </a>
       </div>
 
@@ -1412,7 +1359,7 @@
               <span class="dot dot-yellow"></span>
               <span class="dot dot-green"></span>
             </div>
-            <div class="window-title" data-i18n="mockup.title">PigPort Game Library — v0.2.6 (Active Session)</div>
+            <div class="window-title" data-i18n="mockup.title">PigPort Game Library Preview</div>
             <div style="width: 40px;"></div>
           </div>
           <div class="window-body">
@@ -1423,7 +1370,7 @@
                   <img src="assets/genshin.jpg" alt="Genshin Impact Logo" class="demo-icon-img">
                   <div>
                     <div class="demo-title">Genshin Impact</div>
-                    <span class="demo-tag" data-i18n="card.tag_genshin">iOS IPA • Metal API • 120 FPS</span>
+                    <span class="demo-tag" data-i18n="card.tag_genshin">iOS IPA • Apple Silicon</span>
                   </div>
                 </div>
                 <div class="demo-actions">
@@ -1498,7 +1445,7 @@
           <div class="dl-icon-box">🍎</div>
           <h3 style="font-size: 1.35rem; font-weight: 700; color: #fff;" data-i18n="dl.arm_title">macOS (Apple Silicon)</h3>
           <p class="dl-desc" data-i18n="dl.arm_desc">
-            Runs both iOS games (.IPA) and Android games (.APK/.XAPK) with native 60–120 FPS GPU acceleration and zero emulator overhead.
+            Runs compatible iOS games from unencrypted .ipa files and Android games through the built-in emulator.
           </p>
           <div class="dl-btn-group">
             <a href="https://github.com/PigTinyLabs/PigPort/releases/download/v0.2.6/PigPort-0.2.6-mac-arm64.dmg" class="btn-primary dl-btn">
@@ -1639,7 +1586,7 @@
         <span class="section-tag" data-i18n="features.tag">Core Advantages</span>
         <h2 class="section-title" data-i18n="features.title">Why Gamers Choose PigPort on macOS?</h2>
         <p class="section-subtitle" data-i18n="features.subtitle">
-          Carefully engineered to deliver a console-grade mobile gaming experience on Mac without heating up or battery drain.
+          Install mobile games and configure keyboard, mouse, and gamepad controls.
         </p>
       </div>
 
@@ -1649,7 +1596,7 @@
           <div class="feature-icon-box">⚡</div>
           <h3 data-i18n="feat1.title">Apple Silicon Native Performance</h3>
           <p data-i18n="feat1.desc">
-            Fully leverages ARM architecture on Apple M1, M2, M3, M4 chips. iOS games run natively without virtual machines, providing solid 60-120 FPS.
+            Compatible unencrypted arm64 iOS games run directly on Apple silicon using the Mac’s iOS frameworks. Performance varies by game.
           </p>
         </div>
 
@@ -1852,7 +1799,7 @@
           <tbody>
             <tr>
               <td><strong data-i18n="row.ios">iOS Games (.IPA)</strong></td>
-              <td class="highlight-col check" data-i18n="cell.ios_pigport">✓ Native Smooth (ARM64)</td>
+              <td class="highlight-col check" data-i18n="cell.ios_pigport">✓ Compatible arm64 IPAs</td>
               <td class="check" data-i18n="cell.ios_sideload">✓ Supported</td>
               <td class="cross" data-i18n="cell.ios_emu">✗ Not Supported</td>
             </tr>
@@ -1937,7 +1884,7 @@
             <span class="faq-arrow">▼</span>
           </div>
           <div class="faq-answer" data-i18n="faq1.a">
-            Yes! PigPort is built specifically for Apple Silicon. Because M-series chips share the ARM architecture with iPhone/iPad, iOS games run natively at full speed without emulator overhead or battery drain.
+            PigPort runs compatible, unencrypted arm64 iOS games on Apple silicon Macs. Check the guide above for installation steps and other ways to play.
           </div>
         </div>
 
@@ -1985,6 +1932,7 @@
       <div class="footer-links">
         <a href="https://github.com/PigTinyLabs/PigPort" target="_blank">GitHub Repository</a>
         <a href="#downloads">Direct Downloads</a>
+        <a href="how-to-play-ios-games-on-mac/" hreflang="en" data-i18n="ios.guide_link">How to Play iOS Games on Mac</a>
         <a href="https://paypal.me/pigtiny" target="_blank">☕ Donate a Coffee</a>
         <a href="https://github.com/PigTinyLabs" target="_blank">PigTinyLabs</a>
       </div>
@@ -1997,10 +1945,6 @@
         Disclaimer: All game titles, logos, and trademarks (Genshin Impact, Identity V, Honkai: Star Rail) are property of their respective owners (Cognosphere / miHoYo, NetEase, etc.) and are used here solely for illustrative compatibility demonstration.
       </p>
 
-      <!-- SEO Keywords Footer -->
-      <div class="seo-keyword-block">
-        Keywords: play ios games on mac, run ipa on macbook m1 m2 m3, identity v macbook, genshin impact mac m1, sideload ipa macos, decrypted ipa mac, apk xapk on apple silicon, pigport launcher.
-      </div>
     </div>
   </footer>
 
@@ -2014,7 +1958,7 @@
         <span id="modalGameType" class="demo-tag" style="margin-bottom: 20px;">iOS (.IPA) • Native ARM64</span>
         
         <p id="modalGameMsg" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.6;">
-          To play this game with native 60–120 FPS performance and keyboard/mouse controls on your Mac, download and install PigPort for macOS!
+          Download PigPort to try this game with keyboard and mouse controls using a compatible game package.
         </p>
 
         <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -2096,15 +2040,15 @@
         "nav.guide": "Quick Start",
         "nav.faq": "FAQ",
         "hero.badge": "New Release v0.2.6 • Apple Silicon (M1/M2/M3/M4) & Intel Supported",
-        "hero.title": "Play <span class='gradient-text'>iOS & Android</span> Games<br>On Mac Natively, No Lag",
-        "hero.desc": "Modern open-source launcher optimized for macOS. Sideload and install <strong>.IPA, .APK, and .XAPK</strong> packages with 1-click, customize mouse & keyboard keymapping, and enjoy ultra-lightweight performance. The ultimate alternative to bloated, heavy emulators.",
+        "hero.title": "Play iOS Games on <span class='gradient-text'>Apple Silicon Macs</span>",
+        "hero.desc": "PigPort is a free, open-source launcher for compatible iPhone and iPad games from unencrypted <strong>.ipa</strong> files. Map keyboard and mouse controls, or use the built-in Android emulator for <strong>.apk</strong> and <strong>.xapk</strong> games on Mac and Windows.",
         "hero.cta_download": "Download PigPort v0.2.6 (Free)",
-        "hero.cta_source": "⭐ Source Code on GitHub",
+        "ios.guide_link": "How to Play iOS Games on Mac",
         "hero.meta_free": "✨ 100% Free & Open Source",
         "hero.meta_ads": "🚫 Zero Advertisements",
         "hero.meta_arch": "⚡ Apple Silicon & Intel 64-bit",
-        "mockup.title": "PigPort Game Library — v0.2.6 (Active Session)",
-        "card.tag_genshin": "iOS IPA • Metal API • 120 FPS",
+        "mockup.title": "PigPort Game Library Preview",
+        "card.tag_genshin": "iOS IPA • Apple Silicon",
         "card.tag_identity": "Android XAPK • WASD Keymap",
         "card.tag_starrail": "iOS IPA • ARM64 Native",
         "card.play": "Play Now",
@@ -2114,7 +2058,7 @@
         "dl.subtitle": "Official release v0.2.6 • 100% Free & Open Source (MIT License). Choose your architecture below for direct 1-click download.",
         "dl.rec_badge": "Recommended for M1/M2/M3/M4",
         "dl.arm_title": "macOS (Apple Silicon)",
-        "dl.arm_desc": "Runs both iOS games (.IPA) and Android games (.APK/.XAPK) with native 60–120 FPS GPU acceleration and zero emulator overhead.",
+        "dl.arm_desc": "Runs compatible iOS games from unencrypted .ipa files and Android games through the built-in emulator.",
         "dl.x64_title": "macOS (Intel x64)",
         "dl.x64_desc": "For Intel-based MacBooks, iMacs, and Mac Pros. Optimized for Android gaming with lightweight resource usage.",
         "dl.win_title": "Windows (64-bit)",
@@ -2141,9 +2085,9 @@
         "pkg.android_btn": "🔍 Browse APKPure Repository",
         "features.tag": "Core Advantages",
         "features.title": "Why Gamers Choose PigPort on macOS?",
-        "features.subtitle": "Carefully engineered to deliver a console-grade mobile gaming experience on Mac without heating up or battery drain.",
+        "features.subtitle": "Install mobile games and configure keyboard, mouse, and gamepad controls.",
         "feat1.title": "Apple Silicon Native Performance",
-        "feat1.desc": "Fully leverages ARM architecture on Apple M1, M2, M3, M4 chips. iOS games run natively without virtual machines, providing solid 60-120 FPS.",
+        "feat1.desc": "Compatible unencrypted arm64 iOS games run directly on Apple silicon using the Mac’s iOS frameworks. Performance varies by game.",
         "feat2.title": "Smart Mouse & Keyboard Keymapping",
         "feat2.desc": "Visual keymapping editor with WASD directional control, FPS camera look, MOBA skill buttons, and free mouse clicks. Easily switch profiles.",
         "feat3.title": "1-Click Install: IPA, APK & XAPK",
@@ -2167,7 +2111,7 @@
         "row.keymap": "Visual Keymapping Editor",
         "row.ads": "Zero Ads / Clean UI",
         "row.open": "Open Source (MIT License)",
-        "cell.ios_pigport": "✓ Native Smooth (ARM64)",
+        "cell.ios_pigport": "✓ Compatible arm64 IPAs",
         "cell.ios_sideload": "✓ Supported",
         "cell.ios_emu": "✗ Not Supported",
         "cell.android_pigport": "✓ Built-in & Auto-extract",
@@ -2196,7 +2140,7 @@
         "faq.tag": "FAQ",
         "faq.title": "Frequently Asked Questions",
         "faq1.q": "Can Apple Silicon (M1/M2/M3/M4) Macs run iOS games natively?",
-        "faq1.a": "Yes! PigPort is built specifically for Apple Silicon. Because M-series chips share the ARM architecture with iPhone/iPad, iOS games run natively at full speed without emulator overhead or battery drain.",
+        "faq1.a": "PigPort runs compatible, unencrypted arm64 iOS games on Apple silicon Macs. Check the guide above for installation steps and other ways to play.",
         "faq2.q": "Where can I find .IPA or .APK files?",
         "faq2.a": "For iOS games, use decrypted repositories such as <strong>decrypt.day</strong> or extract from your personal Apple ID account. For Android, safe repositories like APKPure or APKMirror provide direct .apk/.xapk packages. Check our 'Get Games' section above for direct links!",
         "faq3.q": "Is playing games via PigPort bannable?",
@@ -2245,15 +2189,15 @@
         "nav.guide": "Hướng dẫn",
         "nav.faq": "Hỏi đáp",
         "hero.badge": "Phiên bản mới v0.2.6 • Hỗ trợ Apple Silicon (M1/M2/M3/M4) & Intel",
-        "hero.title": "Chơi Game <span class='gradient-text'>iOS & Android</span><br>Trên Mac Mượt Mà & Không Giật Lag",
-        "hero.desc": "Trình khởi chạy mã nguồn mở tối ưu cho macOS. Sideload và cài đặt trực tiếp file <strong>.IPA, .APK, .XAPK</strong> chỉ với 1 cú click, gán phím chuột (Keymapping) trực quan và siêu nhẹ máy. Thay thế hoàn hảo cho các trình giả lập cồng kềnh.",
+        "hero.title": "Chơi game iOS trên <span class='gradient-text'>Mac Apple Silicon</span>",
+        "hero.desc": "PigPort là trình khởi chạy mã nguồn mở miễn phí cho game iPhone và iPad tương thích từ tệp <strong>.ipa</strong> không mã hóa. Bạn có thể gán phím và chuột, hoặc dùng trình giả lập Android tích hợp để chơi game <strong>.apk</strong> và <strong>.xapk</strong> trên Mac và Windows.",
         "hero.cta_download": "Tải PigPort v0.2.6 (Miễn phí)",
-        "hero.cta_source": "⭐ Mã nguồn trên GitHub",
+        "ios.guide_link": "Cách chơi game iOS trên Mac (tiếng Anh)",
         "hero.meta_free": "✨ 100% Miễn phí & Mã nguồn mở",
         "hero.meta_ads": "🚫 Hoàn toàn không quảng cáo",
         "hero.meta_arch": "⚡ Hỗ trợ Apple Silicon & Intel Mac",
-        "mockup.title": "Thư viện Game PigPort — v0.2.6 (Đang hoạt động)",
-        "card.tag_genshin": "iOS IPA • Metal API • 120 FPS",
+        "mockup.title": "Xem trước Thư viện Game PigPort",
+        "card.tag_genshin": "iOS IPA • Apple Silicon",
         "card.tag_identity": "Android XAPK • Gán phím WASD",
         "card.tag_starrail": "iOS IPA • ARM64 Native",
         "card.play": "Chơi ngay",
@@ -2263,7 +2207,7 @@
         "dl.subtitle": "Bản phát hành chính thức v0.2.6 • Miễn phí & Mã nguồn mở (Giấy phép MIT). Chọn đúng phiên bản máy của bạn để tải nhanh 1-click.",
         "dl.rec_badge": "Khuyên dùng cho Mac M1/M2/M3/M4",
         "dl.arm_title": "macOS (Apple Silicon)",
-        "dl.arm_desc": "Chơi cả game iOS (.IPA) và Android (.APK/.XAPK) mượt mà 60–120 FPS trực tiếp trên GPU Apple Silicon, siêu nhẹ và tiết kiệm pin.",
+        "dl.arm_desc": "Chạy game iOS tương thích từ tệp .ipa không mã hóa và chạy game Android qua trình giả lập tích hợp.",
         "dl.x64_title": "macOS (Intel x64)",
         "dl.x64_desc": "Dành cho MacBook, iMac và Mac Pro chạy chip Intel. Tối ưu trải nghiệm chơi game Android mượt mà.",
         "dl.win_title": "Windows (64-bit)",
@@ -2290,9 +2234,9 @@
         "pkg.android_btn": "🔍 Khám phá kho APKPure",
         "features.tag": "Ưu điểm vượt trội",
         "features.title": "Tại sao game thủ chọn PigPort trên Mac?",
-        "features.subtitle": "Được thiết kế tỉ mỉ để mang lại trải nghiệm chơi game mobile đỉnh cao trên macOS mà không làm nóng máy hay tụt pin.",
+        "features.subtitle": "Cài game di động và tùy chỉnh bàn phím, chuột và tay cầm.",
         "feat1.title": "Hiệu năng Native Apple Silicon",
-        "feat1.desc": "Tận dụng triệt để kiến trúc ARM trên chip Apple M1, M2, M3, M4. Game iOS chạy trực tiếp không qua máy ảo, đem lại 60-120 FPS mượt mà và mát máy.",
+        "feat1.desc": "Game iOS arm64 tương thích chạy trực tiếp trên Apple Silicon bằng các framework iOS có sẵn trên Mac. Hiệu năng tùy từng game.",
         "feat2.title": "Smart Keymapping Bàn phím & Chuột",
         "feat2.desc": "Giao diện gán phím trực quan (WASD, tâm ngắm FPS, nút kỹ năng MOBA, click chuột tự do). Dễ dàng chuyển đổi cấu hình phím cho từng tựa game.",
         "feat3.title": "Cài đặt 1 Click: IPA, APK & XAPK",
@@ -2316,7 +2260,7 @@
         "row.keymap": "Gán phím ảo Keymapping",
         "row.ads": "Không quảng cáo / Bloatware",
         "row.open": "Mã nguồn mở (MIT License)",
-        "cell.ios_pigport": "✓ Cực mượt (Native ARM64)",
+        "cell.ios_pigport": "✓ Hỗ trợ IPA arm64 tương thích",
         "cell.ios_sideload": "✓ Có hỗ trợ",
         "cell.ios_emu": "✗ Không hỗ trợ",
         "cell.android_pigport": "✓ Tích hợp sẵn & Tự giải nén",
@@ -2345,7 +2289,7 @@
         "faq.tag": "Câu hỏi thường gặp",
         "faq.title": "Giải đáp thắc mắc (FAQ)",
         "faq1.q": "MacBook chip Apple Silicon (M1, M2, M3, M4) có chơi được không?",
-        "faq1.a": "Có! PigPort được sinh ra và tối ưu mạnh mẽ nhất cho Apple Silicon (M1/M2/M3/M4). Nhờ chia sẻ kiến trúc ARM với chip Apple trên iPhone/iPad, game chạy với hiệu năng gần như 100% native, không hao pin và quạt tản nhiệt không cần rú lên.",
+        "faq1.a": "PigPort chạy game iOS arm64 tương thích từ tệp IPA không mã hóa trên Mac Apple Silicon. Xem hướng dẫn ở trên để chọn cách chơi phù hợp.",
         "faq2.q": "Tôi lấy file game .IPA hoặc .APK ở đâu?",
         "faq2.a": "Với game iOS, bạn có thể tải từ kho <strong>decrypt.day</strong> hoặc trích xuất từ Apple ID. Với Android, các kho APKPure hoặc APKMirror cung cấp sẵn file tải an toàn. Xem chi tiết tại mục hướng dẫn bên trên!",
         "faq3.q": "Chơi game qua PigPort có bị khóa tài khoản không?",
@@ -2448,8 +2392,8 @@
       
       const isVi = currentLang === 'vi';
       document.getElementById('modalGameMsg').innerHTML = isVi 
-        ? `Để chơi <strong>${gameName}</strong> mượt mà 60–120 FPS trên Mac bằng bàn phím & chuột, hãy tải và cài đặt <strong>PigPort</strong> cho macOS!`
-        : `To play <strong>${gameName}</strong> with native 60–120 FPS performance and keyboard/mouse controls on your Mac, download and install <strong>PigPort</strong> for macOS!`;
+        ? `Tải <strong>PigPort</strong> để thử chơi <strong>${gameName}</strong> bằng bàn phím và chuột nếu bạn có gói game tương thích.`
+        : `Download <strong>PigPort</strong> to try <strong>${gameName}</strong> with keyboard and mouse controls using a compatible game package.`;
 
       document.getElementById('playModal').classList.add('active');
     }

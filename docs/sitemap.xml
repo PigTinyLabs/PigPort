@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://pigtinylabs.github.io/PigPort/</loc>
-    <lastmod>2026-10-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="vi" href="https://pigtinylabs.github.io/PigPort/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://pigtinylabs.github.io/PigPort/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://pigtinylabs.github.io/PigPort/" />
+    <lastmod>2026-11-16</lastmod>
+  </url>
+  <url>
+    <loc>https://pigtinylabs.github.io/PigPort/how-to-play-ios-games-on-mac/</loc>
+    <lastmod>2026-11-16</lastmod>
   </url>
 </urlset>
