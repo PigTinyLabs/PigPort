@@ -1,8 +1,7 @@
-import type { PlayBridgeApi } from '../shared/api';
 import { DEFAULT_GAMEPAD, emptyKeymap, parseKeymap, type Keymap, type KeymapElement, type Stick } from '../shared/keymap.js';
 import { activePad, GamepadPoller } from './gamepad.js';
+import { playbridge } from './desktop.js';
 import { el, keyLabel, toast } from './ui.js';
-declare const playbridge: PlayBridgeApi;
 
 const isVi = typeof navigator !== 'undefined' && (/^vi/i.test(navigator.language) || document.documentElement.lang === 'vi');
 

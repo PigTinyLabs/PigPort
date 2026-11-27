@@ -1,16 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { emptyKeymap, Keymap, parseKeymap } from '../shared/keymap';
-import type { MobilePackage } from '../shared/api';
-import { StreamOptions } from './android/scrcpy';
-
-export interface Settings {
-  androidGraphics?: 'auto' | 'software';
-  adbPath?: string;
-  androidAvd?: string;
-  stream: StreamOptions;
-  recentAddresses: string[];
-}
+import type { MobilePackage, Settings } from '../shared/api';
+export type { Settings } from '../shared/api';
 
 const defaults: Settings = {
   stream: { maxSize: 1920, maxFps: 60, bitRate: 8_000_000 },

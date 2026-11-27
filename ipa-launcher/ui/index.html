@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>PigPort IPA</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="brand">
+    <img src="pigport.png" alt="" width="34" height="34">
+    <span>PigPort <b>IPA</b></span>
+    <span class="platform">Mac Apple Silicon</span>
+  </header>
+
+  <main>
+    <div class="workspace-tabs" role="tablist" aria-label="Chức năng PigPort IPA">
+      <button id="local-tab" type="button" role="tab" aria-controls="local-panel" aria-selected="true">IPA trên máy</button>
+      <button id="store-tab" type="button" role="tab" aria-controls="store-panel" aria-selected="false" tabindex="-1">App Store</button>
+    </div>
+
+    <div id="local-panel" role="tabpanel" aria-labelledby="local-tab">
+      <h1>Chạy IPA trên Mac</h1>
+      <p class="intro">Thêm ứng dụng iPhone hoặc iPad từ tệp IPA ARM64 chưa mã hóa.</p>
+
+      <section id="drop-zone" class="import" aria-label="Thêm tệp IPA">
+        <div class="file-mark" aria-hidden="true"><span>IPA</span></div>
+        <div class="import-copy">
+          <h2>Thêm tệp IPA</h2>
+          <p>Kéo tệp vào đây hoặc chọn từ Finder.</p>
+        </div>
+        <button id="choose" class="primary" type="button">Chọn tệp</button>
+      </section>
+
+      <section id="review" class="review" aria-label="Kết quả kiểm tra IPA" hidden>
+        <div class="review-header">
+          <div class="review-file">
+            <h2 id="package-name"></h2>
+            <p id="package-file" class="muted"></p>
+          </div>
+          <span id="compatibility" class="compatibility"></span>
+        </div>
+        <dl id="package-details" class="package-details"></dl>
+        <p id="package-reason" class="reason" hidden></p>
+        <div class="review-actions">
+          <button id="clear" class="quiet" type="button">Bỏ chọn</button>
+          <button id="install" class="primary" type="button">Cài đặt</button>
+        </div>
+      </section>
+
+      <div id="feedback" class="feedback" role="status" aria-live="polite" hidden>
+        <span class="indicator" aria-hidden="true"></span>
+        <span id="feedback-text"></span>
+      </div>
+
+      <section aria-labelledby="library-heading">
+        <div class="library-header">
+          <h2 id="library-heading">Thư viện <span id="app-count" class="app-count" hidden></span></h2>
+          <button id="refresh" class="quiet refresh" type="button">
+            <span aria-hidden="true">↻</span> Làm mới
+          </button>
+        </div>
+        <p id="library-state" class="library-state" role="status">Đang mở thư viện…</p>
+        <ul id="apps" class="apps" aria-label="Ứng dụng đã cài" hidden></ul>
+      </section>
+    </div>
+
+    <div id="store-panel" role="tabpanel" aria-labelledby="store-tab" hidden>
+      <h1>Tải IPA từ App Store</h1>
+      <p class="intro">Tìm ứng dụng iPhone và chọn vị trí lưu tệp IPA trên Mac.</p>
+
+      <section class="store-account" aria-labelledby="store-account-heading">
+        <div class="store-account-copy">
+          <h2 id="store-account-heading">Tài khoản Apple</h2>
+          <p id="store-account-status" class="muted" role="status">Đang kiểm tra đăng nhập…</p>
+        </div>
+        <div class="store-account-actions">
+          <button id="store-check-account" class="quiet" type="button" disabled>Kiểm tra đăng nhập</button>
+          <button id="store-sign-in" class="primary" type="button" disabled>Đăng nhập trong Terminal</button>
+        </div>
+      </section>
+
+      <form id="store-search" class="store-search" role="search" aria-label="Tìm trên App Store">
+        <input id="store-query" type="search" aria-label="Tên ứng dụng" placeholder="Tên ứng dụng" maxlength="120" required disabled>
+        <button id="store-search-button" class="primary" type="submit" disabled>Tìm kiếm</button>
+      </form>
+      <p class="store-note muted">Tệp từ App Store có thể vẫn được mã hóa FairPlay.</p>
+
+      <div id="store-feedback" class="feedback" role="status" aria-live="polite" hidden>
+        <span class="indicator" aria-hidden="true"></span>
+        <span id="store-feedback-text"></span>
+      </div>
+
+      <section id="store-results" aria-labelledby="store-results-heading" hidden>
+        <div class="library-header">
+          <h2 id="store-results-heading">Kết quả <span id="store-count" class="app-count" role="status"></span></h2>
+        </div>
+        <p id="store-empty" class="library-state" role="status" hidden>Không tìm thấy ứng dụng.</p>
+        <ul id="store-apps" class="apps" hidden></ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

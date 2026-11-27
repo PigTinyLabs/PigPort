@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "PigPort",
+  "version": "../package.json",
+  "identifier": "com.pigtinylabs.pigport",
+  "build": {
+    "beforeBuildCommand": "npm run build:desktop",
+    "beforeDevCommand": "npm run build:desktop",
+    "frontendDist": "../dist/web/renderer"
+  },
+  "app": {
+    "windows": [{
+      "label": "main",
+      "title": "PigPort",
+      "width": 1280,
+      "height": 800,
+      "minWidth": 900,
+      "minHeight": 560,
+      "backgroundColor": "#111317"
+    }],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg", "nsis"],
+    "category": "Game",
+    "externalBin": ["binaries/pigport-worker"],
+    "resources": {"runtime-assets/": "runtime-assets/"},
+    "icon": ["../build/icon.png", "../build/icon.icns", "../build/icon.ico"],
+    "macOS": {"minimumSystemVersion": "13.5", "signingIdentity": "-"}
+  }
+}

@@ -1,11 +1,19 @@
-// Copies the renderer's non-TypeScript files next to the compiled JS.
+// Prepare the complete frontend for the Tauri webview.
 import { cpSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { build } from 'esbuild';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const out = path.join(root, 'dist/web/renderer');
 mkdirSync(out, { recursive: true });
+await build({
+  entryPoints: [path.join(root, 'src/renderer/app.ts')],
+  outfile: path.join(out, 'app.js'),
+  bundle: true,
+  format: 'esm',
+  sourcemap: true,
+});
 for (const f of ['index.html', 'styles.css']) {
   cpSync(path.join(root, 'src/renderer', f), path.join(out, f));
 }

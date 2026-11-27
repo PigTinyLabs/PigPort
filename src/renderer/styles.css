@@ -573,6 +573,8 @@ dialog {
 dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 dialog form { display: flex; flex-direction: column; gap: 14px; }
 dialog h2 { font-size: 18px; }
+.desktop-dialog-detail { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 40vh; overflow: auto; }
+.desktop-dialog-buttons { flex-wrap: wrap; }
 
 .toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 50; max-width: min(420px, calc(100vw - 32px)); }
 .toast {

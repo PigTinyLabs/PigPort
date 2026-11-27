@@ -21,19 +21,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        include:
+          - os: macos-15
+            target: aarch64-apple-darwin
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+          - os: windows-2025
+            target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
+    env:
+      PIGPORT_TARGET: ${{ matrix.target }}
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
           cache: npm
 
+      - name: Set up Rust
+        shell: bash
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add "$PIGPORT_TARGET"
+
       - name: Install dependencies
-        run: npm ci && npm run setup:electron
+        run: npm ci
 
       - name: Fetch scrcpy-server
         run: npm run fetch:scrcpy-server
@@ -41,47 +56,36 @@ jobs:
       - name: Set version
         if: inputs.version != ''
         shell: bash
-        run: npm version "${{ inputs.version }}" --no-git-tag-version --allow-same-version
-
-      - name: Signing certificate (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
         env:
-          MAC_CERTS: ${{ secrets.MAC_CERTS }}
-          MAC_CERTS_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          if [ -n "$MAC_CERTS" ]; then
-            echo "$MAC_CERTS" | base64 --decode > "$RUNNER_TEMP/mac-cert.p12"
-            echo "CSC_LINK=$RUNNER_TEMP/mac-cert.p12" >> "$GITHUB_ENV"
-            echo "CSC_KEY_PASSWORD=$MAC_CERTS_PASSWORD" >> "$GITHUB_ENV"
-            if [ -n "$APPLE_ID" ]; then
-              echo "APPLE_ID=$APPLE_ID" >> "$GITHUB_ENV"
-              echo "APPLE_APP_SPECIFIC_PASSWORD=$APPLE_APP_SPECIFIC_PASSWORD" >> "$GITHUB_ENV"
-              echo "APPLE_TEAM_ID=$APPLE_TEAM_ID" >> "$GITHUB_ENV"
-            else
-              echo "No Apple ID secrets: the app will be signed but not notarized."
-            fi
-          else
-            echo "No MAC_CERTS: building an ad-hoc signed app."
-          fi
+          PIGPORT_VERSION: ${{ inputs.version }}
+        run: npm version "${PIGPORT_VERSION#v}" --no-git-tag-version --allow-same-version
 
       - name: Signing certificate (Windows)
         if: runner.os == 'Windows'
-        shell: bash
+        shell: pwsh
         env:
           WIN_CERTS: ${{ secrets.WIN_CERTS }}
           WIN_CERTS_PASSWORD: ${{ secrets.WIN_CERTS_PASSWORD }}
         run: |
-          if [ -n "$WIN_CERTS" ]; then
-            echo "$WIN_CERTS" | base64 --decode > "$RUNNER_TEMP/win-cert.pfx"
-            echo "WIN_CSC_LINK=$RUNNER_TEMP/win-cert.pfx" >> "$GITHUB_ENV"
-            echo "WIN_CSC_KEY_PASSWORD=$WIN_CERTS_PASSWORD" >> "$GITHUB_ENV"
-          else
-            echo "No WIN_CERTS: building an unsigned installer."
-          fi
+          if (-not $env:WIN_CERTS) { exit 0 }
+          $certificatePath = Join-Path $env:RUNNER_TEMP 'win-cert.pfx'
+          [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:WIN_CERTS))
+          try {
+            $password = ConvertTo-SecureString $env:WIN_CERTS_PASSWORD -AsPlainText -Force
+            $certificate = Import-PfxCertificate -FilePath $certificatePath -CertStoreLocation Cert:\CurrentUser\My -Password $password |
+              Where-Object HasPrivateKey | Select-Object -First 1
+            if (-not $certificate) { throw 'The Windows signing certificate has no private key.' }
+            @{
+              bundle = @{ windows = @{
+                certificateThumbprint = $certificate.Thumbprint
+                digestAlgorithm = 'sha256'
+                timestampUrl = 'http://timestamp.digicert.com'
+                tsp = $true
+              } }
+            } | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $env:RUNNER_TEMP 'tauri-windows-signing.json')
+          } finally {
+            Remove-Item -LiteralPath $certificatePath
+          }
 
       - name: Test
         if: runner.os == 'macOS'
@@ -89,7 +93,25 @@ jobs:
 
       - name: Build (macOS)
         if: runner.os == 'macOS'
-        run: npm run dist:mac -- --publish never
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.MAC_CERTS }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          flags=()
+          if [ -n "$APPLE_CERTIFICATE" ]; then
+            # Drop the local ad-hoc default so Tauri can use the imported Developer ID.
+            flags+=(--config '{"bundle":{"macOS":{"signingIdentity":null}}}')
+          else
+            unset APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD
+          fi
+          if [ -z "${APPLE_CERTIFICATE:-}" ] || [ -z "$APPLE_ID" ] || [ -z "$APPLE_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
+            unset APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID
+          fi
+          npm run dist:mac -- --target "$PIGPORT_TARGET" "${flags[@]}"
 
       # AirPlay receiver for viewing an iPhone screen on Windows (UxPlay, GPLv3).
       - name: Set up MSYS2 (Windows)
@@ -118,11 +140,23 @@ jobs:
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        run: npm run dist:win -- --publish never
+        shell: pwsh
+        run: |
+          $config = Join-Path $env:RUNNER_TEMP 'tauri-windows-signing.json'
+          $flags = @('--target', $env:PIGPORT_TARGET)
+          if (Test-Path $config) { $flags += @('--config', $config) }
+          npm run dist:win -- @flags
+
+      - name: Test Rust desktop
+        shell: bash
+        run: cargo test --locked --release --manifest-path src-tauri/Cargo.toml --target "$PIGPORT_TARGET"
+
+      - name: Stage release files
+        run: node scripts/stage-release.mjs ${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: pigport-${{ runner.os }}
+          name: pigport-${{ matrix.target }}
           path: |
             release/*.dmg
             release/*.zip

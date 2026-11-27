@@ -1,5 +1,6 @@
 import { execFile, spawn, ChildProcess } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, promises as fs } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { launchComponent, packageId, pause } from './health';
 
@@ -139,11 +140,52 @@ export class Adb {
   /** Installs one APK, or a split APK set (base + config splits) in one go. */
   async install(serial: string, apks: string[]): Promise<void> {
     if (apks.length === 0) throw new Error('No APK selected');
+    const sizes = apks.length > 1 ? await Promise.all(apks.map((file) => fs.stat(file).then((stat) => stat.size))) : [];
+    // Large split sets can lose the Package Manager input stream partway through a transfer.
+    if (sizes.reduce((sum, size) => sum + size, 0) >= 2 * 1024 ** 3) {
+      await this.installStagedSplits(serial, apks, sizes);
+      return;
+    }
     const args = apks.length === 1
       ? ['-s', serial, 'install', '-r', apks[0]]
       : ['-s', serial, 'install-multiple', '-r', ...apks];
-    const out = await this.run(args, 10 * 60_000);
+    let out: string;
+    try {
+      out = await this.run(args, 10 * 60_000);
+    } catch (error) {
+      if (apks.length === 1 || !/adb: (?:failed to write|connect error for write)/i.test((error as Error).message)) throw error;
+      await this.installStagedSplits(serial, apks, sizes);
+      return;
+    }
     if (!/Success/.test(out)) throw new Error(out.trim() || 'Install failed');
+  }
+
+  private async installStagedSplits(serial: string, apks: string[], sizes: number[]): Promise<void> {
+    const timeout = 10 * 60_000;
+    const dir = `/data/local/tmp/pigport-${randomUUID()}`;
+    const total = sizes.reduce((sum, size) => sum + size, 0);
+    let session: string | undefined;
+    await this.shell(serial, ['mkdir', dir]);
+    try {
+      const created = await this.shell(serial, ['cmd', 'package', 'install-create', '-r', '-S', String(total)]);
+      session = /Success: created install session \[(\d+)\]/.exec(created)?.[1];
+      if (!session) throw new Error(created.trim() || 'Could not create a split APK install session.');
+
+      for (const [index, apk] of apks.entries()) {
+        const name = index ? `split_${index}.apk` : 'base.apk';
+        const remote = `${dir}/${name}`;
+        await this.run(['-s', serial, 'push', apk, remote], timeout);
+        const added = await this.shell(serial, ['cmd', 'package', 'install-write', '-S', String(sizes[index]), session, name, remote], timeout);
+        if (!/^Success\b/m.test(added)) throw new Error(added.trim() || `Could not install ${name}.`);
+        await this.shell(serial, ['rm', '-f', remote]);
+      }
+      const committed = await this.shell(serial, ['cmd', 'package', 'install-commit', session], timeout);
+      if (!/^Success\b/m.test(committed)) throw new Error(committed.trim() || 'Split APK install failed.');
+      session = undefined;
+    } finally {
+      if (session) await this.shell(serial, ['cmd', 'package', 'install-abandon', session], 10_000).catch(() => undefined);
+      await this.shell(serial, ['rm', '-rf', dir], 10_000).catch(() => undefined);
+    }
   }
 
   async uninstall(serial: string, pkg: string, keepData = false): Promise<void> {

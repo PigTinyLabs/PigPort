@@ -1,9 +1,8 @@
-import type { AdbStatus, AirPlayStatus, AppPackage, Device, IosApp, MobilePackage, PlayBridgeApi, Settings, RuntimeStatus, StorageStatus } from '../shared/api';
+import type { AdbStatus, AirPlayStatus, AppPackage, Device, IosApp, MobilePackage, Settings, RuntimeStatus, StorageStatus } from '../shared/api';
 import { Player } from './player.js';
 import { ControlsEditor } from './controls-editor.js';
+import { onFileDrop, playbridge, registerDesktopDialogs } from './desktop.js';
 import { el, formatSize, prettyPackage, svgIcon, toast } from './ui.js';
-
-declare const playbridge: PlayBridgeApi;
 
 type Tab = 'android' | 'ios' | 'packages';
 
@@ -20,7 +19,7 @@ const state = {
   filter: '',
   busy: false,
   activity: '',
-  runtime: { nativeIpa: false, managedAndroid: false, avds: [] } as RuntimeStatus,
+  runtime: { nativeIpa: false, managedAndroid: false, googlePlay: false, avds: [] } as RuntimeStatus,
   settings: undefined as Settings | undefined,
   storage: undefined as StorageStatus | undefined,
 };
@@ -30,6 +29,7 @@ const player = new Player();
 const controlsEditor = new ControlsEditor();
 
 async function init(): Promise<void> {
+  await registerDesktopDialogs();
   document.body.append(player.root);
   player.onExit = () => document.body.classList.remove('playing');
 
@@ -58,8 +58,9 @@ async function init(): Promise<void> {
     renderMain();
   });
   $('restart-android').addEventListener('click', () => void run(async () => {
-    state.settings!.androidGraphics = $<HTMLSelectElement>('set-android-graphics').value === 'software' ? 'software' : 'auto';
-    await playbridge.settings.set(state.settings!);
+    const settings = state.settings!;
+    readAndroidDisplaySettings(settings);
+    await playbridge.settings.set(settings);
     try { await playbridge.runtime.restartAndroid(); await refreshDevices(); }
     finally { activity(''); }
   }));
@@ -70,15 +71,11 @@ async function init(): Promise<void> {
   state.imported = await playbridge.packages.list();
   state.runtime = await playbridge.runtime.status();
   playbridge.runtime.onProgress(activity);
-  document.addEventListener('dragover', (e) => { e.preventDefault(); document.body.classList.add('dragging'); });
-  document.addEventListener('dragleave', (e) => { if (!e.relatedTarget) document.body.classList.remove('dragging'); });
-  document.addEventListener('drop', (e) => {
-    e.preventDefault(); document.body.classList.remove('dragging');
-    const files = [...(e.dataTransfer?.files ?? [])];
+  await onFileDrop((active) => document.body.classList.toggle('dragging', active), (files) => {
     if (state.busy) { toast('Wait for the current installation to finish.', 'error'); return; }
     void run(async () => {
       for (const file of files) {
-        try { await importAndInstall(playbridge.packages.pathForFile(file)); }
+        try { await importAndInstall(file); }
         catch (error) { toast((error as Error).message, 'error'); }
       }
       state.imported = await playbridge.packages.list(); renderMain();
@@ -110,12 +107,14 @@ async function refreshDevices(): Promise<void> {
   $('adb-status').classList.toggle('bad', !state.adb.ok);
   state.devices = state.adb.ok ? await playbridge.adb.devices().catch(() => []) : [];
   const ready = state.devices.filter((d) => d.state === 'device');
-  if (!ready.some((d) => d.serial === state.serial)) state.serial = ready[0]?.serial ?? '';
+  if (!ready.some((d) => d.serial === state.serial)) {
+    state.serial = ready.find((d) => d.avd && d.avd === state.settings?.androidAvd)?.serial ?? ready[0]?.serial ?? '';
+  }
 
   const select = $<HTMLSelectElement>('device');
   select.replaceChildren(...state.devices.map((d) =>
     el('option', { value: d.serial, ...(d.state !== 'device' ? { disabled: '' } : {}) },
-      `${d.model ?? d.serial}${d.state !== 'device' ? ` (${d.state})` : ''}`)));
+      `${d.googlePlay ? 'Android with Google Play' : d.avd ? 'Built-in Android' : d.model ?? d.serial}${d.state !== 'device' ? ` (${d.state})` : ''}`)));
   if (state.devices.length === 0) select.append(el('option', { value: '' }, 'No device'));
   select.value = state.serial;
   await refreshPackages();
@@ -198,10 +197,12 @@ async function wifiFromUsb(): Promise<void> {
 }
 
 
-async function play(pkg: string): Promise<void> {
+async function play(pkg: string, mode?: 'mirror'): Promise<void> {
   await run(async () => {
-    await playbridge.adb.launch(state.serial, pkg);
-    await openPlayer(pkg, prettyPackage(pkg));
+    const result = await playbridge.adb.launch(state.serial, pkg, mode);
+    state.serial = result.serial;
+    if (result.playback === 'direct') await refreshDevices();
+    else await openPlayer(pkg, prettyPackage(pkg));
   });
 }
 
@@ -318,11 +319,12 @@ async function importAndInstall(file?: string): Promise<void> {
   await installGame(pkg);
 }
 
-async function setupAndroid(): Promise<boolean> {
+async function setupAndroid(profile?: 'googlePlay'): Promise<boolean> {
   activity('Preparing Android runtime download…');
   try {
-    const plan = await playbridge.runtime.prepareAndroid();
+    const plan = await playbridge.runtime.prepareAndroid(profile);
     const modal = $<HTMLDialogElement>('runtime-terms');
+    $('runtime-title').textContent = profile === 'googlePlay' ? 'Set up Android with Google Play' : 'Set up built-in Android';
     $('runtime-download-size').textContent = `Download: ${(plan.bytes / 1024 ** 3).toFixed(2)} GiB. Setup also needs space for Android and game data. Packages: ${plan.packages.join(', ')}.`;
     $<HTMLTextAreaElement>('runtime-license').value = plan.licenses.map((l) => l.id + '\n\n' + l.text).join('\n\n────────────────\n\n');
     const accepted = $<HTMLInputElement>('runtime-accept'); accepted.checked = false;
@@ -340,6 +342,14 @@ async function setupAndroid(): Promise<boolean> {
   } finally { activity(''); }
 }
 
+async function openGooglePlay(): Promise<void> {
+  if (!state.runtime.googlePlay && !await setupAndroid('googlePlay')) return;
+  const result = await playbridge.runtime.openGooglePlay();
+  state.serial = result.serial;
+  state.settings = await playbridge.settings.get();
+  await refreshDevices();
+}
+
 async function installGame(pkg: MobilePackage): Promise<void> {
   if ((pkg.kind === 'apk' || pkg.kind === 'xapk') && !state.serial && !state.runtime.avds.length) {
     if (!await setupAndroid()) return;
@@ -348,7 +358,7 @@ async function installGame(pkg: MobilePackage): Promise<void> {
   try {
     const result = await playbridge.packages.install(pkg.file, state.serial || undefined);
     toast(`${result.name} installed. Opening game…`);
-    await playGame(result);
+    await playGame(result, undefined, result.serial);
   } finally {
     activity(''); state.imported = await playbridge.packages.list(); renderMain();
   }
@@ -367,11 +377,12 @@ async function removeGame(pkg: MobilePackage): Promise<void> {
   state.imported = await playbridge.packages.list(); renderMain();
 }
 
-async function playGame(pkg: MobilePackage): Promise<void> {
-  const result = await playbridge.packages.play(pkg.file, state.serial || undefined);
+async function playGame(pkg: MobilePackage, mode?: 'mirror', serial = state.serial || undefined): Promise<void> {
+  const result = await playbridge.packages.play(pkg.file, serial, mode);
   if (result.serial) {
     state.serial = result.serial;
-    await openPlayer(result.appId, pkg.name);
+    if (result.playback === 'direct') await refreshDevices();
+    else await openPlayer(result.appId, pkg.name);
   }
 }
 
@@ -406,13 +417,17 @@ function renderFiles(): HTMLElement {
       ? 'iOS: built-in installer ready. Unencrypted arm64 IPA files are converted and signed here. In game, press ⌘K to edit controls.'
       : 'iOS: local IPA playback requires an Apple Silicon Mac with iOSSupport frameworks. Windows does not have a local iOS runtime.'),
     el('p', {}, `Android: ${state.runtime.managedAndroid ? 'built-in Android device ready' : state.serial ? 'connected device ready' : state.runtime.avds.length ? 'existing virtual device available' : 'first installation downloads Android and creates a device automatically'}.`),
-    ...(!state.runtime.managedAndroid ? [el('button', { class: 'btn', onclick: () => void run(() => setupAndroid()) }, 'Set up built-in Android')] : []));
+    el('div', { class: 'row' },
+      ...(!state.runtime.managedAndroid ? [el('button', { class: 'btn', onclick: () => void run(() => setupAndroid()) }, 'Set up built-in Android')] : []),
+      el('button', { class: 'btn', onclick: () => void run(openGooglePlay) }, state.runtime.googlePlay ? 'Open Google Play' : 'Set up Google Play')));
   const list = state.imported.filter((p) => `${p.name} ${p.bundleId ?? ''}`.toLowerCase().includes(state.filter));
   if (!list.length) return el('div', {}, note, empty('Drop IPA / APK / XAPK to install', 'Or click Install IPA / APK / XAPK above.'));
 
   return el('div', {}, note, el('div', { class: 'grid' }, ...list.map((pkg) => {
     const supported = (pkg.kind === 'apk' || pkg.kind === 'xapk' || state.runtime.nativeIpa) && !pkg.missing;
-    const installed = pkg.status === 'installed';
+    const selectedDevice = state.devices.find((device) => device.serial === state.serial);
+    const needsGoogleInstall = pkg.kind !== 'ipa' && selectedDevice?.googlePlay && !state.packages.some((app) => app.id === pkg.bundleId);
+    const installed = pkg.status === 'installed' && !needsGoogleInstall;
     const removeBtn = el('button', {
       class: 'btn ghost btn-icon danger',
       title: 'Remove from library',
@@ -505,10 +520,14 @@ function humanizeInstallError(error?: string): string {
 
       const hintEl = pkg.kind === 'ipa'
         ? el('span', { class: 'card-hint' }, el('kbd', {}, '⌘K'), ' in-game')
-        : el('span', { class: 'muted text-xs' }, 'Ready to play');
+        : selectedDevice?.avd && el('button', {
+          class: 'btn ghost',
+          title: 'Open inside PigPort with your keyboard and mouse mappings',
+          onclick: () => void run(() => playGame(pkg, 'mirror')),
+        }, 'Play with controls');
 
       const subRow = el('div', { class: 'card-actions-sub' },
-        hintEl,
+        ...(hintEl ? [hintEl] : []),
         el('div', { class: 'card-actions-tools' }, ...tools)
       );
 
@@ -569,6 +588,7 @@ function renderAndroid(): HTMLElement {
     return empty(state.filter ? 'No matches' : 'No apps installed yet',
       state.filter ? 'Try a different search.' : 'Install an APK to get started.');
   }
+  const builtIn = state.devices.some((device) => device.serial === state.serial && device.avd);
   return el('div', { class: 'grid' }, ...list.map((p) => {
     const playBtn = el('button', { class: 'btn primary btn-play', onclick: () => void play(p.id) },
       svgIcon('play'), el('span', {}, 'Play'));
@@ -578,7 +598,11 @@ function renderAndroid(): HTMLElement {
     const mainRow = el('div', { class: 'card-actions-row' }, playBtn, controlsBtn);
 
     const subRow = el('div', { class: 'card-actions-sub' },
-      el('span', { class: 'muted text-xs' }, 'Ready to play'),
+      builtIn ? el('button', {
+        class: 'btn ghost',
+        title: 'Open inside PigPort with your keyboard and mouse mappings',
+        onclick: () => void play(p.id, 'mirror'),
+      }, 'Play with controls') : el('span', { class: 'muted text-xs' }, 'Ready to play'),
       el('div', { class: 'card-actions-tools' },
         el('button', { class: 'btn ghost btn-icon', title: 'Force stop', onclick: () => void run(() => playbridge.adb.forceStop(state.serial, p.id)) }, svgIcon('stop')),
         el('button', { class: 'btn ghost btn-icon', title: 'Android diagnostics & crash log', onclick: () => void run(async () => { toast('Saved Android diagnostics: ' + await playbridge.adb.diagnostics(state.serial, p.id)); }) }, svgIcon('diagnostics')),
@@ -673,6 +697,7 @@ function openSettings(): void {
   $<HTMLSelectElement>('set-avd').replaceChildren(el('option', { value: '' }, 'Automatic (one virtual device)'),
     ...state.runtime.avds.map((name) => el('option', { value: name }, name)));
   $<HTMLSelectElement>('set-android-graphics').value = s.androidGraphics ?? 'auto';
+  $<HTMLSelectElement>('set-android-resolution').value = s.androidResolution ?? 'auto';
   $<HTMLSelectElement>('set-avd').value = s.androidAvd ?? '';
   $<HTMLInputElement>('set-adb').value = s.adbPath ?? '';
   $<HTMLInputElement>('set-adb').placeholder = state.adb?.binary ?? 'adb';
@@ -708,10 +733,15 @@ async function moveStorage(): Promise<void> {
   }
 }
 
+function readAndroidDisplaySettings(s: Settings): void {
+  s.androidGraphics = $<HTMLSelectElement>('set-android-graphics').value as Settings['androidGraphics'];
+  s.androidResolution = $<HTMLSelectElement>('set-android-resolution').value as Settings['androidResolution'];
+}
+
 async function saveSettings(e: Event): Promise<void> {
   if ((e as SubmitEvent).submitter?.getAttribute('value') !== 'save') return;
   const s = state.settings!;
-  s.androidGraphics = $<HTMLSelectElement>('set-android-graphics').value === 'software' ? 'software' : 'auto';
+  readAndroidDisplaySettings(s);
   s.androidAvd = $<HTMLSelectElement>('set-avd').value || undefined;
   s.adbPath = $<HTMLInputElement>('set-adb').value.trim() || undefined;
   s.stream = {
@@ -731,7 +761,7 @@ async function run(fn: () => Promise<unknown>, busyLabel?: string): Promise<void
   try {
     await fn();
   } catch (e) {
-    toast((e as Error).message.replace(/^Error invoking remote method '[^']+': (Error: )?/, ''), 'error');
+    toast((e as Error).message, 'error');
   } finally {
     state.busy = false;
     document.body.classList.remove('busy');

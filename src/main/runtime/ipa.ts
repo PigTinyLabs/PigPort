@@ -10,6 +10,7 @@ import { signAppCode } from './signing';
 import { patchAntiCheat } from './anticheat';
 const execute = promisify(execFile);
 type Progress = (message: string) => void;
+type RuntimeOptions = { cacheName?: string; patchAntiCheat?: boolean; inheritDeviceType?: boolean; confirmLaunch?: boolean };
 
 export function validateIpaEntries(entries: ReadonlyMap<string, ArchiveEntry>): void {
   let total = 0;
@@ -26,7 +27,7 @@ export function validateIpaEntries(entries: ReadonlyMap<string, ArchiveEntry>): 
 }
 
 export class NativeIpaRuntime {
-  constructor(private root: string, private progress: Progress = () => undefined) {}
+  constructor(private root: string, private progress: Progress = () => undefined, private options: RuntimeOptions = {}) {}
   async available(): Promise<boolean> {
     if (!iosAppsSupported()) return false;
     return fs.access('/System/iOSSupport/System/Library/Frameworks/UIKit.framework').then(() => true, () => false);
@@ -56,8 +57,10 @@ export class NativeIpaRuntime {
       if (!executable || executable !== path.basename(executable) || /[\\/:]/.test(executable) || executable === '.' || executable === '..') throw new Error('Invalid app executable name.');
       // Keep the iOS flat layout (executable and resources at the bundle root):
       // engines and SDKs locate files next to the executable or at bundlePath.
-      this.progress('Neutralizing anti-cheat modules…');
-      await patchAntiCheat(original);
+      if (this.options.patchAntiCheat !== false) {
+        this.progress('Neutralizing anti-cheat modules…');
+        await patchAntiCheat(original);
+      }
       this.progress('Converting iOS binaries for Mac Catalyst…');
       const converted = new Set<string>();
       const patchTree = async (dir: string): Promise<void> => {
@@ -125,13 +128,21 @@ export class NativeIpaRuntime {
     for (const dir of ['Documents', 'Library/Caches', 'Library/Application Support', 'tmp']) await fs.mkdir(path.join(data, dir), { recursive: true });
     if (await fs.readlink(home).catch(() => undefined) !== data) { await fs.rm(home, { force: true }); await fs.symlink(data, home); }
     const env = ['CFFIXED_USER_HOME=' + home];
-    if (process.env.PLAYBRIDGE_DEVICE_TYPE) env.push('PLAYBRIDGE_DEVICE_TYPE=' + process.env.PLAYBRIDGE_DEVICE_TYPE);
+    if (this.options.inheritDeviceType !== false && process.env.PLAYBRIDGE_DEVICE_TYPE) env.push('PLAYBRIDGE_DEVICE_TYPE=' + process.env.PLAYBRIDGE_DEVICE_TYPE);
     // Keyboard/mouse controls and device spoofing: the input layer unsets these variables as soon as it loads.
     if (input && !input.library.includes(':')) {
       env.push('DYLD_INSERT_LIBRARIES=' + input.library, 'PLAYBRIDGE_KEYMAP=' + input.keymap);
       if (input.deviceType) env.push('PLAYBRIDGE_DEVICE_TYPE=' + input.deviceType);
     }
     await execute('/usr/bin/open', ['-n', ...env.flatMap((v) => ['--env', v]), clone], { timeout: 15000 });
+    if (this.options.confirmLaunch) {
+      // LaunchServices can accept an open request before the new executable exits.
+      await new Promise((resolve) => setTimeout(resolve, 1800));
+      const processes = (await execute('/bin/ps', ['-wwaxo', 'args='], { maxBuffer: 16 * 1024 * 1024 })).stdout.split('\n');
+      if (!processes.some((command) => command.startsWith(clone + path.sep))) {
+        throw new Error('Ứng dụng đã thoát khi khởi động. Hãy kiểm tra khả năng tương thích với macOS.');
+      }
+    }
   }
 
   /** Bytes used by the game's saved data, patches and caches. */
@@ -171,6 +182,6 @@ export class NativeIpaRuntime {
   private async runDirectory(): Promise<string> {
     const cache = (await execute('/usr/bin/getconf', ['DARWIN_USER_CACHE_DIR'])).stdout.trim();
     if (!path.isAbsolute(cache)) throw new Error('Could not locate the macOS user cache folder.');
-    return path.join(await fs.realpath(cache), 'io.playbridge.ios');
+    return path.join(await fs.realpath(cache), this.options.cacheName ?? 'io.playbridge.ios');
   }
 }

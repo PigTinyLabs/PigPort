@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'">
   <title>PigPort</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -58,9 +57,10 @@
         <p class="muted small">Moves installed IPA games, their data, and built-in Android into a PigPort Data folder. Close iOS games first. Built-in Android will stop for the move. Keep the drive connected while playing.</p>
         <p id="storage-progress" class="small" role="status" aria-live="polite" hidden></p>
       </section>
-      <label class="field stacked"><span>Android graphics (next virtual-device start)</span><select id="set-android-graphics"><option value="auto">Automatic GPU</option><option value="software">Software — slower, try for GPU crashes</option></select></label>
+      <label class="field stacked"><span>Android graphics</span><select id="set-android-graphics"><option value="auto">Automatic GPU</option><option value="opengl">Hardware OpenGL</option><option value="software">Software — slower, try for GPU crashes</option></select></label>
+      <label class="field stacked"><span>Direct play resolution</span><select id="set-android-resolution"><option value="auto">Automatic</option><option value="800x500">800 × 500 (lighter)</option><option value="960x600">960 × 600</option><option value="1280x800">1280 × 800 (sharper)</option></select></label>
       <button id="restart-android" type="button" class="btn">Apply &amp; restart built-in Android (closes Android games)</button>
-      <p class="muted small">The built-in device cold boots as a tablet. Graphics changes require closing and restarting the Android emulator; game data is preserved.</p>
+      <p class="muted small">Graphics and resolution changes take effect the next time the built-in device starts.</p>
       <label class="field stacked"><span>Android virtual device</span><select id="set-avd"></select></label>
       <label class="field stacked"><span>adb path</span>
         <input id="set-adb" placeholder="adb" autocomplete="off">
@@ -90,7 +90,7 @@
 
   <dialog id="runtime-terms">
     <form method="dialog">
-      <h2>Set up built-in Android</h2>
+      <h2 id="runtime-title">Set up built-in Android</h2>
       <p id="runtime-download-size"></p>
       <p>Runtime components download directly from Google's official Android repository. Read the license terms below before installing.</p>
       <textarea id="runtime-license" readonly aria-label="Android license terms" rows="16"></textarea>

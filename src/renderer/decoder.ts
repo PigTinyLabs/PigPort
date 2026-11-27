@@ -1,5 +1,5 @@
-// H.264 (Annex B) decoding with WebCodecs. scrcpy sends SPS/PPS as a separate
-// "config" packet; it is prepended to the next frame, which is a key frame.
+// Scrcpy sends SPS/PPS in a separate packet. WebCodecs expects those parameter
+// sets to accompany the Annex B key frame that starts each decode session.
 
 import type { StreamPacket } from '../shared/api';
 
@@ -16,53 +16,84 @@ export function codecFromSps(data: Uint8Array): string | undefined {
   return undefined;
 }
 
+type AvcConfig = { codec: string; data: Uint8Array };
+
 export class H264Decoder {
   private decoder?: VideoDecoder;
-  private codec?: string;
-  private config?: Uint8Array;
-  private needKeyFrame = true;
+  private config?: AvcConfig;
+  private activeConfig?: AvcConfig;
+  private errorReported = false;
 
   constructor(private onFrame: (frame: VideoFrame) => void, private onError: (message: string) => void) {}
 
   push(p: StreamPacket): void {
     if (p.config) {
-      this.config = p.data;
       const codec = codecFromSps(p.data);
-      if (!codec) return this.onError('Stream config without SPS');
-      if (codec !== this.codec || !this.decoder || this.decoder.state === 'closed') this.configure(codec);
+      if (!codec) return this.reportError('Stream config without SPS');
+      const previous = this.config?.data;
+      if (previous?.length !== p.data.length || !previous.every((byte, i) => byte === p.data[i])) {
+        this.config = { codec, data: p.data };
+      }
       return;
     }
-    if (!this.decoder || this.decoder.state !== 'configured') return;
-    if (this.needKeyFrame && !p.key) return;
+    const config = this.config;
+    if (!config) return;
+    const needsConfigure = this.decoder?.state !== 'configured' || this.activeConfig !== config;
+    if (needsConfigure && !p.key) return;
 
-    let data = p.data;
-    if (this.config) {
-      data = new Uint8Array(this.config.length + p.data.length);
-      data.set(this.config);
-      data.set(p.data, this.config.length);
-      this.config = undefined;
+    try {
+      // Restart at an independent picture if decoding fell behind. An arbitrary
+      // dropped delta frame would corrupt the pictures that refer to it.
+      if (needsConfigure || (p.key && this.decoder && this.decoder.decodeQueueSize > 6)) {
+        this.configure(config);
+      }
+      let data = p.data;
+      if (p.key) {
+        data = new Uint8Array(config.data.length + p.data.length);
+        data.set(config.data);
+        data.set(p.data, config.data.length);
+      }
+      this.decoder?.decode(new EncodedVideoChunk({ type: p.key ? 'key' : 'delta', timestamp: p.pts, data }));
+    } catch (error) {
+      this.closeDecoder();
+      this.reportError(`Decoder error: ${(error as Error).message}`);
     }
-    this.needKeyFrame = false;
-    this.decoder.decode(new EncodedVideoChunk({ type: p.key ? 'key' : 'delta', timestamp: p.pts, data }));
   }
 
   close(): void {
-    if (this.decoder && this.decoder.state !== 'closed') this.decoder.close();
-    this.decoder = undefined;
-    this.codec = undefined;
+    this.closeDecoder();
+    this.config = undefined;
+    this.errorReported = false;
   }
 
-  private configure(codec: string): void {
-    this.close();
-    this.codec = codec;
-    this.needKeyFrame = true;
-    this.decoder = new VideoDecoder({
-      output: (frame) => this.onFrame(frame),
+  private closeDecoder(): void {
+    if (this.decoder && this.decoder.state !== 'closed') this.decoder.close();
+    this.decoder = undefined;
+    this.activeConfig = undefined;
+  }
+
+  private reportError(message: string): void {
+    if (this.errorReported) return;
+    this.errorReported = true;
+    this.onError(message);
+  }
+
+  private configure(config: AvcConfig): void {
+    this.closeDecoder();
+    const decoder = new VideoDecoder({
+      output: (frame) => {
+        if (this.decoder !== decoder) return frame.close();
+        this.errorReported = false;
+        this.onFrame(frame);
+      },
       error: (e) => {
-        this.onError(`Decoder error: ${e.message}`);
-        this.codec = undefined; // force a fresh decoder on the next config packet
+        if (this.decoder !== decoder) return;
+        this.closeDecoder();
+        this.reportError(`Decoder error: ${e.message}`);
       },
     });
-    this.decoder.configure({ codec, optimizeForLatency: true, hardwareAcceleration: 'prefer-hardware' });
+    this.decoder = decoder;
+    decoder.configure({ codec: config.codec, optimizeForLatency: true, hardwareAcceleration: 'prefer-hardware' });
+    this.activeConfig = config;
   }
 }

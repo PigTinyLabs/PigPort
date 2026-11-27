@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { androidMetadata } from '../main/packages/manifest';
@@ -56,12 +56,33 @@ test('multiple Android devices require explicit selection', async () => {
   const adb = new Adb('unused');
   adb.devices = async () => [{ serial: 'phone', state: 'device' }, { serial: 'emulator-5554', state: 'device' }];
   await assert.rejects(ensureAndroid(adb), /Choose/);
-  adb.shell = async (_serial, args) => args[0] === 'getprop' ? '1' : 'package:/system/framework/framework-res.apk';
+  adb.shell = async () => '1\npackage:/system/framework/framework-res.apk';
   assert.equal(await ensureAndroid(adb, 'emulator-5554'), 'emulator-5554');
 });
 test('an unauthorized phone reports the authorization prompt', async () => {
   const adb = new Adb('unused'); adb.devices = async () => [{ serial: 'phone', state: 'unauthorized' }];
   await assert.rejects(ensureAndroid(adb), /Allow USB debugging/);
+});
+test('an interrupted split APK stream is retried as a staged install', async (t) => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'pigport-apk-splits-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const apks = [path.join(dir, 'base.apk'), path.join(dir, 'split.apk')];
+  await Promise.all(apks.map((apk) => writeFile(apk, 'apk')));
+
+  const adb = new Adb('unused');
+  const commands: string[][] = [];
+  adb.run = async (args) => {
+    commands.push(args);
+    if (args[2] === 'install-multiple') throw new Error('adb -s: adb: failed to write "split.apk"');
+    if (args[5] === 'install-create') return 'Success: created install session [1234]';
+    return 'Success';
+  };
+  await adb.install('device', apks);
+  assert.equal(commands.filter((args) => args[2] === 'push').length, 2);
+  assert.equal(commands.filter((args) => args[5] === 'install-write').length, 2);
+  assert.ok(commands.some((args) => args[5] === 'install-commit' && args[6] === '1234'));
+  assert.ok(!commands.some((args) => args[5] === 'install-abandon'));
+  assert.deepEqual(commands.at(-1)?.slice(2, 5), ['shell', 'rm', '-rf']);
 });
 test('failed Android activity launch is not reported as success', async () => {
   const adb = new Adb('unused');

@@ -1,11 +1,9 @@
-import type { PlayBridgeApi } from '../shared/api';
 import { ControlsEditor } from './controls-editor.js';
 import { emptyKeymap, Keymap, KeymapElement, TouchEvent, TouchMapper } from '../shared/keymap.js';
 import { H264Decoder } from './decoder.js';
+import { playbridge } from './desktop.js';
 import { GamepadPoller } from './gamepad.js';
 import { el, keyLabel, toast } from './ui.js';
-
-declare const playbridge: PlayBridgeApi;
 
 const ACTION = { down: 0, up: 1, move: 2 } as const;
 const MOUSE_CODES = ['MouseLeft', 'MouseMiddle', 'MouseRight'];
@@ -32,7 +30,7 @@ export class Player {
   private editing = false;
   private selected = -1;
   private waitingFor?: Binding;
-  private mouseDown = false;
+  private mousePointer?: { x: number; y: number };
   private tickTimer = 0;
   // Controller buttons press like keys; sticks drive joysticks and mouse-look areas bound to them.
   private pad = new GamepadPoller({
@@ -58,7 +56,7 @@ export class Player {
       this.status.textContent = `${m.deviceName} · ${m.width}×${m.height}`;
       this.resize(m.width, m.height);
     });
-    playbridge.stream.onPacket((p) => this.decoder.push(p));
+    playbridge.stream.onPacket((p) => { if (!this.root.hidden) this.decoder.push(p); });
     playbridge.stream.onClosed((reason) => {
       if (reason !== 'stopped') toast(`Stream ended: ${reason}`, 'error');
       this.teardown();
@@ -71,6 +69,11 @@ export class Player {
   }
 
   async open(serial: string, appId: string, title: string): Promise<void> {
+    if (typeof VideoDecoder === 'undefined' || typeof EncodedVideoChunk === 'undefined') {
+      toast('This system webview does not support Android screen mirroring. Update macOS or WebView2, or open the game with Play on built-in Android.', 'error');
+      this.onExit();
+      return;
+    }
     this.appId = appId;
     this.keymap = await playbridge.keymap.load(appId);
     this.send(this.mapper.setKeymap(this.keymap));
@@ -90,13 +93,14 @@ export class Player {
       this.close();
       return;
     }
+    if (this.root.hidden) return;
     this.tickTimer = window.setInterval(() => this.send(this.mapper.tick(performance.now())), 30);
     this.pad.start();
   }
 
   close(): void {
-    void playbridge.stream.stop();
     this.teardown();
+    void playbridge.stream.stop().catch((error: Error) => toast(error.message, 'error'));
     this.onExit();
   }
 
@@ -104,7 +108,7 @@ export class Player {
     window.clearInterval(this.tickTimer);
     this.pad.stop();
     if (document.pointerLockElement) document.exitPointerLock();
-    this.send(this.mapper.releaseAll());
+    this.releaseTouches();
     this.decoder.close();
     this.root.hidden = true;
   }
@@ -112,16 +116,19 @@ export class Player {
   // ---- video ----
 
   private drawFrame(frame: VideoFrame): void {
-    this.resize(frame.displayWidth, frame.displayHeight);
-    this.stage.classList.add('live');
-    this.ctx.drawImage(frame, 0, 0);
-    frame.close();
+    try {
+      this.resize(frame.displayWidth, frame.displayHeight);
+      this.ctx.drawImage(frame, 0, 0);
+      this.stage.classList.add('live');
+    } finally {
+      frame.close();
+    }
   }
 
   private resize(w: number, h: number): void {
     if (w === this.frameW && h === this.frameH) return;
     // Rotation or new stream: lift fingers that refer to the old geometry.
-    this.send(this.mapper.releaseAll());
+    this.releaseTouches();
     this.frameW = this.canvas.width = w;
     this.frameH = this.canvas.height = h;
     this.mapper.setSize(w, h);
@@ -159,6 +166,15 @@ export class Player {
     }
   }
 
+  private releaseTouches(): void {
+    const releases = this.mapper.releaseAll();
+    if (this.mousePointer) {
+      releases.push({ action: 'up', pointerId: 0, ...this.mousePointer });
+      this.mousePointer = undefined;
+    }
+    this.send(releases);
+  }
+
   // ---- input ----
 
   private bindInput(): void {
@@ -181,10 +197,10 @@ export class Player {
       if (this.root.hidden || document.querySelector('dialog.controls-dialog[open]') || this.editing) return;
       this.send(this.mapper.keyUp(e.code));
     });
-    window.addEventListener('blur', () => this.send(this.mapper.releaseAll()));
+    window.addEventListener('blur', () => this.releaseTouches());
     document.addEventListener('pointerlockchange', () => {
       this.stage.classList.toggle('mouse-look', document.pointerLockElement === this.canvas);
-      if (!document.pointerLockElement) this.send(this.mapper.releaseAll());
+      if (!document.pointerLockElement) this.releaseTouches();
     });
 
     this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -195,24 +211,24 @@ export class Player {
         return;
       }
       if (e.button !== 0) return;
-      this.mouseDown = true;
-      const p = this.toFrame(e);
-      this.send([{ action: 'down', pointerId: 0, ...p }]);
+      this.mousePointer = this.toFrame(e);
+      this.send([{ action: 'down', pointerId: 0, ...this.mousePointer }]);
     });
     window.addEventListener('mousemove', (e) => {
       if (this.root.hidden || document.querySelector('dialog.controls-dialog[open]') || this.editing) return;
       if (document.pointerLockElement === this.canvas) {
         this.send(this.mapper.mouseMove(e.movementX, e.movementY, performance.now()));
-      } else if (this.mouseDown) {
-        this.send([{ action: 'move', pointerId: 0, ...this.toFrame(e) }]);
+      } else if (this.mousePointer) {
+        this.mousePointer = this.toFrame(e);
+        this.send([{ action: 'move', pointerId: 0, ...this.mousePointer }]);
       }
     });
     window.addEventListener('mouseup', (e) => {
       if (this.root.hidden || document.querySelector('dialog.controls-dialog[open]') || this.editing) return;
       if (document.pointerLockElement === this.canvas) {
         this.send(this.mapper.keyUp(MOUSE_CODES[e.button] ?? 'MouseLeft'));
-      } else if (this.mouseDown && e.button === 0) {
-        this.mouseDown = false;
+      } else if (this.mousePointer && e.button === 0) {
+        this.mousePointer = undefined;
         this.send([{ action: 'up', pointerId: 0, ...this.toFrame(e) }]);
       }
     });
@@ -250,7 +266,7 @@ export class Player {
 
   private async openControls(): Promise<void> {
     if (document.pointerLockElement) document.exitPointerLock();
-    this.send(this.mapper.releaseAll());
+    this.releaseTouches();
     this.controlsEditor ??= new ControlsEditor();
     await this.controlsEditor.open(this.appId, this.root.dataset.title ?? this.appId, {
       map: this.keymap, image: this.frameW ? this.canvas.toDataURL('image/png') : undefined,
@@ -261,7 +277,7 @@ export class Player {
 
   private startEditing(): void {
     if (document.pointerLockElement) document.exitPointerLock();
-    this.send(this.mapper.releaseAll());
+    this.releaseTouches();
     this.editing = true;
     this.renderToolbar();
     this.renderOverlay();

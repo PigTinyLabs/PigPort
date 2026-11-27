@@ -3,26 +3,30 @@
   "productName": "PigPort",
   "version": "0.2.6",
   "description": "PigPort by PigTinyLabs: play iOS and Android games on Mac and Windows with keyboard and mouse",
-  "main": "dist/main/main.js",
   "license": "MIT",
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.renderer.json && node scripts/copy-static.mjs && node scripts/build-ios-input.mjs",
-    "start": "npm run build && electron .",
+    "start": "tauri dev",
     "test": "npm run build && node --test \"dist/test/*.test.js\"",
     "fetch:scrcpy-server": "node scripts/fetch-scrcpy-server.mjs",
-    "dist:mac": "npm run build && electron-builder --mac --config electron-builder.config.cjs",
-    "dist:win": "npm run build && electron-builder --win --config electron-builder.config.cjs",
-    "setup:electron": "node node_modules/electron/install.js",
+    "dist:mac": "tauri build --bundles app,dmg",
+    "dist:win": "tauri build --bundles nsis",
+    "dist:ipa": "cd ipa-launcher && ../node_modules/.bin/tauri build --bundles app",
     "test:ipa-native": "npm run build && node scripts/test-native-ipa.mjs",
-    "build:ios-input": "node scripts/build-ios-input.mjs --force"
+    "build:ios-input": "node scripts/build-ios-input.mjs --force",
+    "build:desktop": "npm run build && node scripts/bundle-worker.mjs"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.6",
     "@types/node": "^22.10.0",
-    "electron": "^45.0.0",
-    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
     "typescript": "~5.9.3"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.12.5",
     "@xmldom/xmldom": "0.8.15"
+  },
+  "engines": {
+    "node": ">=26"
   }
 }

@@ -71,7 +71,9 @@
 
 ### 2. Bắt đầu chơi
 - Bấm **▶ Play** trên thẻ game để khởi chạy và bắt đầu chiến game.
-- Điều khiển game bằng bàn phím và chuột đã được thiết lập sẵn.
+- Với APK hoặc XAPK đã cài trên Android tích hợp, bấm **Play** để mở game trong cửa sổ giả lập riêng mà không cần truyền hình ảnh. Bấm **Play with controls** để chơi trong PigPort với các phím và thao tác chuột đã gán. PigPort ưu tiên ANGLE chạy bằng GPU trên Apple Silicon. Độ phân giải tự động là 800 × 500 trên M1 hoặc Mac 8 GB và 960 × 600 trên các máy Apple Silicon còn lại. Có thể chỉnh độ phân giải trong **Settings**.
+- Với game dùng tài khoản Google, bấm **Set up Google Play** trong **Game library** và xem điều khoản của Google. PigPort tạo máy ảo riêng và mở Play Store để bạn đăng nhập. Chọn **Android with Google Play** rồi cài game lên máy ảo đó. Game đã cài và dữ liệu lưu trên máy ảo ban đầu vẫn được giữ.
+- Chế độ **Hardware OpenGL** trong **Settings** có thể mở lại nhanh bằng Quick Boot trên Apple Silicon nếu máy ảo đã lưu trạng thái thành công. Hãy đóng cửa sổ giả lập theo cách thông thường để máy ảo lưu lại. Một số game dùng Vulkan vẫn cần khởi động nguội.
 
 ### 3. Tùy chỉnh phím điều khiển (Controls)
 - Bấm nút **🎮 Controls** trên thẻ game hoặc nhấn phím tắt **⌘K** trong khi đang chơi để mở giao diện gán phím:
@@ -94,20 +96,16 @@ Mặc định game Android sẽ chạy trên thiết bị Android tích hợp s�
 
 ## 🛠️ Cài đặt & Khởi chạy từ mã nguồn
 
-Dành cho các bạn lập trình viên muốn tự build hoặc đóng góp phát triển:
+Tauri và Rust quản lý cửa sổ ứng dụng và truyền màn hình Android. PigPort đóng gói sẵn một chương trình hỗ trợ viết bằng Node để cài gói game, chuyển đổi IPA và quản lý dữ liệu. Người dùng bản cài đặt có thể mở PigPort trực tiếp.
 
 ### Yêu cầu
-- [Node.js](https://nodejs.org/) phiên bản 22 trở lên.
+
+- Node.js 26 trở lên và bộ công cụ Rust bản stable hiện tại.
+- macOS 13.5 trở lên với Xcode Command Line Tools, hoặc Windows x64 với bộ công cụ MSVC C++ và WebView2. [Yêu cầu của Tauri](https://v2.tauri.app/start/prerequisites/)
 
 ### Cài đặt
 ```bash
-# Cài đặt các thư viện phụ thuộc
-npm install
-
-# Thiết lập Electron binary
-npm run setup:electron
-
-# Tải scrcpy-server cho Android stream
+npm ci
 npm run fetch:scrcpy-server
 ```
 
@@ -116,14 +114,29 @@ npm run fetch:scrcpy-server
 npm start
 ```
 
-### Đóng gói ứng dụng
+### Chạy kiểm thử
 ```bash
-# Build bộ cài đặt cho macOS (.dmg)
-npm run dist:mac
-
-# Build bộ cài đặt cho Windows (.exe)
-npm run dist:win
+npm test
+npm run build:desktop
+cargo test --locked --manifest-path src-tauri/Cargo.toml
 ```
+
+### Đóng gói ứng dụng
+
+Chạy lệnh phù hợp với hệ điều hành và bộ xử lý của máy dùng để đóng gói.
+
+```bash
+# Mac Apple Silicon
+npm run dist:mac -- --target aarch64-apple-darwin
+
+# Mac Intel
+npm run dist:mac -- --target x86_64-apple-darwin
+
+# Windows x64
+npm run dist:win -- --target x86_64-pc-windows-msvc
+```
+
+Tauri xuất bộ cài vào `src-tauri/target/<target>/release/bundle/`. Muốn tạo tệp theo tên dùng trên GitHub Releases, chạy `node scripts/stage-release.mjs <target>` sau khi build. Với bản Windows portable, hãy giải nén toàn bộ ZIP để `PigPort.exe` mở được chương trình hỗ trợ và các tài nguyên đi kèm.
 
 ---
 

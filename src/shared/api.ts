@@ -1,13 +1,16 @@
-// Shape of window.playbridge, exposed by the preload script.
+// Shared API between the desktop host and the renderer.
 import type { Keymap } from './keymap';
 
-export interface Device { serial: string; state: string; model?: string }
+export interface Device { serial: string; state: string; model?: string; avd?: string; googlePlay?: boolean }
 export interface AppPackage { id: string }
+export interface AndroidLaunch { serial: string; playback: 'direct' | 'mirror' }
 export interface IosApp { name: string; bundleId: string; path: string }
 export interface StreamMeta { deviceName: string; codec: string; width: number; height: number }
 export interface StreamPacket { config: boolean; key: boolean; pts: number; data: Uint8Array }
 export interface StreamOptions { maxSize: number; maxFps: number; bitRate: number }
-export interface Settings { androidGraphics?: 'auto' | 'software';
+export type AndroidGraphics = 'auto' | 'opengl' | 'software';
+export type AndroidResolution = 'auto' | '800x500' | '960x600' | '1280x800';
+export interface Settings { androidGraphics?: AndroidGraphics; androidResolution?: AndroidResolution;
   adbPath?: string; androidAvd?: string; stream: StreamOptions; recentAddresses: string[] }
 export type AdbStatus = { ok: true; binary: string; version: string } | { ok: false; binary: string; error: string };
 export type NavButton = 'back' | 'home' | 'recents';
@@ -24,7 +27,7 @@ export interface MobilePackage {
 export interface RuntimePlan {
   token: string; bytes: number; packages: string[]; licenses: { id: string; text: string }[];
 }
-export interface RuntimeStatus { nativeIpa: boolean; managedAndroid: boolean; avds: string[] }
+export interface RuntimeStatus { nativeIpa: boolean; managedAndroid: boolean; googlePlay: boolean; avds: string[] }
 export interface StorageStatus { path: string; available: boolean }
 /** Viewing an iPhone/iPad screen over AirPlay (view only). */
 export interface AirPlayStatus {
@@ -45,19 +48,19 @@ export interface PlayBridgeApi {
     inspect(file?: string): Promise<MobilePackage | undefined>;
     list(): Promise<MobilePackage[]>;
     install(file: string, serial?: string): Promise<MobilePackage>;
-    play(file: string, serial?: string): Promise<{ serial?: string; appId: string }>;
+    play(file: string, serial?: string, mode?: 'mirror'): Promise<{ appId: string } & Partial<AndroidLaunch>>;
     /** Asks whether to keep game data; undefined when the user cancels. */
     uninstall(file: string, serial?: string): Promise<MobilePackage | undefined>;
     /** Removes a game that is not installed from the library; false when the user cancels. */
     remove(file: string): Promise<boolean>;
     icon(file: string): Promise<string>;
-    pathForFile(file: unknown): string;
   };
   runtime: {
     status(): Promise<RuntimeStatus>;
     restartAndroid(): Promise<void>;
-    prepareAndroid(): Promise<RuntimePlan>;
+    prepareAndroid(profile?: 'googlePlay'): Promise<RuntimePlan>;
     installAndroid(token: string, accepted: boolean): Promise<void>;
+    openGooglePlay(): Promise<AndroidLaunch>;
     onProgress(cb: (message: string) => void): void;
   };
   info(): Promise<{ platform: string; iosApps: boolean; version: string }>;
@@ -79,7 +82,7 @@ export interface PlayBridgeApi {
     packages(serial: string): Promise<AppPackage[]>;
     install(serial: string): Promise<boolean>;
     uninstall(serial: string, pkg: string): Promise<void>;
-    launch(serial: string, pkg: string): Promise<void>;
+    launch(serial: string, pkg: string, mode?: 'mirror'): Promise<AndroidLaunch>;
     diagnostics(serial: string, pkg: string): Promise<string>;
     forceStop(serial: string, pkg: string): Promise<void>;
   };

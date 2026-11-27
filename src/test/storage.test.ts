@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { ManagedAndroid, MANAGED_AVD } from '../main/runtime/managedAndroid';
+import { GOOGLE_PLAY_AVD, ManagedAndroid, MANAGED_AVD } from '../main/runtime/managedAndroid';
 import { moveGameStorage } from '../main/runtime/storage';
 
 async function fixture(t: TestContext) {
@@ -46,18 +46,22 @@ test('rewrites copied Android device paths for its final location', {
 }, async (t) => {
   const { source, parent, destination } = await fixture(t);
   const relative = path.join('runtime', 'android');
-  const avdName = MANAGED_AVD + '.avd';
   const sdkPath = new ManagedAndroid(path.join(source, relative));
-  await fs.mkdir(path.join(sdkPath.avdHome, avdName), { recursive: true });
-  await fs.writeFile(path.join(sdkPath.avdHome, avdName, 'config.ini'), 'image.sysdir.1=/old/image/\nhw.keyboard=yes\n');
-  await fs.writeFile(path.join(sdkPath.avdHome, MANAGED_AVD + '.ini'), 'path=/old/avd\ntarget=android-35\n');
+  for (const profile of [MANAGED_AVD, GOOGLE_PLAY_AVD]) {
+    const avdDir = path.join(sdkPath.avdHome, profile + '.avd');
+    await fs.mkdir(avdDir, { recursive: true });
+    await fs.writeFile(path.join(avdDir, 'config.ini'), 'image.sysdir.1=/old/image/\nhw.keyboard=yes\n');
+    await fs.writeFile(path.join(sdkPath.avdHome, profile + '.ini'), 'path=/old/avd\ntarget=android-35\n');
+  }
   await moveGameStorage(source, parent,
     (staged, active) => new ManagedAndroid(path.join(staged, relative)).relocateAvd(new ManagedAndroid(path.join(active, relative))),
     async () => {}, () => {});
   const active = new ManagedAndroid(path.join(destination, relative));
-  assert.equal(await fs.readFile(path.join(active.avdHome, MANAGED_AVD + '.ini'), 'utf8'),
-    `path=${path.join(active.avdHome, avdName)}\ntarget=android-35\n`);
-  const config = await fs.readFile(path.join(active.avdHome, avdName, 'config.ini'), 'utf8');
-  const image = path.join(active.sdk, 'system-images', 'android-35', active.tag, active.abi);
-  assert.equal(config, `image.sysdir.1=${image}${path.sep}\nhw.keyboard=yes\n`);
+  for (const [profile, tag] of [[MANAGED_AVD, active.abi === 'arm64-v8a' ? 'default' : 'google_apis'], [GOOGLE_PLAY_AVD, 'google_apis_playstore']]) {
+    const avdDir = path.join(active.avdHome, profile + '.avd');
+    assert.equal(await fs.readFile(path.join(active.avdHome, profile + '.ini'), 'utf8'), `path=${avdDir}\ntarget=android-35\n`);
+    const config = await fs.readFile(path.join(avdDir, 'config.ini'), 'utf8');
+    const image = path.join(active.sdk, 'system-images', 'android-35', tag, active.abi);
+    assert.equal(config, `image.sysdir.1=${image}${path.sep}\nhw.keyboard=yes\n`);
+  }
 });

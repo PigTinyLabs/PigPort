@@ -14,13 +14,21 @@ export async function assertAbi(adb: Adb, serial: string, required: string[]): P
     throw new Error(`Game CPU ABI (${required.join(', ')}) does not match Android (${supported.join(', ') || 'unknown'}). Use a matching system image; tablet/device-name settings cannot translate CPU instructions.`);
   }
 }
+export async function androidIsReady(adb: Adb, serial: string, timeout = 5000): Promise<boolean> {
+  const out = await adb.shell(serial, ['getprop sys.boot_completed; pm path android'], timeout).catch(() => '');
+  const [boot, ...packages] = out.trim().split(/\r?\n/);
+  return boot === '1' && packages.some((line) => line.startsWith('package:'));
+}
+
 export async function waitForAndroid(adb: Adb, serial: string, timeout = 90000): Promise<void> {
   const deadline = Date.now() + timeout;
+  let interval = 350;
   do {
-    const booted = (await adb.shell(serial, ['getprop', 'sys.boot_completed'], 5000).catch(() => '')).trim() === '1';
-    if (booted && /package:/.test(await adb.shell(serial, ['pm', 'path', 'android'], 5000).catch(() => ''))) return;
-    if (Date.now() >= deadline) break;
-    await pause(Math.min(1000, Math.max(1, deadline - Date.now())));
+    if (await androidIsReady(adb, serial, Math.max(1, Math.min(5000, deadline - Date.now())))) return;
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await pause(Math.min(interval, remaining));
+    interval = Math.min(1500, interval + 250);
   } while (Date.now() < deadline);
   throw new Error('Android is connected but has not finished booting or its package manager is unavailable. Wait and retry.');
 }

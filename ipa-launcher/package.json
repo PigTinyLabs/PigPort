@@ -1,0 +1,8 @@
+{
+  "name": "pigport-ipa",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build:worker": "node ../scripts/bundle-worker.mjs ipa"
+  }
+}

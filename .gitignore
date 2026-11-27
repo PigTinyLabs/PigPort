@@ -15,3 +15,12 @@ resources/airplay/
 *.p8
 .env
 .env.*
+
+src-tauri/target/
+src-tauri/gen/
+src-tauri/binaries/
+src-tauri/runtime-assets/
+ipa-launcher/src-tauri/target/
+ipa-launcher/src-tauri/gen/
+ipa-launcher/src-tauri/binaries/
+ipa-launcher/src-tauri/runtime-assets/

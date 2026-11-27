@@ -71,7 +71,9 @@
 
 ### 2. Start Playing
 - Click **▶ Play** on the game card to launch.
-- Enjoy gaming immediately with mapped keyboard and mouse controls.
+- For an APK or XAPK installed on built-in Android, **Play** opens the game in a separate emulator window and skips video streaming. Use **Play with controls** to play inside PigPort with your keyboard and mouse mappings. On Apple Silicon, the automatic graphics mode tries hardware ANGLE first. Automatic resolution uses 800 × 500 on an M1 or an 8 GB Mac and 960 × 600 on other Apple Silicon Macs. You can change the resolution in Settings.
+- **Hardware OpenGL** in Settings can resume a recent Quick Boot snapshot on Apple Silicon when the emulator saved one successfully. Close the emulator window normally to let it save. Some games using Vulkan require a cold boot.
+- For games that sign in with Google, click **Set up Google Play** in Game library and review Google's license. PigPort creates a separate device and opens the Play Store so you can sign in. Select **Android with Google Play** and install the game on that device. Your original Android device keeps its installed games and local saves.
 
 ### 3. Customize Controls (Keymapping)
 - Click the **🎮 Controls** button on the game card or press **⌘K** during gameplay to open the editor:
@@ -94,20 +96,16 @@ Android games run on the built-in Android device. To mirror and play on your own
 
 ## 🛠️ Developer Setup (Build from Source)
 
-For developers interested in building or contributing to PigPort:
+Tauri and Rust manage the desktop window and Android screen mirroring. PigPort bundles a Node helper for package installation, IPA conversion, and storage. Installed builds include the helper and run without a separate Node installation.
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) version 22 or later.
+
+- Node.js 26 or later and a current stable Rust toolchain.
+- macOS 13.5 or later with Xcode Command Line Tools, or Windows x64 with the MSVC C++ build tools and WebView2. [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ### Installation
 ```bash
-# Install dependencies
-npm install
-
-# Download Electron binary
-npm run setup:electron
-
-# Fetch scrcpy-server for Android streaming
+npm ci
 npm run fetch:scrcpy-server
 ```
 
@@ -119,16 +117,26 @@ npm start
 ### Run Tests
 ```bash
 npm test
+npm run build:desktop
+cargo test --locked --manifest-path src-tauri/Cargo.toml
 ```
 
 ### Packaging / Distribution
-```bash
-# Build macOS installer (.dmg)
-npm run dist:mac
 
-# Build Windows installer (.exe)
-npm run dist:win
+Run the command for your build machine’s operating system and architecture.
+
+```bash
+# Apple silicon Mac
+npm run dist:mac -- --target aarch64-apple-darwin
+
+# Intel Mac
+npm run dist:mac -- --target x86_64-apple-darwin
+
+# Windows x64
+npm run dist:win -- --target x86_64-pc-windows-msvc
 ```
+
+Tauri writes bundles under `src-tauri/target/<target>/release/bundle/`. To produce files named like the GitHub releases, run `node scripts/stage-release.mjs <target>` after building. Extract the full Windows portable ZIP before opening `PigPort.exe`, since the launcher needs the neighboring helper and resources.
 
 ---
 

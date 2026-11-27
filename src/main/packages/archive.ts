@@ -1,10 +1,12 @@
 import { open } from 'node:fs/promises';
-import { inflateRawSync } from 'node:zlib';
+import { Readable } from 'node:stream';
+import { createInflateRaw, inflateRawSync } from 'node:zlib';
 
 export interface ArchiveEntry { offset: number; compressed: number; size: number; method: number; flags: number; mode: number }
+type ReadRange = (name: string, start: number, length: number) => Promise<Buffer>;
 
-/** Reads only the ZIP directory and selected metadata, never extracts application code. */
-export async function inspectArchive<T>(file: string, inspect: (names: string[], read: (name: string) => Promise<Buffer>, entries: ReadonlyMap<string, ArchiveEntry>) => Promise<T>): Promise<T> {
+/** Reads the ZIP directory and bounded entry data without extracting files. */
+export async function inspectArchive<T>(file: string, inspect: (names: string[], read: (name: string) => Promise<Buffer>, entries: ReadonlyMap<string, ArchiveEntry>, readRange: ReadRange) => Promise<T>): Promise<T> {
   const handle = await open(file, 'r');
   try {
     const size = (await handle.stat()).size;
@@ -42,6 +44,57 @@ export async function inspectArchive<T>(file: string, inspect: (names: string[],
       entries.set(name, { mode: directory.readUInt32LE(pos + 38) >>> 16, offset: directory.readUInt32LE(pos + 42), compressed: directory.readUInt32LE(pos + 20), size: directory.readUInt32LE(pos + 24), method: directory.readUInt16LE(pos + 10), flags: directory.readUInt16LE(pos + 8) });
       pos = next;
     }
+    const readRange: ReadRange = async (name, start, length) => {
+      const entry = entries.get(name);
+      if (!entry) throw new Error(`Missing ${name}`);
+      if (entry.flags & 1) throw new Error('Encrypted ZIP entries are not supported');
+      if (!Number.isSafeInteger(start) || !Number.isSafeInteger(length) || start < 0 || length < 0 ||
+          length > 8 * 1024 * 1024 || start + length > entry.size) throw new Error('Invalid package entry range');
+      const local = await readAt(entry.offset, 30);
+      if (local.readUInt32LE(0) !== 0x04034b50 || local.readUInt16LE(6) !== entry.flags ||
+          local.readUInt16LE(8) !== entry.method) throw new Error('Invalid local ZIP entry');
+      const nameLength = local.readUInt16LE(26);
+      if ((await readAt(entry.offset + 30, nameLength)).toString('utf8') !== name) throw new Error('Conflicting local ZIP path.');
+      const dataStart = entry.offset + 30 + nameLength + local.readUInt16LE(28);
+      if (dataStart + entry.compressed > size) throw new Error('Truncated package entry');
+      if (!length) return Buffer.alloc(0);
+      if (entry.method === 0) {
+        if (entry.compressed !== entry.size) throw new Error('Invalid stored ZIP entry length');
+        return readAt(dataStart + start, length);
+      }
+      if (entry.method !== 8) throw new Error('Unsupported package compression');
+
+      // Stream compressed chunks and stop as soon as the requested uncompressed range is available.
+      // Game executables can be much larger than the metadata read limit.
+      const compressedSize = entry.compressed;
+      async function* compressed() {
+        const chunkSize = 64 * 1024;
+        for (let offset = 0; offset < compressedSize; offset += chunkSize) {
+          yield await readAt(dataStart + offset, Math.min(chunkSize, compressedSize - offset));
+        }
+      }
+      const input = Readable.from(compressed());
+      const inflate = createInflateRaw();
+      input.on('error', (error) => inflate.destroy(error));
+      input.pipe(inflate);
+      const result = Buffer.alloc(length);
+      let position = 0, copied = 0;
+      try {
+        for await (const chunk of inflate as AsyncIterable<Buffer>) {
+          const skip = Math.max(0, start - position);
+          position += chunk.length;
+          if (skip >= chunk.length) continue;
+          const bytes = Math.min(length - copied, chunk.length - skip);
+          chunk.copy(result, copied, skip, skip + bytes);
+          copied += bytes;
+          if (copied === length) return result;
+        }
+        throw new Error('Truncated package entry');
+      } finally {
+        input.destroy();
+        inflate.destroy();
+      }
+    };
     return await inspect([...entries.keys()], async (name) => {
       const e = entries.get(name);
       if (!e) throw new Error(`Missing ${name}`);
@@ -53,7 +106,7 @@ export async function inspectArchive<T>(file: string, inspect: (names: string[],
       const result = e.method === 0 ? bytes : e.method === 8 ? inflateRawSync(bytes, { maxOutputLength: 8 * 1024 * 1024 }) : undefined;
       if (!result || result.length !== e.size) throw new Error('Invalid or unsupported package compression');
       return result;
-    }, entries);
+    }, entries, readRange);
   } finally { await handle.close(); }
 }
 

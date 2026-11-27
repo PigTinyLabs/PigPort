@@ -1,49 +1,51 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
-import { existsSync, readFileSync, promises as fs } from 'node:fs';
+import { existsSync, promises as fs } from 'node:fs';
 import path from 'node:path';
 import { Keymap, parseKeymap } from '../shared/keymap';
 import { Adb, locateAdb } from './android/adb';
-import { assertAbi, waitForAndroid, pause } from './android/health';
-import { KEYCODE_APP_SWITCH, KEYCODE_BACK, KEYCODE_HOME, ScrcpySession } from './android/scrcpy';
+import { assertAbi, pause } from './android/health';
+import { emit, receive, register, requestDialog } from './desktop';
 import { iosAppIcon, iosAppsSupported, launchIosApp, listIosApps } from './mac/iosApps';
 import { Settings, Store } from './store';
-import { avds, ensureAndroid, configureManagedAndroid } from './runtime/android';
+import { avds, configureManagedAndroid, directEmulatorPid, ensureAndroid, managedAndroidDevices } from './runtime/android';
 import { NativeIpaRuntime } from './runtime/ipa';
 import { AirPlayReceiver } from './airplay';
-import { ManagedAndroid, MANAGED_AVD } from './runtime/managedAndroid';
+import { GOOGLE_PLAY_AVD, isManagedProfile, ManagedAndroid, MANAGED_AVD } from './runtime/managedAndroid';
 import { moveGameStorage } from './runtime/storage';
 import { inspectPackage } from './packages/packages';
 import { packageIcon } from './packages/icon';
 import { installXapk, matchDeviceAbis } from './android/xapk';
-import type { MobilePackage, StorageStatus } from '../shared/api';
+import type { AndroidLaunch, MobilePackage, StorageStatus } from '../shared/api';
 
 const imported = new Map<string, MobilePackage>();
 
-const resourcesDir = app.isPackaged
-  ? process.resourcesPath
-  : path.join(__dirname, '..', '..', 'resources');
+function desktopPath(name: string): string {
+  const value = process.env[name];
+  if (!value || !path.isAbsolute(value)) throw new Error(`${name} must be an absolute PigPort path.`);
+  return value;
+}
 
-// Renamed from PlayBridge: keep the existing library, installed games and keymaps.
-app.setPath('userData', path.join(app.getPath('appData'), 'PlayBridge'));
-const userData = app.getPath('userData');
+const resourcesDir = desktopPath('PIGPORT_RESOURCES');
+const userData = desktopPath('PIGPORT_USER_DATA');
 const store = new Store(userData);
-const airplay = new AirPlayReceiver(path.join(resourcesDir, 'airplay'), app.getPath('userData'));
+const airplay = new AirPlayReceiver(path.join(resourcesDir, 'airplay'), userData);
 let adb = new Adb(locateAdb(undefined, resourcesDir));
-let session: ScrcpySession | undefined;
-let win: BrowserWindow | undefined;
-const progress = (message: string) => win?.webContents.send('runtime:progress', message);
+const progress = (message: string) => emit('runtime:progress', message);
 let storageRoot = userData;
 let nativeIpa = new NativeIpaRuntime(path.join(storageRoot, 'ios'), progress);
 let managedAndroid = new ManagedAndroid(path.join(storageRoot, 'runtime', 'android'), progress);
+const lastBuiltInDevices = new Map<string, string>();
 let movingStorage = false;
 let runtimeJobs = 0;
+let shutdown: Promise<void> | undefined;
 const storageJobs = new Set(['packages:install', 'packages:play', 'packages:uninstall', 'runtime:android:prepare',
-  'runtime:android:install', 'runtime:android:restart', 'adb:install', 'adb:launch', 'adb:uninstall', 'stream:start']);
+  'runtime:android:install', 'runtime:android:restart', 'runtime:android:openGooglePlay',
+  'adb:install', 'adb:launch', 'adb:uninstall', 'stream:configuration']);
 
 function useStorageRoot(dir: string): void {
   storageRoot = dir;
   nativeIpa = new NativeIpaRuntime(path.join(dir, 'ios'), progress);
   managedAndroid = new ManagedAndroid(path.join(dir, 'runtime', 'android'), progress);
+  lastBuiltInDevices.clear();
 }
 
 async function storageStatus(): Promise<StorageStatus> {
@@ -55,26 +57,66 @@ async function requireGameStorage(): Promise<void> {
   if (!(await storageStatus()).available) throw new Error(`Reconnect the drive that contains PigPort Data at ${storageRoot}.`);
 }
 
-async function refreshAdb(): Promise<void> {
+async function refreshAdb() {
   const settings = await store.settings();
-  const ready = await managedAndroid.ready();
-  configureManagedAndroid(ready ? managedAndroid.sdk : undefined, ready ? managedAndroid.avdHome : undefined);
-  adb = new Adb(locateAdb(settings.adbPath ?? (ready ? managedAndroid.adbPath : undefined), resourcesDir));
+  const profiles = await managedAndroid.readyAvds();
+  configureManagedAndroid(profiles.length ? { sdk: managedAndroid.sdk, avdHome: managedAndroid.avdHome, profiles } : undefined);
+  adb = new Adb(locateAdb(settings.adbPath ?? (profiles.length ? managedAndroid.adbPath : undefined), resourcesDir));
+  return { settings, profiles, preferred: settings.androidAvd ?? profiles[0] };
 }
 async function androidDevice(serial?: string): Promise<string> {
-  await refreshAdb();
-  const settings = await store.settings();
-  return ensureAndroid(adb, serial, settings.androidAvd ?? (await managedAndroid.ready() ? MANAGED_AVD : undefined), settings.androidGraphics);
+  const { settings, preferred } = await refreshAdb();
+  return ensureAndroid(adb, serial, preferred, settings.androidGraphics);
+}
+
+async function startManagedAndroid(settings: Settings, mode: 'direct' | 'restart', profile: string): Promise<string> {
+  if (mode === 'restart') progress('Restarting built-in Android; running Android games will close…');
+  try {
+    const serial = await ensureAndroid(adb, undefined, profile, settings.androidGraphics, { mode, progress, resolution: settings.androidResolution });
+    lastBuiltInDevices.set(serial, profile);
+    return serial;
+  } finally { progress(''); }
+}
+
+async function androidInstallTarget(serial?: string): Promise<string> {
+  const { settings, profiles, preferred } = await refreshAdb();
+  if (!serial && preferred && isManagedProfile(preferred) && profiles.includes(preferred) && !(await adb.devices()).length) {
+    // Open the emulator window on the first boot so the game can play after installation
+    // without restarting Android or starting a video stream.
+    return startManagedAndroid(settings, 'direct', preferred);
+  }
+  return ensureAndroid(adb, serial, preferred, settings.androidGraphics);
+}
+
+type PlayTarget = AndroidLaunch & { profile?: string };
+async function androidPlayback(serial: string | undefined, mode: 'mirror' | undefined, installing: boolean): Promise<PlayTarget> {
+  const { settings, profiles, preferred } = await refreshAdb();
+  if (profiles.length && mode !== 'mirror') {
+    const devices = await adb.devices();
+    const ready = devices.filter((device) => device.state === 'device');
+    const target = serial || (ready.length === 1 ? ready[0].serial : undefined);
+    const builtIn = await managedAndroidDevices(adb, devices);
+    const remembered = target && !devices.some((device) => device.serial === target) ? lastBuiltInDevices.get(target) : undefined;
+    const name = target ? builtIn.get(target) ?? remembered : devices.length ? undefined : preferred;
+    if (name && isManagedProfile(name) && profiles.includes(name)) {
+      if (installing) throw new Error('Wait for the current game installation to finish.');
+      await requireGameStorage();
+      return { serial: await startManagedAndroid(settings, 'direct', name), playback: 'direct', profile: name };
+    }
+  }
+  const selected = await ensureAndroid(adb, serial, preferred, settings.androidGraphics);
+  return { serial: selected, playback: 'mirror' };
 }
 
 async function saveAndroidDiagnostic(report: string): Promise<string> {
-  const dir = path.join(app.getPath('userData'), 'diagnostics');
+  const dir = path.join(userData, 'diagnostics');
   await fs.mkdir(dir, { recursive: true });
   const file = path.join(dir, 'android-latest.txt');
   await fs.writeFile(file, Buffer.from(report).subarray(-1024 * 1024));
   return file;
 }
-async function launchAndroid(serial: string, pkg: string): Promise<void> {
+async function launchAndroid(target: PlayTarget, pkg: string): Promise<AndroidLaunch & { windowPid?: number }> {
+  const { serial, playback, profile } = target;
   progress('Opening Android game and checking startup…');
   try { await adb.launch(serial, pkg); }
   catch (error) {
@@ -83,55 +125,24 @@ async function launchAndroid(serial: string, pkg: string): Promise<void> {
     catch { report = 'Diagnostic capture failed; check the ADB connection.'; }
     throw new Error((error as Error).message + '\nDiagnostics: ' + report);
   } finally { progress(''); }
-}
-
-function scrcpyServer(): { jar: string; version: string } {
-  const jar = path.join(resourcesDir, 'scrcpy-server');
-  const versionFile = path.join(resourcesDir, 'scrcpy-server.version');
-  if (!existsSync(jar) || !existsSync(versionFile)) {
-    throw new Error('scrcpy-server is missing. Run "npm run fetch:scrcpy-server" (see README).');
-  }
-  return { jar, version: readFileSync(versionFile, 'utf8').trim() };
-}
-
-function createWindow(): void {
-  win = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    minWidth: 900,
-    minHeight: 560,
-    title: 'PigPort',
-    icon: path.join(__dirname, '..', 'web', 'renderer', 'logo.png'),
-    backgroundColor: '#111317',
-    webPreferences: {
-      preload: path.join(__dirname, '..', 'preload', 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
-  });
-  win.removeMenu();
-  void win.loadFile(path.join(__dirname, '..', 'web', 'renderer', 'index.html'));
-  win.on('closed', () => {
-    session?.stop();
-    win = undefined;
-  });
+  return { serial, playback, windowPid: profile ? await directEmulatorPid(serial, profile) : undefined };
 }
 
 function handle<A extends unknown[], R>(channel: string, fn: (...args: A) => Promise<R> | R): void {
-  ipcMain.handle(channel, async (_e, ...args) => {
-    if (!storageJobs.has(channel)) return fn(...(args as A));
+  register(channel, async (...args: A) => {
+    if (shutdown && channel !== 'app:shutdown') throw new Error('PigPort is closing.');
+    if (!storageJobs.has(channel)) return fn(...args);
     if (movingStorage) throw new Error('Wait until PigPort finishes moving game storage.');
     runtimeJobs++;
     try {
-      return await fn(...(args as A));
+      return await fn(...args);
     } finally {
       runtimeJobs--;
     }
   });
 }
 
-function registerIpc(): void {
+function registerCommands(): void {
   const saveLibrary = () => store.saveLibrary([...imported.values()]);
   let installing = false;
   // `missing`: the IPA/APK was moved or deleted after it was added to the library.
@@ -151,7 +162,7 @@ function registerIpc(): void {
     if (installing) throw new Error('Wait for the current installation to finish.');
     if (file !== undefined && (typeof file !== 'string' || !path.isAbsolute(file))) throw new Error('Drop a local IPA, APK, or XAPK file.');
     if (!file) {
-      const pick = await dialog.showOpenDialog(win!, {
+      const pick = await requestDialog('open', {
         title: 'Install mobile game', properties: ['openFile'],
         filters: [{ name: 'Mobile packages', extensions: ['ipa', 'apk', 'xapk'] }],
       });
@@ -165,9 +176,10 @@ function registerIpc(): void {
   });
   handle('packages:install', async (file: string, serial?: string) => {
     if (installing) throw new Error('Another installation is in progress.');
-    if (!imported.has(file)) throw new Error('Import the package first.');
+    const previous = imported.get(file);
+    if (!previous) throw new Error('Import the package first.');
     installing = true;
-    let pkg = imported.get(file)!;
+    let pkg = previous;
     try {
       if (pkg.kind !== 'apk') await requireGameStorage();
       pkg = { ...await inspectPackage(file), status: 'installing' };
@@ -175,7 +187,7 @@ function registerIpc(): void {
       await saveLibrary();
       if (pkg.kind === 'apk' || pkg.kind === 'xapk') {
         if (!pkg.bundleId) throw new Error(`Cannot read ${pkg.kind.toUpperCase()} package ID.`);
-        const target = await androidDevice(serial);
+        const target = await androidInstallTarget(serial);
         await assertAbi(adb, target, pkg.architectures);
         const presentBefore = (await adb.packages(target)).some((p) => p.id === pkg.bundleId);
         if (!presentBefore) {
@@ -199,13 +211,12 @@ function registerIpc(): void {
       await saveLibrary();
       return pkg;
     } catch (e) {
-      pkg.status = 'error'; pkg.error = (e as Error).message;
-      imported.set(file, pkg);
+      imported.set(file, previous.status === 'installed' ? previous : { ...pkg, status: 'error', error: (e as Error).message });
       await saveLibrary();
       throw e;
     } finally { installing = false; }
   });
-  handle('packages:play', async (file: string, serial?: string) => {
+  handle('packages:play', async (file: string, serial?: string, mode?: 'mirror') => {
     const pkg = imported.get(file);
     if (!pkg || pkg.status !== 'installed' || !pkg.bundleId) throw new Error('Finish installing this game first.');
     if (pkg.kind === 'ipa') {
@@ -216,11 +227,12 @@ function registerIpc(): void {
       await nativeIpa.launch(pkg.bundleId, input);
       return { appId: pkg.bundleId };
     }
-    const target = await androidDevice(serial);
-    if (!(await adb.packages(target)).some((p) => p.id === pkg.bundleId)) throw new Error('Game is not installed on this device. Select the original device or install again.');
-    await assertAbi(adb, target, pkg.architectures);
-    await launchAndroid(target, pkg.bundleId);
-    return { appId: pkg.bundleId, serial: target };
+    const target = await androidPlayback(serial, mode, installing);
+    if (!(await adb.packages(target.serial)).some((p) => p.id === pkg.bundleId)) {
+      throw new Error('Game is not installed on this device. Select the original device or install again.');
+    }
+    await assertAbi(adb, target.serial, pkg.architectures);
+    return { ...await launchAndroid(target, pkg.bundleId), appId: pkg.bundleId };
   });
   handle('packages:uninstall', async (file: string, serial?: string) => {
     const pkg = imported.get(file);
@@ -228,7 +240,7 @@ function registerIpc(): void {
     if (pkg.kind === 'ipa') await requireGameStorage();
     if (installing) throw new Error('Wait for the current installation to finish.');
     const size = pkg.kind === 'ipa' ? await nativeIpa.dataSize(pkg.bundleId) : 0;
-    const { response, checkboxChecked: removeEntry } = await dialog.showMessageBox(win!, {
+    const { response, checkboxChecked: removeEntry } = await requestDialog('message', {
       type: 'question', message: `Uninstall ${pkg.name}?`,
       detail: 'Keep the game data to reinstall without downloading game updates and settings again, or delete it to free space.'
         + (size ? `\n\nGame data: ${(size / 1024 ** 3).toFixed(1)} GB` : '') + '\nDeleting data also deletes this game\'s controls (keymap).',
@@ -257,7 +269,7 @@ function registerIpc(): void {
     if (installing && pkg.status === 'installing') throw new Error('Wait for the installation to finish.');
     // A missing file needs no confirmation: there is nothing left to install.
     if (existsSync(file)) {
-      const { response } = await dialog.showMessageBox(win!, {
+      const { response } = await requestDialog('message', {
         type: 'question', message: `Remove ${pkg.name} from the library?`,
         detail: `The ${pkg.kind.toUpperCase()} file stays on disk. Drop it here again to add it back.`,
         buttons: ['Remove', 'Cancel'], defaultId: 0, cancelId: 1,
@@ -268,44 +280,52 @@ function registerIpc(): void {
     await saveLibrary();
     return true;
   });
-  handle('runtime:status', async () => ({ nativeIpa: await nativeIpa.available(), managedAndroid: await managedAndroid.ready(), avds: await avds().catch(() => []) }));
+  handle('runtime:status', async () => {
+    const profiles = await managedAndroid.readyAvds();
+    return { nativeIpa: await nativeIpa.available(), managedAndroid: profiles.length > 0,
+      googlePlay: profiles.includes(GOOGLE_PLAY_AVD), avds: await avds().catch(() => []) };
+  });
   handle('runtime:android:restart', async () => {
     await requireGameStorage();
-    await refreshAdb();
     if (installing) throw new Error('Wait for installation to finish.');
-    if (!await managedAndroid.ready()) throw new Error('Set up built-in Android first.');
-    progress('Restarting built-in Android; running Android games will close…');
-    try {
-      for (const device of await adb.devices()) {
-        if (!device.serial.startsWith('emulator-')) continue;
-        const name = (await adb.run(['-s', device.serial, 'emu', 'avd', 'name'], 5000)).split(/\r?\n/)[0].trim();
-        if (name !== MANAGED_AVD) continue;
-        await adb.run(['-s', device.serial, 'emu', 'kill'], 10000);
-        const deadline = Date.now() + 30000;
-        while ((await adb.devices()).some((d) => d.serial === device.serial)) {
-          if (Date.now() >= deadline) throw new Error('Android did not stop. Close the emulator before retrying.');
-          await pause(500);
-        }
-      }
-      await ensureAndroid(adb, undefined, MANAGED_AVD, (await store.settings()).androidGraphics, true);
-    } finally { progress(''); }
+    const { settings, profiles } = await refreshAdb();
+    const profile = profiles.find((name) => name === settings.androidAvd) ?? profiles[0];
+    if (!profile) throw new Error('Set up built-in Android first.');
+    await startManagedAndroid(settings, 'restart', profile);
   });
-  handle('runtime:android:prepare', async () => { await requireGameStorage(); return managedAndroid.prepare(); });
+  handle('runtime:android:prepare', async (profile?: 'googlePlay') => {
+    await requireGameStorage();
+    return managedAndroid.prepare(profile === 'googlePlay' ? GOOGLE_PLAY_AVD : MANAGED_AVD);
+  });
   handle('runtime:android:install', async (token: string, accepted: boolean) => {
     await requireGameStorage();
     if (installing) throw new Error('Wait for the current game installation to finish.');
     await managedAndroid.install(token, accepted);
     await refreshAdb();
   });
-  handle('app:info', () => ({ platform: process.platform, iosApps: iosAppsSupported(), version: app.getVersion() }));
+  handle('runtime:android:openGooglePlay', async () => {
+    await requireGameStorage();
+    if (installing) throw new Error('Wait for the current game installation to finish.');
+    const { settings, profiles } = await refreshAdb();
+    if (!profiles.includes(GOOGLE_PLAY_AVD)) throw new Error('Set up Google Play first.');
+    const serial = await startManagedAndroid(settings, 'direct', GOOGLE_PLAY_AVD);
+    const result = await launchAndroid({ serial, playback: 'direct', profile: GOOGLE_PLAY_AVD }, 'com.android.vending');
+    await store.saveSettings({ ...settings, androidAvd: GOOGLE_PLAY_AVD });
+    return result;
+  });
+  handle('app:info', () => ({ platform: process.platform, iosApps: iosAppsSupported(), version: process.env.PIGPORT_VERSION ?? '' }));
+  handle('app:shutdown', () => {
+    if (movingStorage || runtimeJobs) throw new Error('Wait for PigPort to finish the current operation before closing.');
+    return closeRuntime();
+  });
 
   handle('storage:status', storageStatus);
   handle('storage:choose', async () => {
-    if (movingStorage || runtimeJobs || session) throw new Error('Close games and finish any installations before moving game storage.');
+    if (movingStorage || runtimeJobs) throw new Error('Close games and finish any installations before moving game storage.');
     movingStorage = true;
     try {
       await requireGameStorage();
-      const pick = await dialog.showOpenDialog(win!, {
+      const pick = await requestDialog('open', {
         title: 'Choose where to move PigPort game data',
         defaultPath: storageRoot === userData ? undefined : path.dirname(storageRoot),
         properties: ['openDirectory', 'createDirectory'],
@@ -317,7 +337,7 @@ function registerIpc(): void {
         return { ...await storageStatus(), remaining: [] };
       }
       await nativeIpa.assertAllStopped();
-      if (await managedAndroid.ready()) await managedAndroid.stopRunning(true);
+      if ((await managedAndroid.readyAvds()).length) await managedAndroid.stopRunning(true);
       const result = await moveGameStorage(storageRoot, pick.filePaths[0], async (staging, destination) => {
         await nativeIpa.assertAllStopped();
         await new ManagedAndroid(path.join(staging, 'runtime', 'android'))
@@ -348,7 +368,15 @@ function registerIpc(): void {
       return { ok: false, binary: adb.binary, error: (e as Error).message };
     }
   });
-  handle('adb:devices', () => adb.devices());
+  handle('adb:devices', async () => {
+    const devices = await adb.devices();
+    const builtin = await managedAndroidDevices(adb, devices);
+    for (const [serial, profile] of builtin) lastBuiltInDevices.set(serial, profile);
+    return devices.map((device) => {
+      const profile = builtin.get(device.serial);
+      return profile ? { ...device, avd: profile, googlePlay: profile === GOOGLE_PLAY_AVD } : device;
+    });
+  });
   handle('adb:wireless', () => adb.wireless());
   handle('adb:pair', async (address: string, code: string) => {
     const paired = await adb.pair(address, code);
@@ -367,7 +395,7 @@ function registerIpc(): void {
   handle('adb:connect', (address: string) => adb.connect(address));
   handle('adb:packages', (serial: string) => adb.packages(serial));
   handle('adb:install', async (serial: string) => {
-    const pick = await dialog.showOpenDialog(win!, {
+    const pick = await requestDialog('open', {
       title: 'Install APK / XAPK',
       properties: ['openFile', 'multiSelections'],
       filters: [{ name: 'Android packages', extensions: ['apk', 'xapk'] }],
@@ -384,7 +412,8 @@ function registerIpc(): void {
     return true;
   });
   handle('adb:uninstall', (serial: string, pkg: string) => adb.uninstall(serial, pkg));
-  handle('adb:launch', async (serial: string, pkg: string) => { await waitForAndroid(adb, serial); await launchAndroid(serial, pkg); });
+  handle('adb:launch', async (serial: string, pkg: string, mode?: 'mirror') =>
+    launchAndroid(await androidPlayback(serial, mode, installing), pkg));
   handle('adb:diagnostics', async (serial: string, pkg: string) => {
     const report = await adb.diagnostics(serial, pkg);
     return saveAndroidDiagnostic(report);
@@ -394,11 +423,11 @@ function registerIpc(): void {
   handle('airplay:status', () => airplay.status());
   handle('airplay:start', () => airplay.start());
   handle('airplay:stop', () => airplay.stop());
-  airplay.on('status', () => void airplay.status().then((s) => win?.webContents.send('airplay:status', s)));
+  airplay.on('status', () => void airplay.status().then((s) => emit('airplay:status', s)).catch(() => undefined));
   handle('ios:list', () => listIosApps());
   handle('ios:launch', (appPath: string) => launchIosApp(appPath));
   handle('ios:icon', async (appPath: string) => {
-    const icon = await iosAppIcon(appPath, path.join(app.getPath('userData'), 'icon-cache'));
+    const icon = await iosAppIcon(appPath, path.join(userData, 'icon-cache'));
     if (!icon) throw new Error('No icon');
     return icon;
   });
@@ -406,7 +435,7 @@ function registerIpc(): void {
   handle('keymap:load', (appId: string) => store.keymap(appId));
   handle('keymap:save', (appId: string, map: Keymap) => store.saveKeymap(appId, map));
   handle('keymap:export', async (appId: string, map: Keymap) => {
-    const pick = await dialog.showSaveDialog(win!, {
+    const pick = await requestDialog('save', {
       defaultPath: `${appId}.keymap.json`,
       filters: [{ name: 'Keymap', extensions: ['json'] }],
     });
@@ -415,7 +444,7 @@ function registerIpc(): void {
     return true;
   });
   handle('keymap:import', async () => {
-    const pick = await dialog.showOpenDialog(win!, {
+    const pick = await requestDialog('open', {
       properties: ['openFile'],
       filters: [{ name: 'Keymap', extensions: ['json'] }],
     });
@@ -423,54 +452,28 @@ function registerIpc(): void {
     return parseKeymap(await fs.readFile(pick.filePaths[0], 'utf8'));
   });
 
-  handle('stream:start', async (serial: string) => {
-    session?.stop();
-    const { jar, version } = scrcpyServer();
-    const s = new ScrcpySession(adb, serial, jar, version, (await store.settings()).stream);
-    session = s;
-    const send = (channel: string, payload: unknown) => {
-      if (session === s) win?.webContents.send(channel, payload);
-    };
-    s.on('meta', (m) => send('stream:meta', m));
-    s.on('packet', (p) => send('stream:packet', p));
-    s.on('log', (l) => send('stream:log', l));
-    s.on('closed', (reason) => {
-      send('stream:closed', reason);
-      if (session === s) session = undefined;
-    });
-    await s.start();
-  });
-  handle('stream:stop', () => session?.stop());
-
-  // Input is fire-and-forget: no round trip per touch.
-  ipcMain.on('stream:touch', (_e, action: number, id: number, x: number, y: number, w: number, h: number) => {
-    session?.touch(action, id, x, y, w, h);
-  });
-  ipcMain.on('stream:nav', (_e, button: 'back' | 'home' | 'recents') => {
-    session?.key({ back: KEYCODE_BACK, home: KEYCODE_HOME, recents: KEYCODE_APP_SWITCH }[button]);
+  handle('stream:configuration', async () => {
+    const { settings } = await refreshAdb();
+    return { adbPath: adb.binary, options: settings.stream };
   });
 }
 
-app.whenReady().then(async () => {
-  // Packaged builds take the icon from the bundle; `npm start` would show Electron's.
-  if (!app.isPackaged) app.dock?.setIcon(path.join(__dirname, '..', 'web', 'renderer', 'logo.png'));
+function closeRuntime(): Promise<void> {
+  shutdown ??= (async () => {
+    airplay.stop();
+    // Keep the managed runtime alive on macOS, as in the previous desktop host.
+    if (process.platform !== 'darwin') await managedAndroid.stopRunning();
+  })();
+  return shutdown;
+}
+
+void (async () => {
   useStorageRoot(await store.storagePath() ?? userData);
   await refreshAdb();
   for (const pkg of await store.library()) imported.set(pkg.file, pkg);
-  registerIpc();
-  createWindow();
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+  registerCommands();
+  receive(closeRuntime);
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
 });
-
-app.on('before-quit', (event) => { if (movingStorage) event.preventDefault(); });
-
-app.on('window-all-closed', () => {
-  session?.stop();
-  airplay.stop();
-  if (process.platform !== 'darwin') {
-    void managedAndroid.stopRunning().finally(() => app.quit());
-  }
-});
-
